@@ -35,18 +35,20 @@
 
   (* Lexer *)
   module Make (M : sig 
-                type 'a t
+                type ('a, 'b) t
 
-                val bind: 'a t -> ('a -> 'b t) -> 'b t
-                val return: 'a -> 'a t
+                val return: 'a -> ('a, 'b) t
+                val bind: ('a, 'b) t -> ('a -> ('c, 'b) t) -> ('c, 'b) t
 
                 (* Additional Effects *)
-                val fail: string -> 'a t
-                val on_refill: Lexing.lexbuf -> unit t
-              end) = struct
+                val fail: 'b -> ('a, 'b) t
+                val on_refill: Lexing.lexbuf -> ('a, 'b) t
+              end): M.t = result = struct
     
   let refill_handle k lexbuf =
-    M.bind (M.on_refill lexbuf) (fun () -> print_endline "refill"; k lexbuf)
+    let _ = M.bind (M.on_refill lexbuf) (fun _ -> let () = k lexbuf in M.return []) in ()
+
+  let append v = M.return [v]
 }
 
 let white = [' ' '\t']+
@@ -60,41 +62,41 @@ let num = digit+
 let frac = '.' digit+
 let real = digit* frac? 
 
-refill { refill_handle }
+(* refill { refill_handle } *)
 
 rule token = parse
   | white | newline    { token lexbuf }
-  | "{"     { M.return SCOPE_OPEN } 
-  | "}"     { M.return SCOPE_CLSE }
-  | "["     { M.return DEREF_OPEN }
-  | "]"     { M.return DEREF_CLSE }
-  | "("     { M.return GROUP_OPEN }
-  | ")"     { M.return GROUP_CLOSE }
-  | ";"     { M.return STAT_SEPA }
-  | "="     { M.return ASSIGN }
-  | "if"    { M.return IF }
-  | "else"  { M.return ELSE }
-  | "while" { M.return WHILE }
-  | "do"    { M.return DO }
-  | "break" { M.return BREAK }
-  | "||"    { M.return OR }
-  | "&&"    { M.return AND }
-  | "=="    { M.return EQ }
-  | "!="    { M.return NEQ }
-  | "<"     { M.return LT }
-  | "<="    { M.return LEQ }
-  | ">="    { M.return GEQ }
-  | ">"     { M.return GT }
-  | "+"     { M.return PLUS }
-  | "-"     { M.return MINUS }
-  | "*"     { M.return MULTIPLY }
-  | "/"     { M.return DIVIDE }
-  | "!"     { M.return NOT }
-  | num as n    { M.return (NUM (int_of_string n)) }
-  | real as r    { M.return (REAL (float_of_string r)) }
-  | "true"  { M.return TRUE }
-  | "false" { M.return FALSE }
-  | ident as id { M.return (IDENT id) }
+  | "{"     { append SCOPE_OPEN } 
+  | "}"     { append SCOPE_CLSE }
+  | "["     { append DEREF_OPEN }
+  | "]"     { append DEREF_CLSE }
+  | "("     { append GROUP_OPEN }
+  | ")"     { append GROUP_CLOSE }
+  | ";"     { append STAT_SEPA }
+  | "="     { append ASSIGN }
+  | "if"    { append IF }
+  | "else"  { append ELSE }
+  | "while" { append WHILE }
+  | "do"    { append DO }
+  | "break" { append BREAK }
+  | "||"    { append OR }
+  | "&&"    { append AND }
+  | "=="    { append EQ }
+  | "!="    { append NEQ }
+  | "<"     { append LT }
+  | "<="    { append LEQ }
+  | ">="    { append GEQ }
+  | ">"     { append GT }
+  | "+"     { append PLUS }
+  | "-"     { append MINUS }
+  | "*"     { append MULTIPLY }
+  | "/"     { append DIVIDE }
+  | "!"     { append NOT }
+  | num as n    { append (NUM (int_of_string n)) }
+  | real as r    { append (REAL (float_of_string r)) }
+  | "true"  { append TRUE }
+  | "false" { append FALSE }
+  | ident as id { append (IDENT id) }
   | _
     { M.fail ("bad token " ^ (Lexing.lexeme lexbuf)) }
 
