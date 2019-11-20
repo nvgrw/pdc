@@ -1,4 +1,4 @@
 (executable
  (public_name pdc)
  (name pdc)
- (libraries parse))
+ (libraries compile))
