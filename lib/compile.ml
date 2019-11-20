@@ -1,24 +1,23 @@
 open Lexer
-open List
 
 module LexerMake = Make(struct
-    let return (v: 'a list): ('a list, 'b) result = Ok v
+    let return t = Success [t]
 
     let bind m f = match m with
       | Error _ -> m
-      | Ok tokens -> (let update = f tokens in
-                      match update with 
-                      | Ok new_tokens -> return @@ tokens @ new_tokens
-                      | Error _ -> update)
+      | Success tokens -> 
+        (let update = f () in match update with 
+          | Error _ -> update
+          | Success new_tokens -> Success (tokens @ new_tokens))
 
     let fail message = Error message
 
-    let on_refill lexbuf = return []
+    let on_refill lexbuf = Success []
   end)
 
 let compile buf: unit = 
-  let tokenize = LexerMake.token in 
-  let result = tokenize buf in 
+  Printexc.record_backtrace true;
+  let result = LexerMake.lex buf (fun tokens -> print_endline @@ String.concat ", " @@ List.map show_token tokens) in 
   match result with
-  | Ok tokens -> print_endline @@ String.concat ", " @@ map show_token tokens
+  | Success tokens -> print_endline @@ String.concat ", " @@ List.map show_token tokens
   | Error message -> print_endline @@ "Got error " ^ message
