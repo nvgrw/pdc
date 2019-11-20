@@ -35,15 +35,13 @@
 
   (* Lexer *)
   module Make (M : sig 
-                type ('a, 'b) t
-
-                val return: 'a -> ('a, 'b) t
-                val bind: ('a, 'b) t -> ('a -> ('c, 'b) t) -> ('c, 'b) t
+                val return: 'a list -> ('a list, 'b) result
+                val bind: ('a list, 'b) result -> ('a list -> ('a list, 'b) result) -> ('a list, 'b) result
 
                 (* Additional Effects *)
-                val fail: 'b -> ('a, 'b) t
-                val on_refill: Lexing.lexbuf -> ('a, 'b) t
-              end): M.t = result = struct
+                val fail: 'b -> ('a list, 'b) result
+                val on_refill: Lexing.lexbuf -> ('a list, 'b) result
+              end) = struct
     
   let refill_handle k lexbuf =
     let _ = M.bind (M.on_refill lexbuf) (fun _ -> let () = k lexbuf in M.return []) in ()
