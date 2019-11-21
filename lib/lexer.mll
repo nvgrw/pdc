@@ -47,7 +47,6 @@
                 val fail: string -> lex_result
 
                 val complete: lex_result
-                (* val on_refill: Lexing.lexbuf -> lex_result *)
               end) = struct
     
     let append t = M.return [t]

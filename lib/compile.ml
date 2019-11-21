@@ -14,8 +14,6 @@ module LexerMake = Make(struct
     let fail message = Error message
 
     let complete = Success []
-
-    (* let on_refill lexbuf = return [] *)
   end)
 
 let compile buf: unit = 
