@@ -1,37 +1,5 @@
 {
-  type token = 
-    (* Structural *)
-    | SCOPE_OPEN
-    | SCOPE_CLSE
-    | DEREF_OPEN
-    | DEREF_CLSE
-    | GROUP_OPEN
-    | GROUP_CLOSE
-    | STAT_SEPA
-    (* Misc *)
-    | ASSIGN
-    | IDENT of string
-    (* Control Flow *)
-    | IF
-    | ELSE
-    | WHILE
-    | DO
-    | BREAK
-    (* Relational *)
-    | OR | AND
-    | EQ | NEQ
-    | LT | LEQ | GEQ | GT
-    (* Arithmetic *)
-    | PLUS | MINUS | MULTIPLY | DIVIDE
-    (* Unary *)
-    | NOT (* | NEGATE -- negate is ambiguous, will handle this in parsing *)
-    | NUM of int
-    | REAL of float
-    | TRUE
-    | FALSE
-    (* Types *)
-    | INT | FLOAT | CHAR | BOOL
-    [@@deriving show]
+  open Parser
 
   type lex_result =
     | Success of token list
@@ -70,7 +38,7 @@ rule token = parse
   | "["     { append DEREF_OPEN }
   | "]"     { append DEREF_CLSE }
   | "("     { append GROUP_OPEN }
-  | ")"     { append GROUP_CLOSE }
+  | ")"     { append GROUP_CLSE }
   | ";"     { append STAT_SEPA }
   | "="     { append ASSIGN }
   | "if"    { append IF }

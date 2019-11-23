@@ -19,6 +19,6 @@ module LexerMake = Make(struct
 let compile buf: unit = 
   let result = LexerMake.lex buf in 
   match result with
-  | Success tokens -> print_endline @@ String.concat ", " @@ List.map show_token tokens
+  | Success _tokens -> print_endline @@ "Success"
   | Error message -> print_endline @@ "Got error " ^ message
   | _ -> print_endline @@ "Failed to completely process input stream"
