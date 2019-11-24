@@ -12,15 +12,18 @@ type binop =
   | Subtract
   | Multiply
   | Divide
+[@@deriving show]
 
 type unop =
   | Negate
   | Not
+[@@deriving show]
 
 type value =
   | Num of int
   | Real of float
   | Bool of bool
+[@@deriving show]
 
 type expr =
   | BinOp of expr * binop * expr
@@ -30,6 +33,7 @@ type expr =
 and loc =
   | Id of string
   | Deref of loc * expr
+[@@deriving show]
 
 type typ =
   | Array of typ * int
@@ -37,9 +41,11 @@ type typ =
   | Float
   | Char
   | Bool
+[@@deriving show]
 
 type decl =
   | Decl of typ * string
+[@@deriving show]
 
 type stmt =
   | Assign of loc * expr
@@ -50,5 +56,7 @@ type stmt =
   | BlockStmt of block
 and block =
   | Block of (decl list) * (stmt list)
+[@@deriving show]
 
 type program = block
+[@@deriving show]

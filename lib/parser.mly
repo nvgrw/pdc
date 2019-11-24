@@ -1,4 +1,10 @@
 
+/*
+ * Significant inspiration taken from this tutorial:
+ * https://medium.com/@aleksandrasays/tutorial-parsing-json-with-ocaml-579cc054924f
+ */
+
+%token EOF
 %token SCOPE_OPEN
 %token SCOPE_CLSE
 %token DEREF_OPEN
@@ -56,7 +62,7 @@
 %%
 
 program: 
-  | block { $1 }
+  | block EOF { $1 }
   ;
 
 block:
@@ -69,7 +75,7 @@ decls:
   ;
 
 decl:
-  | t = typ name = IDENT { Decl (t, name) }
+  | t = typ name = IDENT STAT_SEPA { Decl (t, name) }
   ;
 
 typ:

@@ -10,4 +10,4 @@ type compile_conf =
 
 let make_buf = function
   | File path -> Lexing.from_string path
-  | String code -> Lexing.from_string code 
+  | String code -> Lexing.from_string code

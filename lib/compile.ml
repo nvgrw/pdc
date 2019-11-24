@@ -1,24 +1,33 @@
-open Lexer
+open Program
+open Lexing
 
-module LexerMake = Make(struct
-    let return t = Incomplete t
+open Printf
 
-    let bind m f = match m with
-      | Incomplete tokens -> 
-        (let update = f tokens in match update with 
-          | Success new_tokens -> Success (tokens @ new_tokens)
-          | Incomplete new_tokens -> return new_tokens
-          | _ -> update)
-      | _ -> m
+type compile_result = (program, string) result
+type position = string * int * int
 
-    let fail message = Error message
+let generate (p: program) = print_endline @@ show_program p
 
-    let complete = Success []
-  end)
+let get_pos (buf: Lexing.lexbuf) = 
+  let pos = buf.lex_curr_p in
+  (pos.pos_fname, pos.pos_lnum, (pos.pos_cnum - pos.pos_bol + 1))
 
-let compile buf: unit = 
-  let result = LexerMake.lex buf in 
-  match result with
-  | Success _tokens -> print_endline @@ "Success"
-  | Error message -> print_endline @@ "Got error " ^ message
-  | _ -> print_endline @@ "Failed to completely process input stream"
+let print_pos out_channel p = 
+  match p with (file, line, col) -> 
+    let file = match file with | "" -> "<no file>" | _ -> file in
+    fprintf out_channel "%s:%d:%d" file line col
+
+let get_line ?(surround = 5) buf = 
+  let pos = buf.lex_curr_p in 
+  let start_pos = max pos.pos_bol (pos.pos_cnum - surround) in
+  let length = pos.pos_cnum - pos.pos_bol + surround in
+  let substr = Lexing.sub_lexeme buf start_pos length in
+  let pointer = (String.make (pos.pos_cnum - start_pos) ' ') ^ "^" in
+  sprintf "... %s ...\n    %s" substr pointer
+
+let compile buf = 
+  try generate (Parser.program Lexer.token buf) with
+  | Lexer.SyntaxError msg -> print_endline msg
+  | Parser.Error -> 
+    print_endline @@ get_line buf;
+    printf "%a: parser error\n" print_pos (get_pos buf)
