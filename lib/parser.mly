@@ -49,6 +49,10 @@
 %type  <Program.loc> loc
 %type  <Program.expr> bool join equality rel expr term unary factor
 
+/* Address Dangling Else */
+%nonassoc GROUP_CLSE
+%nonassoc ELSE
+
 %%
 
 program: 
