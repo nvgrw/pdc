@@ -18,4 +18,4 @@ let () =
       if( i >= j ) break;
       x = a[i]; a[i] = a[j]; a[j] = x;
   }
-}|test})) ({ default_conf with tokensOnly = false }.tokensOnly)
+}|test})) 

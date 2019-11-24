@@ -5,11 +5,10 @@ type compile_setup =
 
 type compile_conf = 
   { 
-    tokensOnly: bool;
     parseOnly: bool 
   }
 
-let default_conf = { tokensOnly = false; parseOnly = false }
+let default_conf = { parseOnly = false }
 
 let make_buf = function
   | File path -> Lexing.from_string path
