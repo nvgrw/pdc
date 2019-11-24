@@ -26,6 +26,10 @@ let real = digit+ | (digit* frac)
 rule token = parse
   | white       { token lexbuf }
   | newline     { next_line lexbuf; token lexbuf }
+  | "int"       { INT }
+  | "float"     { FLOAT }
+  | "char"      { CHAR }
+  | "bool"      { BOOL }
   | "{"         { SCOPE_OPEN } 
   | "}"         { SCOPE_CLSE }
   | "["         { DEREF_OPEN }

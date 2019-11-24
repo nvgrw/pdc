@@ -10,7 +10,7 @@ let () =
   let anon_handle x = print_endline @@ Printf.sprintf "Anonymous argument %s" x in
   let exec_name = Sys.argv.(0) in
   let () = parse options anon_handle (Printf.sprintf "%s [--parse]\n" exec_name) in
-  Compile.compile @@ make_buf @@ (String {test|{
+  Compile.compile (make_buf @@ (String {test|{
   int i; int j; float v; float x; float[100] a;
   while( true ) {
       do i = i + 1; while( a[i] < v);
@@ -18,4 +18,4 @@ let () =
       if( i >= j ) break;
       x = a[i]; a[i] = a[j]; a[j] = x;
   }
-}|test})
+}|test})) ({ default_conf with tokensOnly = false }.tokensOnly)
