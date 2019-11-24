@@ -42,101 +42,107 @@
 %token BOOL
 
 %start <Program.program> program
+%type  <Program.block> block
+%type  <Program.decl> decl
+%type  <Program.typ> typ
+%type  <Program.stmt> stmt
+%type  <Program.loc> loc
+%type  <Program.expr> bool join equality rel expr term unary factor
 
 %%
 
 program: 
-  | block { 0 }
+  | block { $1 }
   ;
 
 block:
-  | SCOPE_OPEN decls stmts SCOPE_CLSE { 0 }
+  | SCOPE_OPEN d = decls s = stmts SCOPE_CLSE { Block (List.rev d, List.rev s) }
   ;
 
 decls:
-  | decls decl { 0 }
-  | (* empty *) { 0 }
+  | rest = decls cur = decl   { cur :: rest }
+  | (* empty *)               { [] }
   ;
 
 decl:
-  | typ IDENT { 0 }
+  | t = typ name = IDENT { Decl (t, name) }
   ;
 
 typ:
-  | typ DEREF_OPEN NUM DEREF_CLSE { 0 }
-  | INT  { 0 }
-  | FLOAT { 0 }
-  | CHAR  { 0 }
-  | BOOL { 0 }
+  | t = typ DEREF_OPEN size = NUM DEREF_CLSE  { Array (t, size) }
+  | INT                                       { Int }
+  | FLOAT                                     { Float }
+  | CHAR                                      { Char }
+  | BOOL                                      { Bool }
   ;
 
 stmts:
-  | stmts stmt { 0 }
-  | (* empty *) { 0 }
+  | rest = stmts cur = stmt { cur :: rest }
+  | (* empty *)             { [] }
   ;
 
 stmt:
-  | loc ASSIGN bool STAT_SEPA { 0 }
-  | IF GROUP_OPEN bool GROUP_CLSE { 0 }
-  | IF GROUP_OPEN bool GROUP_CLSE ELSE stmt { 0 }
-  | WHILE GROUP_OPEN bool GROUP_CLSE stmt { 0 }
-  | DO stmt WHILE GROUP_OPEN bool GROUP_CLSE STAT_SEPA { 0 }
-  | BREAK STAT_SEPA { 0 }
-  | block { 0 }
+  | l = loc ASSIGN e = bool STAT_SEPA                             { Assign (l, e) }
+  | IF GROUP_OPEN e = bool GROUP_CLSE t = stmt                    { If (e, t, None) }
+  | IF GROUP_OPEN e = bool GROUP_CLSE t = stmt ELSE f = stmt      { If (e, t, Some f) }
+  | WHILE GROUP_OPEN e = bool GROUP_CLSE body = stmt              { While (e, body) }
+  | DO body = stmt WHILE GROUP_OPEN e = bool GROUP_CLSE STAT_SEPA { Do (e, body) }
+  | BREAK STAT_SEPA                                               { Break }
+  | block                                                         { BlockStmt $1 }
   ;
 
 loc:
-  | loc DEREF_OPEN bool DEREF_CLSE { 0 }
-  | IDENT { 0 }
+  | l = loc DEREF_OPEN e = bool DEREF_CLSE  { Deref (l, e) }
+  | name = IDENT                            { Id name }
   ;
 
 bool:
-  | bool OR join { 0 }
-  | join { 0 }
+  | l = bool OR r = join  { BinOp (l, Or, r) }
+  | join                  { $1 }
   ;
 
 join:
-  | join AND equality { 0 }
-  | equality { 0 }
+  | l = join AND r = equality { BinOp (l, And, r) }
+  | equality                  { $1 }
   ;
 
 equality:
-  | equality EQ rel { 0 }
-  | equality NEQ rel { 0 }
-  | rel { 0 }
+  | l = equality EQ r = rel   { BinOp (l, Eq, r) }
+  | l = equality NEQ r = rel  { BinOp (l, Neq, r) }
+  | rel                       { $1 }
   ;
 
 rel:
-  | expr LT expr { 0 }
-  | expr LEQ expr { 0 }
-  | expr GEQ expr { 0 }
-  | expr GT expr { 0 }
-  | expr { 0 }
+  | l = expr LT r = expr  { BinOp (l, Lt, r) }
+  | l = expr LEQ r = expr { BinOp (l, Leq, r) }
+  | l = expr GEQ r = expr { BinOp (l, Geq, r) }
+  | l = expr GT r = expr  { BinOp (l, Gt, r) }
+  | expr                  { $1 }
   ;
 
 expr:
-  | expr PLUS term { 0 }
-  | expr MINUS term { 0 }
-  | term { 0 }
+  | l = expr PLUS r = term  { BinOp (l, Add, r) }
+  | l = expr MINUS r = term { BinOp (l, Subtract, r) }
+  | term                    { $1 }
   ;
 
 term:
-  | term MULTIPLY unary { 0 }
-  | term DIVIDE unary { 0 }
-  | unary { 0 }
+  | l = term MULTIPLY r = unary { BinOp (l, Multiply, r) }
+  | l = term DIVIDE r = unary   { BinOp (l, Divide, r) }
+  | unary                       { $1 }
   ;
 
 unary:
-  | NOT unary { 0 }
-  | MINUS unary { 0 }
-  | factor { 0 }
+  | NOT e = unary   { UnOp (Not, e) }
+  | MINUS e = unary { UnOp (Negate, e) }
+  | factor          { $1 }
   ;
 
 factor:
-  | GROUP_OPEN bool GROUP_CLSE { 0 }
-  | loc { 0 }
-  | NUM { 0 }
-  | REAL { 0 }
-  | TRUE { 0 }
-  | FALSE { 0 }
+  | GROUP_OPEN bool GROUP_CLSE  { $2 }
+  | loc                         { Var $1 }
+  | n = NUM                     { Const (Num n) }
+  | r = REAL                    { Const (Real r) }
+  | TRUE                        { Const (Bool true) }
+  | FALSE                       { Const (Bool false) }
   ;
