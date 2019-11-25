@@ -1,4 +1,4 @@
-open Program
+open AST
 open Lexing
 
 open Printf
