@@ -1,3 +1,5 @@
+open AST
+
 module Walker_TypeCheck = Walker.Make(struct 
     let visit_program_pre p = p
     let visit_program_pos p = p
@@ -12,7 +14,12 @@ module Walker_TypeCheck = Walker.Make(struct
     let visit_decl_pos d = d
 
     let visit_expr_pre e = e
-    let visit_expr_pos e = e
+    let visit_expr_pos = function
+      | (Const value) as v -> (match value with
+          | Num _ -> Typed (Int, v)
+          | Real _ -> Typed (Float, v)
+          | Bool _ -> Typed (Bool, v))
+      | _ as e -> e
 
     let visit_loc_pre l = l
     let visit_loc_pos l = l
