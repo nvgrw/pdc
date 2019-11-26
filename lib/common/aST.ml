@@ -25,22 +25,23 @@ type value =
   | Bool of bool
 [@@deriving show]
 
-type expr =
-  | BinOp of expr * binop * expr
-  | UnOp of unop * expr
-  | Const of value
-  | Var of loc
-and loc =
-  | Id of string
-  | Deref of loc * expr
-[@@deriving show]
-
 type typ =
   | Array of typ * int
   | Int
   | Float
   | Char
   | Bool
+[@@deriving show]
+
+type expr =
+  | BinOp of expr * binop * expr
+  | UnOp of unop * expr
+  | Const of value
+  | Var of loc
+  | Typed of typ * expr
+and loc =
+  | Id of string
+  | Deref of loc * expr
 [@@deriving show]
 
 type decl =

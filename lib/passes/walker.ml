@@ -36,22 +36,6 @@ module Make(V : Visitor) = struct
 
   let walk_value v = V.visit_value v
 
-  let rec walk_expr e = 
-    let pre_result = V.visit_expr_pre e in
-    let walk_result = match pre_result with
-      | BinOp (l, op, r) -> BinOp (walk_expr l, walk_binop op, walk_expr r)
-      | UnOp (op, expr) -> UnOp (walk_unop op, walk_expr expr)
-      | Const value -> Const (walk_value value)
-      | Var loc -> Var (walk_loc loc)
-    in V.visit_expr_pos walk_result
-
-  and walk_loc l = 
-    let pre_result = V.visit_loc_pre l in
-    let walk_result = match pre_result with
-      | Id id -> Id id
-      | Deref (loc, expr) -> Deref (walk_loc loc, walk_expr expr)
-    in V.visit_loc_pos walk_result
-
   let rec walk_typ t = 
     let pre_result = V.visit_typ_pre t in
     let walk_result = match pre_result with
@@ -61,6 +45,23 @@ module Make(V : Visitor) = struct
       | Char -> Char
       | Bool -> Bool
     in V.visit_typ_pos walk_result
+
+  let rec walk_expr e = 
+    let pre_result = V.visit_expr_pre e in
+    let walk_result = match pre_result with
+      | BinOp (l, op, r) -> BinOp (walk_expr l, walk_binop op, walk_expr r)
+      | UnOp (op, expr) -> UnOp (walk_unop op, walk_expr expr)
+      | Const value -> Const (walk_value value)
+      | Var loc -> Var (walk_loc loc)
+      | Typed (typ, expr) -> Typed (walk_typ typ, walk_expr expr)
+    in V.visit_expr_pos walk_result
+
+  and walk_loc l = 
+    let pre_result = V.visit_loc_pre l in
+    let walk_result = match pre_result with
+      | Id id -> Id id
+      | Deref (loc, expr) -> Deref (walk_loc loc, walk_expr expr)
+    in V.visit_loc_pos walk_result
 
   let walk_decl d = 
     let pre_result = V.visit_decl_pre d in
