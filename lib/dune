@@ -1,6 +1,6 @@
 (library
  (name compile)
- (preprocess (pps ppx_deriving.show)))
+ (libraries typeCheck))
 
 (ocamllex lexer)
 
