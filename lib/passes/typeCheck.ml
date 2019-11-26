@@ -11,12 +11,6 @@ module Walker_TypeCheck = Walker.Make(struct
     let visit_decl_pre d = d
     let visit_decl_pos d = d
 
-    let visit_binop b = b
-
-    let visit_unop u = u
-
-    let visit_value v = v
-
     let visit_expr_pre e = e
     let visit_expr_pos e = e
 

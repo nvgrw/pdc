@@ -13,12 +13,6 @@ module type Visitor = sig
   val visit_decl_pre: decl -> decl
   val visit_decl_pos: decl -> decl
 
-  val visit_binop: binop -> binop
-
-  val visit_unop: unop -> unop
-
-  val visit_value: value -> value
-
   val visit_expr_pre: expr -> expr
   val visit_expr_pos: expr -> expr
 
@@ -30,12 +24,6 @@ module type Visitor = sig
 end
 
 module Make(V : Visitor) = struct 
-  let walk_binop b = V.visit_binop b
-
-  let walk_unop u = V.visit_unop u
-
-  let walk_value v = V.visit_value v
-
   let rec walk_typ t = 
     let pre_result = V.visit_typ_pre t in
     let walk_result = match pre_result with
@@ -49,9 +37,9 @@ module Make(V : Visitor) = struct
   let rec walk_expr e = 
     let pre_result = V.visit_expr_pre e in
     let walk_result = match pre_result with
-      | BinOp (l, op, r) -> BinOp (walk_expr l, walk_binop op, walk_expr r)
-      | UnOp (op, expr) -> UnOp (walk_unop op, walk_expr expr)
-      | Const value -> Const (walk_value value)
+      | BinOp (l, op, r) -> BinOp (walk_expr l, op, walk_expr r)
+      | UnOp (op, expr) -> UnOp (op, walk_expr expr)
+      | Const value -> Const value
       | Var loc -> Var (walk_loc loc)
       | Typed (typ, expr) -> Typed (walk_typ typ, walk_expr expr)
     in V.visit_expr_pos walk_result
