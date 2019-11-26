@@ -1,4 +1,3 @@
-
 module Walker_TypeCheck = Walker.Make(struct 
     let visit_program_pre p = p
     let visit_program_pos p = p
@@ -27,3 +26,5 @@ module Walker_TypeCheck = Walker.Make(struct
     let visit_typ_pre t = t
     let visit_typ_pos t = t
   end)
+
+let process = Walker_TypeCheck.walk_program

@@ -3,10 +3,12 @@ open Lexing
 
 open Printf
 
-type compile_result = (program, string) result
-type position = string * int * int
+(* type compile_result = (program, string) result *)
+(* type position = string * int * int *)
 
-let generate (p: program) = print_endline @@ show_program p
+let generate (p: program) = 
+  let post_semant = Semant.check p in 
+  print_endline @@ show_program post_semant
 
 let get_pos (buf: Lexing.lexbuf) = 
   let pos = buf.lex_curr_p in
@@ -26,10 +28,10 @@ let get_line ?(surround = 5) buf =
   let pointer = (String.make (pos.pos_cnum - start_pos - 1) ' ') ^ "^" in
   sprintf "%s\n%s" substr pointer
 
-let rec tokenize buf = 
-  let next = Lexer.token buf in match next with
-  | EOF -> []
-  | _ as tok -> tok :: tokenize buf
+(* let rec tokenize buf = 
+   let next = Lexer.token buf in match next with
+   | EOF -> []
+   | _ as tok -> tok :: tokenize buf *)
 
 let compile buf = 
   try generate (Parser.program Lexer.token buf) with
