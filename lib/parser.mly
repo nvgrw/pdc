@@ -47,13 +47,13 @@
 %token CHAR 
 %token BOOL
 
-%start <AST.program> program
-%type  <AST.block> block
-%type  <AST.decl> decl
-%type  <AST.typ> typ
-%type  <AST.stmt> stmt
-%type  <AST.loc> loc
-%type  <AST.expr> bool join equality rel expr term unary factor
+%start <Common.AST.program> program
+%type  <Common.AST.block> block
+%type  <Common.AST.decl> decl
+%type  <Common.AST.typ> typ
+%type  <Common.AST.stmt> stmt
+%type  <Common.AST.loc> loc
+%type  <Common.AST.expr> bool join equality rel expr term unary factor
 
 /* Address Dangling Else */
 %nonassoc GROUP_CLSE

@@ -1,3 +1,5 @@
-open AST
+open Common.AST
+open Common.VisitorMonad
+open PassContext
 
-val check: program -> program
+val check: program -> (context, program) res

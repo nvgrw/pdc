@@ -1,30 +1,5 @@
 open AST
-
-(* Result type for visitor *)
-type ('state, 'ast) res =
-  | Success of 'state * 'ast
-  | Error 
-
-(* State monad for visitor *)
-type ('state, 'ast) state = 'state -> ('state, 'ast) res
-
-let (>>=) m f =
-  fun s -> 
-  match m s with
-  | Error -> Error
-  | Success (t, v) -> (f v) t
-
-let success v = fun s -> Success (s, v)
-let error = fun _ -> Error
-let map m f = m >>= fun v -> success (f v)
-
-let seqOpt (s: ('state, 'v option) state): ('state, 'v) state option = ()
-
-(*
-val (>>=): ('s, 'a) state -> ('a -> ('s, 'b) state) -> ('s, 'b) state
-val success: 'a -> ('s, 'a) state
-val error: ('s, 'a) state
-*)
+open VisitorMonad
 
 module type Visitor = sig 
   type ctx
@@ -114,21 +89,33 @@ module Make(V : Visitor) = struct
     | If (expr, stmt, stmt_opt) -> 
       walk_expr expr >>= fun walk_expr_expr ->
       walk_stmt stmt >>= fun walk_stmt_stmt ->
-      success (If (walk_expr_expr, walk_stmt_stmt, Option.map walk_stmt stmt_opt))
-    | While (expr, stmt) -> While (walk_expr expr, walk_stmt stmt)
-    | Do (expr, stmt) -> Do (walk_expr expr, walk_stmt stmt)
-    | Break -> Break
-    | BlockStmt block -> BlockStmt (walk_block block)
+      seqOpt (Option.map walk_stmt stmt_opt) >>= fun walk_stmt_stmt_opt ->
+      success (If (walk_expr_expr, walk_stmt_stmt, walk_stmt_stmt_opt))
+    | While (expr, stmt) -> 
+      walk_expr expr >>= fun walk_expr_expr ->
+      walk_stmt stmt >>= fun walk_stmt_stmt ->
+      success (While (walk_expr_expr, walk_stmt_stmt))
+    | Do (expr, stmt) -> 
+      walk_expr expr >>= fun walk_expr_expr ->
+      walk_stmt stmt >>= fun walk_stmt_stmt ->
+      success (Do (walk_expr_expr, walk_stmt_stmt))
+    | Break -> success Break
+    | BlockStmt block -> 
+      walk_block block >>= fun walk_block_block ->
+      success (BlockStmt (walk_block_block))
       >>= fun walk_result -> V.visit_stmt_pos walk_result
 
-  and walk_block b = 
-    let pre_result = V.visit_block_pre b in 
-    let walk_result = match pre_result with
-      | Block (decls, stmts) -> Block (List.map walk_decl decls, List.map walk_stmt stmts)
-    in V.visit_block_pos walk_result
+  and walk_block (b: block): (ctx, block) state = 
+    V.visit_block_pre b
+    >>= fun pre_result -> match pre_result with
+    | Block (decls, stmts) -> 
+      seqList (List.map walk_decl decls) >>= fun walk_decl_decls ->
+      seqList (List.map walk_stmt stmts) >>= fun walk_stmt_stmts ->
+      success (Block (walk_decl_decls, walk_stmt_stmts))
+      >>= fun walk_result -> V.visit_block_pos walk_result
 
-  let walk_program p s = walk_block p
-  (* let pre_result = V.visit_program_pre p s in
-     let walk_result = walk_block p in
-     in V.visit_program_pos p s *)
+  let walk_program p = 
+    V.visit_program_pre p 
+    >>= fun pre_result -> walk_block pre_result
+    >>= fun walk_result -> V.visit_program_pos walk_result
 end

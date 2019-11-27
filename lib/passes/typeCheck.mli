@@ -1,3 +1,5 @@
-open AST
+open Common.AST
+open Common.VisitorMonad
+open PassContext
 
-val process: program -> program
+val process: program -> (context, program) state

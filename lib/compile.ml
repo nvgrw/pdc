@@ -1,4 +1,5 @@
-open AST
+open Common.AST
+open Common.VisitorMonad
 open Lexing
 
 open Printf
@@ -7,8 +8,10 @@ open Printf
 (* type position = string * int * int *)
 
 let generate (p: program) = 
-  let post_semant = Semant.check p in 
-  print_endline @@ show_program post_semant
+  let post_semant = Semant.check p
+  in match post_semant with
+  | Success (_ctx, final_ast) -> print_endline @@ show_program final_ast
+  | Error -> print_endline "encountered an error during semantic checking"
 
 let get_pos (buf: Lexing.lexbuf) = 
   let pos = buf.lex_curr_p in

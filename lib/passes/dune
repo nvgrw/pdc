@@ -1,1 +1,3 @@
-(library (name typeCheck) (libraries aST))
+(library (name passContext) (modules passContext))
+
+(library (name typeCheck) (libraries common passContext) (modules typeCheck))

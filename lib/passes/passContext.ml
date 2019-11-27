@@ -1,0 +1,2 @@
+
+type context = { typeCheck: int }
