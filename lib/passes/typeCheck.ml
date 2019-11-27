@@ -18,6 +18,7 @@ module Walker_TypeCheck = Common.Walker.Make(struct
 
     let visit_expr_pre e = success e
     let visit_expr_pos e = success e
+
     let visit_loc_pre l = success l
     let visit_loc_pos l = success l
 
