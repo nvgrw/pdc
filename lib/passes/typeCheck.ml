@@ -1,5 +1,6 @@
 open Common.VisitorMonad
 open PassContext
+open Common.AST
 
 module Walker_TypeCheck = Common.Walker.Make(struct 
     type ctx = context
@@ -17,7 +18,12 @@ module Walker_TypeCheck = Common.Walker.Make(struct
     let visit_decl_pos d = success d
 
     let visit_expr_pre e = success e
-    let visit_expr_pos e = success e
+    let visit_expr_pos = function
+      | Const value as v -> (match value with
+          | Num _ -> success @@ Typed (Int, v)
+          | Real _ -> success @@ Typed (Float, v)
+          | Bool _ -> success @@ Typed (Bool, v))
+      | _ as e -> success e
 
     let visit_loc_pre l = success l
     let visit_loc_pos l = success l

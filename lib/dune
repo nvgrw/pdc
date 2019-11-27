@@ -1,6 +1,6 @@
 (library
  (name compile)
- (libraries typeCheck passContext))
+ (libraries passes passContext))
 
 (ocamllex lexer)
 

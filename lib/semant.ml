@@ -4,7 +4,8 @@ open PassContext
 let empty_context: context = { typeCheck = 0 }
 
 let passes = [
-  TypeCheck.process
+  (* Passes.Print.process; *)
+  Passes.TypeCheck.process
 ]
 
 let check p = 
