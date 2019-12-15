@@ -4,14 +4,17 @@ open Lexing
 
 open Printf
 
-(* type compile_result = (program, string) result *)
-(* type position = string * int * int *)
-
 let generate (p: program) = 
   let post_semant = Semant.check p
   in match post_semant with
-  | Success (_ctx, final_ast) -> print_endline @@ show_program final_ast
-  | Error -> print_endline "encountered an error during semantic checking"
+  | Success (_, final_ast) -> print_endline @@ show_program final_ast
+  | Error err -> print_endline (match err with
+      | TypeError (IncompatibleBinOp (lt, op, rt)) -> 
+        Printf.sprintf "%s incompatible with types %s and %s." (show_binop op) (show_typ lt) (show_typ rt)
+      | TypeError (IncompatibleUnOp (op, t)) -> 
+        Printf.sprintf "%s incompatible with type %s." (show_unop op) (show_typ t)
+      | Message m -> m
+    ) 
 
 let get_pos (buf: Lexing.lexbuf) = 
   let pos = buf.lex_curr_p in

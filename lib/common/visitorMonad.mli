@@ -1,18 +1,18 @@
 (* Result type for visitor *)
-type ('state, 'ast) res =
+type ('state, 'ast, 'err) res =
   | Success of 'state * 'ast
-  | Error 
+  | Error of 'err
 
 (* State monad for visitor *)
-type ('state, 'ast) state = 'state -> ('state, 'ast) res
+type ('state, 'ast, 'err) state = 'state -> ('state, 'ast, 'err) res
 
-val (>>=): ('s, 'a) state -> ('a -> ('s, 'b) state) -> ('s, 'b) state
-val success: 'a -> ('s, 'a) state
-val error: ('s, 'a) state
-val map: ('s, 'a) state -> ('a -> 'b) -> ('s, 'b) state
+val (>>=): ('s, 'a, 'e) state -> ('a -> ('s, 'b, 'e) state) -> ('s, 'b, 'e) state
+val success: 'a -> ('s, 'a, 'e) state
+val error: 'e -> ('s, 'a, 'e) state
+val map: ('s, 'a, 'e) state -> ('a -> 'b) -> ('s, 'b, 'e) state
 
-val seqOpt: ('state, 'v) state option -> ('state, 'v option) state
-val seqList: ('state, 'v) state list -> ('state, 'v list) state
+val seqOpt: ('state, 'v, 'e) state option -> ('state, 'v option, 'e) state
+val seqList: ('state, 'v, 'e) state list -> ('state, 'v list, 'e) state
 
-val get: ('state, 'state) state
-val put: 'state -> ('state, unit) state
+val get: ('state, 'state, 'err) state
+val put: 'state -> ('state, unit, 'err) state

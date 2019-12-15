@@ -1,19 +1,19 @@
 (* Result type for visitor *)
-type ('state, 'ast) res =
+type ('state, 'ast, 'err) res =
   | Success of 'state * 'ast
-  | Error 
+  | Error of 'err
 
 (* State monad for visitor *)
-type ('state, 'ast) state = 'state -> ('state, 'ast) res
+type ('state, 'ast, 'err) state = 'state -> ('state, 'ast, 'err) res
 
 let (>>=) m f =
   fun s -> 
   match m s with
-  | Error -> Error
+  | Error err -> Error err
   | Success (t, v) -> (f v) t
 
 let success v = fun s -> Success (s, v)
-let error = fun _ -> Error
+let error err = fun _ -> Error err
 let map m f = m >>= fun v -> success (f v)
 
 (* let seqOpt (o: ('state, 'v) state option): ('state, 'v option) state =  *)
@@ -21,7 +21,7 @@ let seqOpt o =
   let stateOpt = Option.map (fun s -> s >>= fun v -> success (Some v)) o 
   in Option.value stateOpt ~default:(success None)
 
-let seqList (s: ('state, 'v) state list): ('state, 'v list) state = 
+let seqList (s: ('state, 'v, 'e) state list): ('state, 'v list, 'e) state = 
   let combine = fun acc elem ->
     acc >>= fun results -> 
     elem >>= fun result -> success (results @ [result]) 

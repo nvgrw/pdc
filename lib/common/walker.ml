@@ -3,33 +3,35 @@ open VisitorMonad
 
 module type Visitor = sig 
   type ctx
+  type err
 
-  val visit_program_pre: program -> (ctx, program) state
-  val visit_program_pos: program -> (ctx, program) state
+  val visit_program_pre: program -> (ctx, program, err) state
+  val visit_program_pos: program -> (ctx, program, err) state
 
-  val visit_block_pre: block -> (ctx, block) state
-  val visit_block_pos: block -> (ctx, block) state
+  val visit_block_pre: block -> (ctx, block, err) state
+  val visit_block_pos: block -> (ctx, block, err) state
 
-  val visit_stmt_pre: stmt -> (ctx, stmt) state
-  val visit_stmt_pos: stmt -> (ctx, stmt) state
+  val visit_stmt_pre: stmt -> (ctx, stmt, err) state
+  val visit_stmt_pos: stmt -> (ctx, stmt, err) state
 
-  val visit_decl_pre: decl -> (ctx, decl) state
-  val visit_decl_pos: decl -> (ctx, decl) state
+  val visit_decl_pre: decl -> (ctx, decl, err) state
+  val visit_decl_pos: decl -> (ctx, decl, err) state
 
-  val visit_expr_pre: expr -> (ctx, expr) state
-  val visit_expr_pos: expr -> (ctx, expr) state
+  val visit_expr_pre: expr -> (ctx, expr, err) state
+  val visit_expr_pos: expr -> (ctx, expr, err) state
 
-  val visit_loc_pre: loc -> (ctx, loc) state
-  val visit_loc_pos: loc -> (ctx, loc) state
+  val visit_loc_pre: loc -> (ctx, loc, err) state
+  val visit_loc_pos: loc -> (ctx, loc, err) state
 
-  val visit_typ_pre: typ -> (ctx, typ) state
-  val visit_typ_pos: typ -> (ctx, typ) state
+  val visit_typ_pre: typ -> (ctx, typ, err) state
+  val visit_typ_pos: typ -> (ctx, typ, err) state
 end
 
 module Make(V : Visitor) = struct 
   type ctx = V.ctx
+  type err = V.err
 
-  let rec walk_typ (t: typ): (ctx, typ) state = 
+  let rec walk_typ (t: typ): (ctx, typ, err) state = 
     V.visit_typ_pre t 
     >>= fun pre_result -> (match pre_result with
         | Array (typ, size) -> 
@@ -41,7 +43,7 @@ module Make(V : Visitor) = struct
         | Bool -> success Bool)
     >>= fun walk_result -> V.visit_typ_pos walk_result
 
-  let rec walk_expr (e: expr): (ctx, expr) state = 
+  let rec walk_expr (e: expr): (ctx, expr, err) state = 
     V.visit_expr_pre e
     >>= fun pre_result -> (match pre_result with
         | BinOp (l, op, r) -> 
@@ -61,7 +63,7 @@ module Make(V : Visitor) = struct
           success (Typed (walk_typ_typ, walk_expr_expr)))
     >>= fun walk_result -> V.visit_expr_pos walk_result
 
-  and walk_loc (l: loc): (ctx, loc) state = 
+  and walk_loc (l: loc): (ctx, loc, err) state = 
     V.visit_loc_pre l 
     >>= fun pre_result -> (match pre_result with
         | Id id -> success (Id id)
@@ -71,7 +73,7 @@ module Make(V : Visitor) = struct
           success (Deref (walk_loc_loc, walk_expr_expr)))
     >>= fun walk_result -> V.visit_loc_pos walk_result
 
-  let walk_decl (d: decl): (ctx, decl) state = 
+  let walk_decl (d: decl): (ctx, decl, err) state = 
     V.visit_decl_pre d 
     >>= fun pre_result -> (match pre_result with
         | Decl (typ, id) -> 
@@ -79,7 +81,7 @@ module Make(V : Visitor) = struct
           success (Decl (walk_typ_typ, id)))
     >>= fun walk_result -> V.visit_decl_pos walk_result
 
-  let rec walk_stmt (s: stmt): (ctx, stmt) state = 
+  let rec walk_stmt (s: stmt): (ctx, stmt, err) state = 
     V.visit_stmt_pre s 
     >>= fun pre_result -> (match pre_result with
         | Assign (loc, expr) -> 
@@ -105,7 +107,7 @@ module Make(V : Visitor) = struct
           success (BlockStmt (walk_block_block)))
     >>= fun walk_result -> V.visit_stmt_pos walk_result
 
-  and walk_block (b: block): (ctx, block) state = 
+  and walk_block (b: block): (ctx, block, err) state = 
     V.visit_block_pre b
     >>= fun pre_result -> (match pre_result with
         | Block (decls, stmts) -> 

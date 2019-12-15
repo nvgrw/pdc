@@ -3,6 +3,7 @@ open PassContext
 
 module Walker_Print = Common.Walker.Make(struct 
     type ctx = context
+    type err = pass_error
 
     let visit_program_pre p = print_endline "Pre Program"; success p
     let visit_program_pos p = print_endline "Pos Program"; success p
