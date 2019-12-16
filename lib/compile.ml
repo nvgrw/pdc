@@ -13,6 +13,8 @@ let generate (p: program) =
         Printf.sprintf "%s incompatible with types %s and %s." (show_binop op) (show_typ lt) (show_typ rt)
       | TypeError (IncompatibleUnOp (op, t)) -> 
         Printf.sprintf "%s incompatible with type %s." (show_unop op) (show_typ t)
+      | StructuralError (BadIdentifier ident) -> 
+        Printf.sprintf "identifier `%s' not declared in scope." ident
       | Message m -> m
     ) 
 

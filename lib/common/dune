@@ -1,4 +1,4 @@
 (library 
     (name common)
-    (modules aST visitorMonad walker)
+    (modules aST visitorMonad walker data)
     (preprocess (pps ppx_deriving.show)))

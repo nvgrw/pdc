@@ -1,3 +1,3 @@
 (library (name passContext) (libraries common) (modules passContext))
 
-(library (name passes) (libraries common passContext) (modules typeCheck print))
+(library (name passes) (libraries common passContext) (modules scopeRes typeCheck print))

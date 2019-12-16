@@ -1,6 +1,7 @@
 open Common.VisitorMonad
 open PassContext
 open Common.AST
+open Common.Data
 
 (* 
   Strategies for resolving types:
@@ -10,22 +11,19 @@ open Common.AST
   Do subtyping/further checks and propagate errors if there are any
  *)
 
-(* 
-type typ =
-  | Array of typ * int
-  | Int
-  | Float
-  | Char
-  | Bool
- *)
-
-(* Trivial combination is equality *)
-(* let combine a b = a == b *)
-
 let unop_compatible = function
   | Negate, Int | Negate, Float -> true
   | Not, Bool -> true
   | _ -> false
+
+let wrap_type typ e = success @@ Typed (typ, e)
+
+let get_type ident = 
+  get >>= fun state ->
+  let curr = List.hd state.scopes in
+  let ident_type = StringMap.find_opt ident curr in
+  let state_type = Option.map (fun t -> success t) ident_type in
+  Option.value state_type ~default:(error @@ StructuralError (BadIdentifier ident))
 
 let binop_result = function
   (* Equality *)
@@ -58,8 +56,6 @@ module Walker_TypeCheck = Common.Walker.Make(struct
     let visit_decl_pre d = success d
     let visit_decl_pos d = success d
 
-    let wrap_type typ e = success @@ Typed (typ, e)
-
     let visit_expr_pre e = success e
     let visit_expr_pos = function
       | BinOp (Typed (lt, _), op, Typed (rt, _)) as e -> (
@@ -73,6 +69,9 @@ module Walker_TypeCheck = Common.Walker.Make(struct
       | Const (Num _) as v -> success @@ Typed (Int, v)
       | Const (Real _) as v -> success @@ Typed (Float, v)
       | Const (Bool _) as v -> success @@ Typed (Bool, v)
+      | Var (Id ident) as e ->
+        get_type ident >>= fun ident_typ ->
+        wrap_type ident_typ e
       (* | Var loc as e -> success e *)
       (* | Typed (typ, expr) as e -> success e *)
       | _ as e -> success e

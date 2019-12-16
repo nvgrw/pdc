@@ -110,10 +110,11 @@ module Make(V : Visitor) = struct
   and walk_block (b: block): (ctx, block, err) state = 
     V.visit_block_pre b
     >>= fun pre_result -> (match pre_result with
-        | Block (decls, stmts) -> 
+        | Block (scope, decls, stmts) -> 
           seqList (List.map walk_decl decls) >>= fun walk_decl_decls ->
           seqList (List.map walk_stmt stmts) >>= fun walk_stmt_stmts ->
-          success (Block (walk_decl_decls, walk_stmt_stmts)))
+          success (Block (scope, walk_decl_decls, walk_stmt_stmts))
+      )
     >>= fun walk_result -> V.visit_block_pos walk_result
 
   let walk_program p = 

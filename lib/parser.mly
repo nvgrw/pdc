@@ -66,7 +66,7 @@ program:
   ;
 
 block:
-  | SCOPE_OPEN d = decls s = stmts SCOPE_CLSE { Block (List.rev d, List.rev s) }
+  | SCOPE_OPEN d = decls s = stmts SCOPE_CLSE { Block (Common.Data.StringMap.empty, List.rev d, List.rev s) }
   ;
 
 decls:

@@ -1,9 +1,10 @@
 open Common.VisitorMonad
 open PassContext
 
-let empty_context: context = { typeCheck = 0 }
+let empty_context: context = { scopes = []; other = 0 }
 
 let passes = [
+  Passes.ScopeRes.process;
   (* Passes.Print.process; *)
   Passes.TypeCheck.process
 ]

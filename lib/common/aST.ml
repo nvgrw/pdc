@@ -1,4 +1,3 @@
-
 type binop =
   | Or
   | And
@@ -56,7 +55,7 @@ type stmt =
   | Break
   | BlockStmt of block
 and block =
-  | Block of (decl list) * (stmt list)
+  | Block of (typ Data.StringMap.t [@opaque]) * (decl list) * (stmt list)
 [@@deriving show]
 
 type program = block
