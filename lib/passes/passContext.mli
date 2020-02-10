@@ -6,6 +6,9 @@ type type_error =
   | IncompatibleUnOp of unop * typ
   | UntypedSubExpressions of expr
   | UntypedSubLocations of loc
+  | IncompatibleAssignment of typ * typ
+  | IfRequiresBoolean 
+  | WhileRequiresBoolean
 type structural_error =
   | BadIdentifier of string
   | DuplicateIdentifier of string

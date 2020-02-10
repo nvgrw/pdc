@@ -45,7 +45,24 @@ module Walker_TypeCheck = Common.Walker.Make(struct
     let visit_block_pos b = success b
 
     let visit_stmt_pre s = success s
-    let visit_stmt_pos s = success s
+    let visit_stmt_pos = function
+      | Assign (LTyped(ltyp, _), Typed(typ, _)) as s ->
+        if ltyp == typ then success s
+        else error @@ TypeError (IncompatibleAssignment (ltyp, typ))
+      | If (Typed (typ, _), _,_) as s -> 
+        if typ == Bool then success s
+        else error @@ TypeError IfRequiresBoolean
+      | While (Typed (typ, _), _) as s ->
+        if typ == Bool then success s
+        else error @@ TypeError WhileRequiresBoolean
+      | _ as s -> success s
+
+    (* | Assign of loc * expr
+       | If of expr * stmt * (stmt option)
+       | While of expr * stmt
+       | Do of expr * stmt
+       | Break
+       | BlockStmt of block *)
 
     let visit_decl_pre d = success d
     let visit_decl_pos d = success d

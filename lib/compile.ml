@@ -16,7 +16,13 @@ let generate (p: program) =
       | TypeError (UntypedSubExpressions expr) ->
         Printf.sprintf "untyped subexpressions in expression:\n%s" (show_expr expr)
       | TypeError (UntypedSubLocations loc) ->
-        Printf.sprintf "untyped sublocations in location:\n%s" (show_loc loc)
+        Printf.sprintf "untyped sublocations in location:\n%s." (show_loc loc)
+      | TypeError (IncompatibleAssignment (ltyp, typ)) ->
+        Printf.sprintf "incompatible assignment between types %s and %s." (show_typ ltyp) (show_typ typ)
+      | TypeError IfRequiresBoolean ->
+        "if statement requires condition to evaluate to boolean expression"
+      | TypeError WhileRequiresBoolean ->
+        "while statement requires condition to evaluate to boolean expression"
       | StructuralError (BadIdentifier ident) -> 
         Printf.sprintf "identifier `%s' not declared in scope." ident
       | StructuralError (DuplicateIdentifier ident) -> 
