@@ -8,6 +8,8 @@ module type Visitor = sig
   val visit_program_pre: program -> (ctx, program, err) state
   val visit_program_pos: program -> (ctx, program, err) state
 
+  val scope_block_pre: block -> (ctx, block, err) state
+  val scope_block_pos: block -> (ctx, block, err) state
   val visit_block_pre: block -> (ctx, block, err) state
   val visit_block_pos: block -> (ctx, block, err) state
 
@@ -108,14 +110,16 @@ module Make(V : Visitor) = struct
     >>= fun walk_result -> V.visit_stmt_pos walk_result
 
   and walk_block (b: block): (ctx, block, err) state = 
-    V.visit_block_pre b
+    V.scope_block_pre b >>=
+    V.visit_block_pre
     >>= fun pre_result -> (match pre_result with
         | Block (scope, decls, stmts) -> 
           seqList (List.map walk_decl decls) >>= fun walk_decl_decls ->
           seqList (List.map walk_stmt stmts) >>= fun walk_stmt_stmts ->
           success (Block (scope, walk_decl_decls, walk_stmt_stmts))
       )
-    >>= fun walk_result -> V.visit_block_pos walk_result
+    >>= fun walk_result -> V.visit_block_pos walk_result 
+    >>= V.scope_block_pos
 
   let walk_program p = 
     V.visit_program_pre p 

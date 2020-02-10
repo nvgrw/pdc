@@ -10,18 +10,10 @@ module Walker_ScopeRes = Common.Walker.Make(struct
     let visit_program_pre p = success p
     let visit_program_pos p = success p
 
-    let visit_block_pre = function
-      | Block (scope, _, _) as e ->
-        get >>= fun state ->
-        (* Push scope to state *)
-        put { state with scopes = scope :: state.scopes } >>= fun _ -> 
-        success e
-    let visit_block_pos = function
-      | Block (_, decls, stmts) ->
-        get >>= fun state ->
-        put { state with scopes = List.tl state.scopes } >>= fun _ ->
-        (* Pop scope from state *)
-        success @@ Block (List.hd state.scopes, decls, stmts)
+    let scope_block_pre = Scope.scope_block_pre
+    let scope_block_pos = Scope.scope_block_pos
+    let visit_block_pre b = success b
+    let visit_block_pos b = success b
 
     let visit_stmt_pre s = success s
     let visit_stmt_pos s = success s

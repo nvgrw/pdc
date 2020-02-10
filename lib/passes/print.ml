@@ -10,6 +10,8 @@ module Walker_Print = Common.Walker.Make(struct
     let visit_program_pre p = print_endline "Pre Program"; success p
     let visit_program_pos p = print_endline "Pos Program"; success p
 
+    let scope_block_pre b = print_endline "SCOPE Pre Block"; success b
+    let scope_block_pos b = print_endline "SCOPE Pos Block"; success b
     let visit_block_pre b = 
       print_endline "Pre Block"; 
       match b with Block (scope, _, _) -> StringMap.iter (fun k v -> print_endline @@ Printf.sprintf "%s %s" k (show_typ v)) scope;
