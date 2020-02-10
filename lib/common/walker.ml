@@ -72,7 +72,12 @@ module Make(V : Visitor) = struct
         | Deref (loc, expr) -> 
           walk_loc loc >>= fun walk_loc_loc -> 
           walk_expr expr >>= fun walk_expr_expr ->
-          success (Deref (walk_loc_loc, walk_expr_expr)))
+          success (Deref (walk_loc_loc, walk_expr_expr))
+        | LTyped (typ, loc) ->
+          walk_typ typ >>= fun walk_typ_typ ->
+          walk_loc loc >>= fun walk_loc_loc ->
+          success (LTyped (walk_typ_typ, walk_loc_loc))
+      )
     >>= fun walk_result -> V.visit_loc_pos walk_result
 
   let walk_decl (d: decl): (ctx, decl, err) state = 

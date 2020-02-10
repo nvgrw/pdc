@@ -41,6 +41,7 @@ type expr =
 and loc =
   | Id of string
   | Deref of loc * expr
+  | LTyped of typ * loc
 [@@deriving show]
 
 type decl =
