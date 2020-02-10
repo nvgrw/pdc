@@ -4,6 +4,8 @@ open Common.Data
 type type_error =
   | IncompatibleBinOp of typ * binop * typ
   | IncompatibleUnOp of unop * typ
+  | UntypedSubExpressions of expr
+  | UntypedSubLocations of loc
 type structural_error =
   | BadIdentifier of string
 type pass_error = 

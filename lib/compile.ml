@@ -13,6 +13,10 @@ let generate (p: program) =
         Printf.sprintf "%s incompatible with types %s and %s." (show_binop op) (show_typ lt) (show_typ rt)
       | TypeError (IncompatibleUnOp (op, t)) -> 
         Printf.sprintf "%s incompatible with type %s." (show_unop op) (show_typ t)
+      | TypeError (UntypedSubExpressions expr) ->
+        Printf.sprintf "untyped subexpressions in expression:\n%s" (show_expr expr)
+      | TypeError (UntypedSubLocations loc) ->
+        Printf.sprintf "untyped sublocations in location:\n%s" (show_loc loc)
       | StructuralError (BadIdentifier ident) -> 
         Printf.sprintf "identifier `%s' not declared in scope." ident
       | Message m -> m

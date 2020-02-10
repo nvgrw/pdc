@@ -64,9 +64,8 @@ module Walker_TypeCheck = Common.Walker.Make(struct
       | Const (Real _) as v -> success @@ Typed (Float, v)
       | Const (Bool _) as v -> success @@ Typed (Bool, v)
       | Var (LTyped (typ, loc)) -> success @@ Typed (typ, Var loc)
-      (* for arrays, get their type, then for each deref unwrap the type so that Var expression of deref matches assignment *)
-      (* | Typed (typ, expr) as e -> success e *)
-      | _ as e -> success e
+      | Typed _ as typed -> success typed
+      | _ as e -> error @@ TypeError (UntypedSubExpressions e)
 
     let visit_loc_pre l = success l
     let visit_loc_pos = function
@@ -75,9 +74,8 @@ module Walker_TypeCheck = Common.Walker.Make(struct
       | Id ident as l -> 
         Scope.get_type ident >>= fun ident_typ ->
         success @@ LTyped (ident_typ, l)
-      | _ as l  -> success l
-    (* | Deref of loc * expr
-       | LTyped of typ * loc *)
+      | LTyped _ as typed -> success typed
+      | _ as l  -> error @@ TypeError (UntypedSubLocations l)
 
     let visit_typ_pre t = success t
     let visit_typ_pos t = success t
