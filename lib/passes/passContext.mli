@@ -8,6 +8,7 @@ type type_error =
   | UntypedSubLocations of loc
 type structural_error =
   | BadIdentifier of string
+  | DuplicateIdentifier of string
 type pass_error = 
   | TypeError of type_error
   | StructuralError of structural_error

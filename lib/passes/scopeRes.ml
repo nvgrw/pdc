@@ -22,10 +22,14 @@ module Walker_ScopeRes = Common.Walker.Make(struct
     let visit_decl_pos = function
       | Decl (typ, ident) as e -> 
         get >>= fun state ->
-        let new_scope = StringMap.add ident typ @@ List.hd state.scopes in
-        let new_state = { state with scopes = new_scope :: List.tl state.scopes } in
-        put new_state >>= fun _ ->
-        success e
+        let curr = List.hd state.scopes in
+        match StringMap.find_opt ident curr with
+        | Some _ -> error @@ StructuralError (DuplicateIdentifier ident)
+        | None ->
+          let new_scope = StringMap.add ident typ @@ curr in
+          let new_state = { state with scopes = new_scope :: List.tl state.scopes } in
+          put new_state >>= fun _ ->
+          success e
 
     let visit_expr_pre e = success e
     let visit_expr_pos e = success e

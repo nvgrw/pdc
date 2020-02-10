@@ -19,6 +19,8 @@ let generate (p: program) =
         Printf.sprintf "untyped sublocations in location:\n%s" (show_loc loc)
       | StructuralError (BadIdentifier ident) -> 
         Printf.sprintf "identifier `%s' not declared in scope." ident
+      | StructuralError (DuplicateIdentifier ident) -> 
+        Printf.sprintf "identifier `%s' already declared in scope." ident
       | Message m -> m
     ) 
 
