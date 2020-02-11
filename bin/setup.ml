@@ -11,5 +11,11 @@ type compile_conf =
 let default_conf = { parseOnly = false }
 
 let make_buf = function
-  | File path -> Lexing.from_string path
-  | String code -> Lexing.from_string code
+  | File path -> (
+      Lexing.from_string path, 
+      fun lnum -> "todo -- implement"
+    )
+  | String code -> (
+      Lexing.from_string code, 
+      List.nth (Core.String.split_lines code)
+    )

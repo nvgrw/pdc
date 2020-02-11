@@ -1,2 +1,2 @@
 
-val compile: Lexing.lexbuf -> unit
+val compile: Lexing.lexbuf -> (int -> string) -> unit
