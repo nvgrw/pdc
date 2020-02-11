@@ -1,4 +1,8 @@
 (executable
  (public_name pdc)
  (name pdc)
- (libraries compile))
+ (libraries compile core))
+
+(env
+ (dev
+  (flags (:standard -w -32 -w -27))))
