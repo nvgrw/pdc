@@ -1,8 +1,8 @@
 open Common.AST
 open Common.Data
 
-type meta = Position of int * int [@@deriving show]
-let dummy_meta = Position (-1, -1)
+type meta = Position of (Lexing.position * Lexing.position) [@@deriving show]
+let dummy_meta = Position ((Lexing.dummy_pos, Lexing.dummy_pos))
 
 type type_error =
   | IncompatibleBinOp of meta typ * meta binop * meta typ

@@ -4,6 +4,10 @@
  * https://medium.com/@aleksandrasays/tutorial-parsing-json-with-ocaml-579cc054924f
  */
 
+ %{
+   open PassContext
+ %}
+
 %token EOF
 %token SCOPE_OPEN
 %token SCOPE_CLSE
@@ -47,13 +51,13 @@
 %token CHAR 
 %token BOOL
 
-%start <Common.AST.program> program
-%type  <Common.AST.block> block
-%type  <Common.AST.decl> decl
-%type  <Common.AST.typ> typ
-%type  <Common.AST.stmt> stmt
-%type  <Common.AST.loc> loc
-%type  <Common.AST.expr> bool join equality rel expr term unary factor
+%start <meta Common.AST.program> program
+%type  <meta Common.AST.block> block
+%type  <meta Common.AST.decl> decl
+%type  <meta Common.AST.typ> typ
+%type  <meta Common.AST.stmt> stmt
+%type  <meta Common.AST.loc> loc
+%type  <meta Common.AST.expr> bool join equality rel expr term unary factor
 
 /* Address Dangling Else */
 %nonassoc GROUP_CLSE
@@ -79,11 +83,11 @@ decl:
   ;
 
 typ:
-  | t = typ DEREF_OPEN size = NUM DEREF_CLSE  { Array (t, size) }
-  | INT                                       { Int }
-  | FLOAT                                     { Float }
-  | CHAR                                      { Char }
-  | BOOL                                      { Bool }
+  | t = typ DEREF_OPEN size = NUM DEREF_CLSE  { Array (t, size, Position $loc) }
+  | INT                                       { Int (Position $loc) }
+  | FLOAT                                     { Float (Position $loc) }
+  | CHAR                                      { Char (Position $loc) }
+  | BOOL                                      { Bool (Position $loc) }
   ;
 
 stmts:
@@ -92,27 +96,27 @@ stmts:
   ;
 
 stmt:
-  | l = loc ASSIGN e = bool STAT_SEPA                             { Assign (l, e) }
-  | IF GROUP_OPEN e = bool GROUP_CLSE t = stmt                    { If (e, t, None) }
-  | IF GROUP_OPEN e = bool GROUP_CLSE t = stmt ELSE f = stmt      { If (e, t, Some f) }
-  | WHILE GROUP_OPEN e = bool GROUP_CLSE body = stmt              { While (e, body) }
-  | DO body = stmt WHILE GROUP_OPEN e = bool GROUP_CLSE STAT_SEPA { Do (e, body) }
-  | BREAK STAT_SEPA                                               { Break }
-  | block                                                         { BlockStmt $1 }
+  | l = loc ASSIGN e = bool STAT_SEPA                             { Assign (l, e, Position $loc) }
+  | IF GROUP_OPEN e = bool GROUP_CLSE t = stmt                    { If (e, t, None, Position $loc) }
+  | IF GROUP_OPEN e = bool GROUP_CLSE t = stmt ELSE f = stmt      { If (e, t, Some f, Position $loc) }
+  | WHILE GROUP_OPEN e = bool GROUP_CLSE body = stmt              { While (e, body, Position $loc) }
+  | DO body = stmt WHILE GROUP_OPEN e = bool GROUP_CLSE STAT_SEPA { Do (e, body, Position $loc) }
+  | BREAK STAT_SEPA                                               { Break (Position $loc) }
+  | block                                                         { BlockStmt ($1, Position $loc) }
   ;
 
 loc:
-  | l = loc DEREF_OPEN e = bool DEREF_CLSE  { Deref (l, e) }
-  | name = IDENT                            { Id name }
+  | l = loc DEREF_OPEN e = bool DEREF_CLSE  { Deref (l, e, Position $loc) }
+  | name = IDENT                            { Id (name, Position $loc) }
   ;
 
 bool:
-  | l = bool OR r = join  { BinOp (l, Or, r) }
+  | l = bool OR r = join  { BinOp (l, Or (Position $loc($2)), r, Position $loc) }
   | join                  { $1 }
   ;
 
 join:
-  | l = join AND r = equality { BinOp (l, And, r) }
+  | l = join AND r = equality { BinOp (l, And (Position $loc($2)), r, Position $loc) }
   | equality                  { $1 }
   ;
 
@@ -123,10 +127,10 @@ equality:
   ;
 
 rel:
-  | l = expr LT r = expr  { BinOp (l, Lt, r) }
-  | l = expr LEQ r = expr { BinOp (l, Leq, r) }
-  | l = expr GEQ r = expr { BinOp (l, Geq, r) }
-  | l = expr GT r = expr  { BinOp (l, Gt, r) }
+  | l = expr LT r = expr  { BinOp (l, Lt (Position $loc($2)), r, Position $loc) }
+  | l = expr LEQ r = expr { BinOp (l, Leq (Position $loc($2)), r, Position $loc) }
+  | l = expr GEQ r = expr { BinOp (l, Geq (Position $loc($2)), r, Position $loc) }
+  | l = expr GT r = expr  { BinOp (l, Gt (Position $loc($2)), r, Position $loc) }
   | expr                  { $1 }
   ;
 
@@ -137,14 +141,14 @@ expr:
   ;
 
 term:
-  | l = term MULTIPLY r = unary { BinOp (l, Multiply, r) }
-  | l = term DIVIDE r = unary   { BinOp (l, Divide, r) }
+  | l = term MULTIPLY r = unary { BinOp (l, Multiply (Position $loc($2)), r, Position $loc) }
+  | l = term DIVIDE r = unary   { BinOp (l, Divide (Position $loc($2)), r, Position $loc) }
   | unary                       { $1 }
   ;
 
 unary:
-  | NOT e = unary   { UnOp (Not, e) }
-  | MINUS e = unary { UnOp (Negate, e) }
+  | NOT e = unary   { UnOp (Not (Position $loc($1)), e, Position $loc) }
+  | MINUS e = unary { UnOp (Negate (Position $loc($1)), e, Position $loc) }
   | factor          { $1 }
   ;
 
