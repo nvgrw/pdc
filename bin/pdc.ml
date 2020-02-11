@@ -17,6 +17,7 @@ let () =
       do j = j - 1; while( a[j] > v);
       if( i >= j ) break;
       x = a[i]; a[i] = a[j] * b[i][j]; a[j] = x;
+      do { j = j + 1; } while (true);
   }
 }|test})) 
 

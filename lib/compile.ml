@@ -13,16 +13,20 @@ let generate (p: program) =
         Printf.sprintf "%s incompatible with types %s and %s." (show_binop op) (show_typ lt) (show_typ rt)
       | TypeError (IncompatibleUnOp (op, t)) -> 
         Printf.sprintf "%s incompatible with type %s." (show_unop op) (show_typ t)
+      | TypeError (IncompatibleAssignment (ltyp, typ)) ->
+        Printf.sprintf "incompatible assignment between types %s and %s." (show_typ ltyp) (show_typ typ)
+      | TypeError IfRequiresBoolean ->
+        "if statement requires condition to evaluate to boolean expression."
+      | TypeError WhileRequiresBoolean ->
+        "while statement requires condition to evaluate to boolean expression."
+      | TypeError DoRequiresBoolean ->
+        "do statement requires condition to evaluate to a boolean expression."
       | TypeError (UntypedSubExpressions expr) ->
         Printf.sprintf "untyped subexpressions in expression:\n%s" (show_expr expr)
       | TypeError (UntypedSubLocations loc) ->
         Printf.sprintf "untyped sublocations in location:\n%s." (show_loc loc)
-      | TypeError (IncompatibleAssignment (ltyp, typ)) ->
-        Printf.sprintf "incompatible assignment between types %s and %s." (show_typ ltyp) (show_typ typ)
-      | TypeError IfRequiresBoolean ->
-        "if statement requires condition to evaluate to boolean expression"
-      | TypeError WhileRequiresBoolean ->
-        "while statement requires condition to evaluate to boolean expression"
+      | TypeError (UntypedStatementFragment stmt) ->
+        Printf.sprintf "untyped statement fragment %s." (show_stmt stmt)
       | StructuralError (BadIdentifier ident) -> 
         Printf.sprintf "identifier `%s' not declared in scope." ident
       | StructuralError (DuplicateIdentifier ident) -> 

@@ -55,14 +55,12 @@ module Walker_TypeCheck = Common.Walker.Make(struct
       | While (Typed (typ, _), _) as s ->
         if typ == Bool then success s
         else error @@ TypeError WhileRequiresBoolean
-      | _ as s -> success s
-
-    (* | Assign of loc * expr
-       | If of expr * stmt * (stmt option)
-       | While of expr * stmt
-       | Do of expr * stmt
-       | Break
-       | BlockStmt of block *)
+      | Do (Typed (typ, _), _) as s ->
+        if typ == Bool then success s
+        else error @@ TypeError DoRequiresBoolean
+      | Break as s -> success s
+      | BlockStmt _ as s -> success s
+      | _ as s -> error @@ TypeError (UntypedStatementFragment s)
 
     let visit_decl_pre d = success d
     let visit_decl_pos d = success d
