@@ -12,7 +12,7 @@ let () =
   let () = parse options anon_handle (Printf.sprintf "%s [--parse]\n" exec_name) in
   let input_string = String {test|{
   int i; int j; float v; float x; float[100] a; float[100][50] b;
-  while( true x {
+  while( true ) {
       do i = i + 1; while( a[i] < v);
       do j = j - 1; while( a[j] > v);
       if( i >= j ) break;
