@@ -10,11 +10,11 @@ let generate (p: program) =
   | Success (_, final_ast) -> print_endline @@ show_program final_ast
   | Error err -> print_endline (match err with
       | TypeError (IncompatibleBinOp (lt, op, rt)) -> 
-        Printf.sprintf "%s incompatible with types %s and %s." (show_binop op) (show_typ lt) (show_typ rt)
+        sprintf "%s incompatible with types %s and %s." (show_binop op) (show_typ lt) (show_typ rt)
       | TypeError (IncompatibleUnOp (op, t)) -> 
-        Printf.sprintf "%s incompatible with type %s." (show_unop op) (show_typ t)
+        sprintf "%s incompatible with type %s." (show_unop op) (show_typ t)
       | TypeError (IncompatibleAssignment (ltyp, typ)) ->
-        Printf.sprintf "incompatible assignment between types %s and %s." (show_typ ltyp) (show_typ typ)
+        sprintf "incompatible assignment between types %s and %s." (show_typ ltyp) (show_typ typ)
       | TypeError IfRequiresBoolean ->
         "if statement requires condition to evaluate to boolean expression."
       | TypeError WhileRequiresBoolean ->
@@ -22,15 +22,15 @@ let generate (p: program) =
       | TypeError DoRequiresBoolean ->
         "do statement requires condition to evaluate to a boolean expression."
       | TypeError (UntypedSubExpressions expr) ->
-        Printf.sprintf "untyped subexpressions in expression:\n%s" (show_expr expr)
+        sprintf "untyped subexpressions in expression:\n%s" (show_expr expr)
       | TypeError (UntypedSubLocations loc) ->
-        Printf.sprintf "untyped sublocations in location:\n%s." (show_loc loc)
+        sprintf "untyped sublocations in location:\n%s." (show_loc loc)
       | TypeError (UntypedStatementFragment stmt) ->
-        Printf.sprintf "untyped statement fragment %s." (show_stmt stmt)
+        sprintf "untyped statement fragment %s." (show_stmt stmt)
       | StructuralError (BadIdentifier ident) -> 
-        Printf.sprintf "identifier `%s' not declared in scope." ident
+        sprintf "identifier `%s' not declared in scope." ident
       | StructuralError (DuplicateIdentifier ident) -> 
-        Printf.sprintf "identifier `%s' already declared in scope." ident
+        sprintf "identifier `%s' already declared in scope." ident
       | Message m -> m
     ) 
 
