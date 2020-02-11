@@ -84,7 +84,7 @@ module Walker_TypeCheck = Common.Walker.Make(struct
 
     let visit_loc_pre l = success l
     let visit_loc_pos = function
-      | Deref (LTyped (Array (atyp, size) as arr, loc), expr) -> 
+      | Deref (LTyped (Array (atyp, _) as arr, loc), expr) -> 
         success @@ LTyped (atyp, Deref (LTyped (arr, loc), expr))
       | Id ident as l -> 
         Scope.get_type ident >>= fun ident_typ ->
