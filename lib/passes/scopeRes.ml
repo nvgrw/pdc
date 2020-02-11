@@ -21,7 +21,7 @@ module Walker_ScopeRes = Common.Walker.Make(struct
 
     let visit_decl_pre d = success d
     let visit_decl_pos = function
-      | Decl (typ, ident) as e -> 
+      | Decl (typ, ident, _) as e -> 
         get >>= fun state ->
         let curr = List.hd state.scopes in
         match StringMap.find_opt ident curr with

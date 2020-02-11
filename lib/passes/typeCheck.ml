@@ -7,7 +7,7 @@ let unop_compatible = function
   | (Not _, Bool _) -> true
   | _ -> false
 
-let wrap_type typ e = success @@ Typed (typ, e, dummy_meta)
+let wrap_type typ e m = success @@ Typed (typ, e, m)
 
 let binop_result = function
   (* Equality *)
@@ -37,6 +37,15 @@ let binop_result = function
   | (Float _, Divide _, Float _, m) -> Some (Float m)
   | _ -> None
 
+let rec same_typ = function
+  | (Array (left_typ, left_size, _), Array (right_typ, right_size, _)) 
+    -> same_typ (left_typ, right_typ) && left_size == right_size
+  | (Int _, Int _)
+  | (Float _, Float _)
+  | (Char _, Char _) 
+  | (Bool _, Char _) -> true
+  | _ -> false
+
 module Walker_TypeCheck = Common.Walker.Make(struct 
     type ctx = context
     type err = pass_error
@@ -53,18 +62,20 @@ module Walker_TypeCheck = Common.Walker.Make(struct
     let visit_stmt_pre s = success s
     let visit_stmt_pos = function
       | Assign (LTyped(ltyp, _, _), Typed(typ, _, _), _) as s ->
-        (* TODO: fix this. cannot check for equality *)
-        if ltyp == typ then success s
+        if (same_typ (ltyp, typ)) then success s
         else error @@ TypeError (IncompatibleAssignment (ltyp, typ))
-      | If (Typed (typ, _, _), _,_, _) as s -> 
-        if typ == Bool then success s
-        else error @@ TypeError IfRequiresBoolean
+      | If (Typed (typ, _, _), _, _, _) as s -> 
+        (match typ with 
+         |Bool _ -> success s
+         | _ -> error @@ TypeError IfRequiresBoolean)
       | While (Typed (typ, _, _), _, _) as s ->
-        if typ == Bool then success s
-        else error @@ TypeError WhileRequiresBoolean
+        (match typ with 
+         |Bool _ -> success s
+         | _ -> error @@ TypeError WhileRequiresBoolean)
       | Do (Typed (typ, _, _), _, _) as s ->
-        if typ == Bool then success s
-        else error @@ TypeError DoRequiresBoolean
+        (match typ with 
+         |Bool _ -> success s
+         | _ -> error @@ TypeError DoRequiresBoolean)
       | Break _ as s -> success s
       | BlockStmt _ as s -> success s
       | _ as s -> error @@ TypeError (UntypedStatementFragment s)
@@ -74,28 +85,28 @@ module Walker_TypeCheck = Common.Walker.Make(struct
 
     let visit_expr_pre e = success e
     let visit_expr_pos = function
-      | BinOp (Typed (lt, _), op, Typed (rt, _)) as e -> (
-          match binop_result (lt, op, rt) with
-          | Some merged_type -> wrap_type merged_type e
+      | BinOp (Typed (lt, _, _), op, Typed (rt, _, _), m) as e -> (
+          match binop_result (lt, op, rt, m) with
+          | Some merged_type -> wrap_type merged_type e m
           | None -> error @@ TypeError (IncompatibleBinOp (lt, op, rt)))
-      | UnOp (op, Typed (typ, _)) as e ->
+      | UnOp (op, Typed (typ, _, _), m) as e ->
         if unop_compatible (op, typ)
-        then wrap_type typ e
+        then wrap_type typ e m
         else error @@ TypeError (IncompatibleUnOp (op, typ))
-      | Const (Num _) as v -> success @@ Typed (Int, v)
-      | Const (Real _) as v -> success @@ Typed (Float, v)
-      | Const (Bool _) as v -> success @@ Typed (Bool, v)
-      | Var (LTyped (typ, loc)) -> success @@ Typed (typ, Var loc)
+      | Const (Num (_, nm), m) as v -> success @@ Typed (Int nm, v, m)
+      | Const (Real (_, rm), m) as v -> success @@ Typed (Float rm, v, m)
+      | Const (Bool (_, bm), m) as v -> success @@ Typed (Bool bm, v, m)
+      | Var (LTyped (typ, loc, tm), vm) -> success @@ Typed (typ, (Var (loc, vm)), tm)
       | Typed _ as typed -> success typed
       | _ as e -> error @@ TypeError (UntypedSubExpressions e)
 
     let visit_loc_pre l = success l
     let visit_loc_pos = function
-      | Deref (LTyped (Array (atyp, _) as arr, loc), expr) -> 
-        success @@ LTyped (atyp, Deref (LTyped (arr, loc), expr))
-      | Id ident as l -> 
+      | Deref (LTyped (Array (atyp, _, _) as arr, loc, lm), expr, m) -> 
+        success @@ LTyped (atyp, Deref (LTyped (arr, loc, lm), expr, m), m)
+      | Id (ident, m) as l -> 
         Scope.get_type ident >>= fun ident_typ ->
-        success @@ LTyped (ident_typ, l)
+        success @@ LTyped (ident_typ, l, m)
       | LTyped _ as typed -> success typed
       | _ as l  -> error @@ TypeError (UntypedSubLocations l)
 
