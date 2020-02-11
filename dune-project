@@ -13,4 +13,4 @@
  (synopsis "Probabilistic Dragon Compiler")
  (description "Probabilistic Dragon Compiler for Imperial College London Final Year Project")
  (depends
-  (core (> v0.13.0))))
+  (core (>= v0.13.0))))
