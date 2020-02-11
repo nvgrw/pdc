@@ -1,63 +1,63 @@
-type binop =
-  | Or
-  | And
-  | Eq
-  | Neq
-  | Lt
-  | Leq
-  | Geq
-  | Gt
-  | Add
-  | Subtract
-  | Multiply
-  | Divide
+type 'm binop =
+  | Or of 'm
+  | And of 'm
+  | Eq of 'm
+  | Neq of 'm
+  | Lt of 'm
+  | Leq of 'm
+  | Geq of 'm
+  | Gt of 'm
+  | Add of 'm
+  | Subtract of 'm
+  | Multiply of 'm
+  | Divide of 'm
 [@@deriving show]
 
-type unop =
-  | Negate
-  | Not
+type 'm unop =
+  | Negate of 'm
+  | Not of 'm
 [@@deriving show]
 
-type value =
-  | Num of int
-  | Real of float
-  | Bool of bool
+type 'm value =
+  | Num of int * 'm
+  | Real of float * 'm
+  | Bool of bool * 'm
 [@@deriving show]
 
-type typ =
-  | Array of typ * int
-  | Int
-  | Float
-  | Char
-  | Bool
+type 'm typ =
+  | Array of 'm typ * int * 'm
+  | Int of 'm
+  | Float of 'm
+  | Char of 'm
+  | Bool of 'm
 [@@deriving show]
 
-type expr =
-  | BinOp of expr * binop * expr
-  | UnOp of unop * expr
-  | Const of value
-  | Var of loc
-  | Typed of typ * expr
-and loc =
-  | Id of string
-  | Deref of loc * expr
-  | LTyped of typ * loc
+type 'm expr =
+  | BinOp of 'm expr * 'm binop * 'm expr * 'm
+  | UnOp of 'm unop * 'm expr * 'm
+  | Const of 'm value * 'm
+  | Var of 'm loc * 'm
+  | Typed of 'm typ * 'm expr * 'm
+and 'm loc =
+  | Id of string * 'm
+  | Deref of 'm loc * 'm expr * 'm
+  | LTyped of 'm typ * 'm loc * 'm
 [@@deriving show]
 
-type decl =
-  | Decl of typ * string
+type 'm decl =
+  | Decl of 'm typ * string * 'm
 [@@deriving show]
 
-type stmt =
-  | Assign of loc * expr
-  | If of expr * stmt * (stmt option)
-  | While of expr * stmt
-  | Do of expr * stmt
-  | Break
-  | BlockStmt of block
-and block =
-  | Block of (typ Data.StringMap.t [@opaque]) * (decl list) * (stmt list)
+type 'm stmt =
+  | Assign of 'm loc * 'm expr * 'm
+  | If of 'm expr * 'm stmt * ('m stmt option) * 'm
+  | While of 'm expr * 'm stmt * 'm
+  | Do of 'm expr * 'm stmt * 'm
+  | Break of 'm
+  | BlockStmt of 'm block * 'm
+and 'm block =
+  | Block of (('m typ) Data.StringMap.t [@opaque]) * ('m decl list) * ('m stmt list) * 'm
 [@@deriving show]
 
-type program = block
+type 'm program = 'm block
 [@@deriving show]

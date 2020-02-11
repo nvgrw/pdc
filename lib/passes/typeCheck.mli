@@ -2,4 +2,4 @@ open Common.AST
 open Common.VisitorMonad
 open PassContext
 
-val process: program -> (context, program, pass_error) state
+val process: meta program -> (context, meta program, pass_error) state

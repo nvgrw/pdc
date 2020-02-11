@@ -6,6 +6,7 @@ open Common.Data
 module Walker_Print = Common.Walker.Make(struct 
     type ctx = context
     type err = pass_error
+    type mta = meta
 
     let visit_program_pre p = print_endline "Pre Program"; success p
     let visit_program_pos p = print_endline "Pos Program"; success p
@@ -14,7 +15,7 @@ module Walker_Print = Common.Walker.Make(struct
     let scope_block_pos b = print_endline "SCOPE Pos Block"; success b
     let visit_block_pre b = 
       print_endline "Pre Block"; 
-      match b with Block (scope, _, _) -> StringMap.iter (fun k v -> print_endline @@ Printf.sprintf "%s %s" k (show_typ v)) scope;
+      match b with Block (scope, _, _, _) -> StringMap.iter (fun k v -> print_endline @@ Printf.sprintf "%s %s" k (show_typ v)) scope;
         success b
     let visit_block_pos b = print_endline "Pos Block"; success b
 

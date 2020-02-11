@@ -2,39 +2,45 @@ open Common.VisitorMonad
 open PassContext
 open Common.AST
 
-(* 
-  Strategies for resolving types:
-
-  Is operator legal?
-  Apply type to all super-expressions.
-  Do subtyping/further checks and propagate errors if there are any
- *)
-
 let unop_compatible = function
-  | Negate, Int | Negate, Float -> true
-  | Not, Bool -> true
+  | (Negate _, Int _) | (Negate _, Float _) -> true
+  | (Not _, Bool _) -> true
   | _ -> false
 
-let wrap_type typ e = success @@ Typed (typ, e)
+let wrap_type typ e = success @@ Typed (typ, e, dummy_meta)
 
 let binop_result = function
   (* Equality *)
-  | t, Eq, t' | t, Neq, t' when t == t' -> Some Bool
+  | (t, Eq _, t', m) | (t, Neq _, t', m) when (t == t') -> Some (Bool m)
   (* (Int) Inequality *)
-  | Int, Lt, Int | Int, Leq, Int | Int, Geq, Int | Int, Gt, Int -> Some Bool
+  | (Int _, Lt _, Int _, m) 
+  | (Int _, Leq _, Int _, m) 
+  | (Int _, Geq _, Int _, m) 
+  | (Int _, Gt _, Int _, m) -> Some (Bool m)
   (* (Float) Inequality *)
-  | Float, Lt, Float | Float, Leq, Float | Float, Geq, Float | Float, Gt, Float -> Some Bool
+  | (Float _, Lt _, Float _, m) 
+  | (Float _, Leq _, Float _, m) 
+  | (Float _, Geq _, Float _, m) 
+  | (Float _, Gt _, Float _, m) -> Some (Bool m)
   (* (Bool) Arithmetic *)
-  | Bool, Or, Bool | Bool, And, Bool -> Some Bool
+  | (Bool _, Or _, Bool _, m) 
+  | (Bool _, And _, Bool _, m) -> Some (Bool m)
   (* (Int) Arithmetic *)
-  | Int, Add, Int | Int, Subtract, Int | Int, Multiply, Int | Int, Divide, Int -> Some Int
+  | (Int _, Add _, Int _, m) 
+  | (Int _, Subtract _, Int _, m) 
+  | (Int _, Multiply _, Int _, m) 
+  | (Int _, Divide _, Int _, m) -> Some (Int m)
   (* (Float) Arithmetic *)
-  | Float, Add, Float | Float, Subtract, Float | Float, Multiply, Float | Float, Divide, Float -> Some Float
+  | (Float _, Add _, Float _, m) 
+  | (Float _, Subtract _, Float _, m) 
+  | (Float _, Multiply _, Float _, m) 
+  | (Float _, Divide _, Float _, m) -> Some (Float m)
   | _ -> None
 
 module Walker_TypeCheck = Common.Walker.Make(struct 
     type ctx = context
     type err = pass_error
+    type mta = meta
 
     let visit_program_pre p = success p
     let visit_program_pos p = success p
@@ -46,19 +52,20 @@ module Walker_TypeCheck = Common.Walker.Make(struct
 
     let visit_stmt_pre s = success s
     let visit_stmt_pos = function
-      | Assign (LTyped(ltyp, _), Typed(typ, _)) as s ->
+      | Assign (LTyped(ltyp, _, _), Typed(typ, _, _), _) as s ->
+        (* TODO: fix this. cannot check for equality *)
         if ltyp == typ then success s
         else error @@ TypeError (IncompatibleAssignment (ltyp, typ))
-      | If (Typed (typ, _), _,_) as s -> 
+      | If (Typed (typ, _, _), _,_, _) as s -> 
         if typ == Bool then success s
         else error @@ TypeError IfRequiresBoolean
-      | While (Typed (typ, _), _) as s ->
+      | While (Typed (typ, _, _), _, _) as s ->
         if typ == Bool then success s
         else error @@ TypeError WhileRequiresBoolean
-      | Do (Typed (typ, _), _) as s ->
+      | Do (Typed (typ, _, _), _, _) as s ->
         if typ == Bool then success s
         else error @@ TypeError DoRequiresBoolean
-      | Break as s -> success s
+      | Break _ as s -> success s
       | BlockStmt _ as s -> success s
       | _ as s -> error @@ TypeError (UntypedStatementFragment s)
 

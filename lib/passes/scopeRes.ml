@@ -6,6 +6,7 @@ open Common.Data
 module Walker_ScopeRes = Common.Walker.Make(struct 
     type ctx = context
     type err = pass_error
+    type mta = meta
 
     let visit_program_pre p = success p
     let visit_program_pos p = success p
