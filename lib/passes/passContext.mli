@@ -2,7 +2,7 @@ open Common.AST
 open Common.Data
 
 type meta = 
-  | Position of (Lexing.position * Lexing.position)
+  | Position of ((Lexing.position [@opaque]) * (Lexing.position [@opaque]))
 [@@deriving show]
 val dummy_meta: meta
 

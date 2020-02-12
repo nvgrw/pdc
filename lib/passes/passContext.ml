@@ -5,8 +5,6 @@ type meta =
   | Position of ((Lexing.position [@opaque]) * (Lexing.position [@opaque]))
 [@@deriving show]
 
-(* [%import: PassContext.meta] *)
-
 let dummy_meta = Position ((Lexing.dummy_pos, Lexing.dummy_pos))
 
 type type_error =
