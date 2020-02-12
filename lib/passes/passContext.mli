@@ -1,7 +1,9 @@
 open Common.AST
 open Common.Data
 
-type meta = Position of (Lexing.position * Lexing.position) [@@deriving show]
+type meta = 
+  | Position of (Lexing.position * Lexing.position)
+[@@deriving show]
 val dummy_meta: meta
 
 type type_error =

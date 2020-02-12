@@ -1,20 +1,21 @@
 open Common.AST
 open Common.VisitorMonad
 open Lexing
+open PassContext
 
 open Printf
 
-let generate (p: program) = 
+let generate (p: meta program) = 
   let post_semant = Semant.check p
   in match post_semant with
-  | Success (_, final_ast) -> print_endline @@ show_program final_ast
+  | Success (_, final_ast) -> print_endline @@ show_program pp_meta final_ast
   | Error err -> print_endline (match err with
       | TypeError (IncompatibleBinOp (lt, op, rt)) -> 
-        sprintf "%s incompatible with types %s and %s." (show_binop op) (show_typ lt) (show_typ rt)
+        sprintf "%s incompatible with types %s and %s." (show_binop pp_meta op) (show_typ pp_meta lt) (show_typ pp_meta rt)
       | TypeError (IncompatibleUnOp (op, t)) -> 
-        sprintf "%s incompatible with type %s." (show_unop op) (show_typ t)
+        sprintf "%s incompatible with type %s." (show_unop pp_meta op) (show_typ pp_meta t)
       | TypeError (IncompatibleAssignment (ltyp, typ)) ->
-        sprintf "incompatible assignment between types %s and %s." (show_typ ltyp) (show_typ typ)
+        sprintf "incompatible assignment between types %s and %s." (show_typ pp_meta ltyp) (show_typ pp_meta typ)
       | TypeError IfRequiresBoolean ->
         "if statement requires condition to evaluate to boolean expression."
       | TypeError WhileRequiresBoolean ->
@@ -22,11 +23,11 @@ let generate (p: program) =
       | TypeError DoRequiresBoolean ->
         "do statement requires condition to evaluate to a boolean expression."
       | TypeError (UntypedSubExpressions expr) ->
-        sprintf "untyped subexpressions in expression:\n%s" (show_expr expr)
+        sprintf "untyped subexpressions in expression:\n%s" (show_expr pp_meta expr)
       | TypeError (UntypedSubLocations loc) ->
-        sprintf "untyped sublocations in location:\n%s." (show_loc loc)
+        sprintf "untyped sublocations in location:\n%s." (show_loc pp_meta loc)
       | TypeError (UntypedStatementFragment stmt) ->
-        sprintf "untyped statement fragment %s." (show_stmt stmt)
+        sprintf "untyped statement fragment %s." (show_stmt pp_meta stmt)
       | StructuralError (BadIdentifier ident) -> 
         sprintf "identifier `%s' not declared in scope." ident
       | StructuralError (DuplicateIdentifier ident) -> 

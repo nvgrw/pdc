@@ -1,3 +1,11 @@
-(library (name passContext) (libraries common) (modules passContext))
+(library 
+ (name passContext)
+ (libraries common)
+ (modules passContext)
+ (preprocess (pps ppx_import ppx_deriving.show)))
 
-(library (name passes) (libraries common passContext) (modules scope scopeRes typeCheck print))
+(library 
+ (name passes) 
+ (libraries common passContext) 
+ (modules scope scopeRes typeCheck print)
+ (preprocess (pps ppx_import ppx_deriving.show)))

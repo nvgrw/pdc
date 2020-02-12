@@ -4,10 +4,6 @@
  * https://medium.com/@aleksandrasays/tutorial-parsing-json-with-ocaml-579cc054924f
  */
 
- %{
-   open PassContext
- %}
-
 %token EOF
 %token SCOPE_OPEN
 %token SCOPE_CLSE
@@ -51,13 +47,13 @@
 %token CHAR 
 %token BOOL
 
-%start <meta Common.AST.program> program
-%type  <meta Common.AST.block> block
-%type  <meta Common.AST.decl> decl
-%type  <meta Common.AST.typ> typ
-%type  <meta Common.AST.stmt> stmt
-%type  <meta Common.AST.loc> loc
-%type  <meta Common.AST.expr> bool join equality rel expr term unary factor
+%start <PassContext.meta Common.AST.program> program
+%type  <PassContext.meta Common.AST.block> block
+%type  <PassContext.meta Common.AST.decl> decl
+%type  <PassContext.meta Common.AST.typ> typ
+%type  <PassContext.meta Common.AST.stmt> stmt
+%type  <PassContext.meta Common.AST.loc> loc
+%type  <PassContext.meta Common.AST.expr> bool join equality rel expr term unary factor
 
 /* Address Dangling Else */
 %nonassoc GROUP_CLSE
@@ -70,7 +66,7 @@ program:
   ;
 
 block:
-  | SCOPE_OPEN d = decls s = stmts SCOPE_CLSE { Block (Common.Data.StringMap.empty, List.rev d, List.rev s) }
+  | SCOPE_OPEN d = decls s = stmts SCOPE_CLSE { Block (Common.Data.StringMap.empty, List.rev d, List.rev s, Position $loc) }
   ;
 
 decls:
@@ -79,7 +75,7 @@ decls:
   ;
 
 decl:
-  | t = typ name = IDENT STAT_SEPA { Decl (t, name) }
+  | t = typ name = IDENT STAT_SEPA { Decl (t, name, Position $loc) }
   ;
 
 typ:
@@ -121,8 +117,8 @@ join:
   ;
 
 equality:
-  | l = equality EQ r = rel   { BinOp (l, Eq, r) }
-  | l = equality NEQ r = rel  { BinOp (l, Neq, r) }
+  | l = equality EQ r = rel   { BinOp (l, Eq (Position $loc($2)), r, Position $loc) }
+  | l = equality NEQ r = rel  { BinOp (l, Neq (Position $loc($2)), r, Position $loc) }
   | rel                       { $1 }
   ;
 
@@ -135,8 +131,8 @@ rel:
   ;
 
 expr:
-  | l = expr PLUS r = term  { BinOp (l, Add, r) }
-  | l = expr MINUS r = term { BinOp (l, Subtract, r) }
+  | l = expr PLUS r = term  { BinOp (l, Add (Position $loc($2)), r, Position $loc) }
+  | l = expr MINUS r = term { BinOp (l, Subtract (Position $loc($2)), r, Position $loc) }
   | term                    { $1 }
   ;
 
@@ -154,9 +150,9 @@ unary:
 
 factor:
   | GROUP_OPEN bool GROUP_CLSE  { $2 }
-  | loc                         { Var $1 }
-  | n = NUM                     { Const (Num n) }
-  | r = REAL                    { Const (Real r) }
-  | TRUE                        { Const (Bool true) }
-  | FALSE                       { Const (Bool false) }
+  | loc                         { Var ($1, Position $loc) }
+  | n = NUM                     { Const (Num (n, Position $loc), Position $loc) }
+  | r = REAL                    { Const (Real (r, Position $loc), Position $loc) }
+  | TRUE                        { Const (Bool (true, Position $loc), Position $loc) }
+  | FALSE                       { Const (Bool (false, Position $loc), Position $loc) }
   ;

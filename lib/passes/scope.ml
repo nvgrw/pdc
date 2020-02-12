@@ -2,6 +2,7 @@ open Common.AST
 open Common.VisitorMonad
 open PassContext
 open Common.Data
+module Option = Core.Option
 
 let scope_block_pre = function
   | Block (scope, _, _, _) as e ->
@@ -19,7 +20,7 @@ let scope_block_pos = function
 let rec lookup ident scopes = match scopes with
   | s :: ss ->
     let ident_type = StringMap.find_opt ident s in
-    let state_type = Option.map (fun t -> success t) ident_type in
+    let state_type = Option.map ~f:(fun t -> success t) ident_type in
     Option.value state_type ~default:(lookup ident ss)
   | _ -> error @@ StructuralError (BadIdentifier ident)
 

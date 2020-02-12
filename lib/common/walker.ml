@@ -1,5 +1,6 @@
 open AST
 open VisitorMonad
+module Option = Core.Option
 
 module type Visitor = sig 
   type ctx
@@ -100,7 +101,7 @@ module Make(V : Visitor) = struct
         | If (expr, stmt, stmt_opt, m) -> 
           walk_expr expr >>= fun walk_expr_expr ->
           walk_stmt stmt >>= fun walk_stmt_stmt ->
-          seqOpt (Option.map walk_stmt stmt_opt) >>= fun walk_stmt_stmt_opt ->
+          seqOpt (Option.map ~f:walk_stmt stmt_opt) >>= fun walk_stmt_stmt_opt ->
           success (If (walk_expr_expr, walk_stmt_stmt, walk_stmt_stmt_opt, m))
         | While (expr, stmt, m) -> 
           walk_expr expr >>= fun walk_expr_expr ->
