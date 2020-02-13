@@ -1,8 +1,10 @@
 open Common.AST
 open Common.Data
 
+val pp_position: Format.formatter -> Lexing.position -> unit
+
 type meta = 
-  | Position of ((Lexing.position [@opaque]) * (Lexing.position [@opaque]))
+  | Position of ((Lexing.position [@printer pp_position]) * (Lexing.position [@printer pp_position]))
 [@@deriving show]
 val dummy_meta: meta
 
