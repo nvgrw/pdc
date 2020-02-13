@@ -1,5 +1,5 @@
 (library 
     (name common)
     (libraries core)
-    (modules aST visitorMonad walker data)
-    (preprocess (pps ppx_deriving.show)))
+    (modules aST visitorMonad walker data meta)
+    (preprocess (pps ppx_import ppx_deriving.show)))

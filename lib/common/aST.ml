@@ -48,6 +48,10 @@ type 'm decl =
   | Decl of 'm typ * string * 'm
 [@@deriving show]
 
+let pp_scope (fmt: Format.formatter) (scope: ('m typ) Data.StringMap.t) = 
+  let pp_opaque = fun ofmt _ -> Format.pp_print_string ofmt "<opaque>" in
+  Data.StringMap.iter (fun k v -> Format.fprintf fmt "%s %s" k (show_typ pp_opaque v)) scope
+
 type 'm stmt =
   | Assign of 'm loc * 'm expr * 'm
   | If of 'm expr * 'm stmt * ('m stmt option) * 'm
@@ -56,8 +60,9 @@ type 'm stmt =
   | Break of 'm
   | BlockStmt of 'm block * 'm
 and 'm block =
-  | Block of (('m typ) Data.StringMap.t [@opaque]) * ('m decl list) * ('m stmt list) * 'm
+  | Block of (('m typ) Data.StringMap.t [@printer pp_scope]) * ('m decl list) * ('m stmt list) * 'm
 [@@deriving show]
+
 
 type 'm program = 'm block
 [@@deriving show]

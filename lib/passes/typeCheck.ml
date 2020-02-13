@@ -1,6 +1,7 @@
 open Common.VisitorMonad
 open PassContext
 open Common.AST
+open Common.Meta
 
 let unop_compatible = function
   | (Negate _, Int _) | (Negate _, Float _) -> true

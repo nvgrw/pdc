@@ -1,5 +1,6 @@
 open Common.AST
 open Common.VisitorMonad
+open Common.Meta
 open Lexing
 open PassContext
 

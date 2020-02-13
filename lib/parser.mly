@@ -47,13 +47,13 @@
 %token CHAR 
 %token BOOL
 
-%start <PassContext.meta Common.AST.program> program
-%type  <PassContext.meta Common.AST.block> block
-%type  <PassContext.meta Common.AST.decl> decl
-%type  <PassContext.meta Common.AST.typ> typ
-%type  <PassContext.meta Common.AST.stmt> stmt
-%type  <PassContext.meta Common.AST.loc> loc
-%type  <PassContext.meta Common.AST.expr> bool join equality rel expr term unary factor
+%start <Common.Meta.meta Common.AST.program> program
+%type  <Common.Meta.meta Common.AST.block> block
+%type  <Common.Meta.meta Common.AST.decl> decl
+%type  <Common.Meta.meta Common.AST.typ> typ
+%type  <Common.Meta.meta Common.AST.stmt> stmt
+%type  <Common.Meta.meta Common.AST.loc> loc
+%type  <Common.Meta.meta Common.AST.expr> bool join equality rel expr term unary factor
 
 /* Address Dangling Else */
 %nonassoc GROUP_CLSE
