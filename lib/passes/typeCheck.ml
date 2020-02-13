@@ -64,19 +64,19 @@ module Walker_TypeCheck = Common.Walker.Make(struct
     let visit_stmt_pos = function
       | Assign (LTyped(ltyp, _, _), Typed(typ, _, _), _) as s ->
         if (same_typ (ltyp, typ)) then success s
-        else error @@ TypeError (IncompatibleAssignment (ltyp, typ))
+        else error @@ TypeError (IncompatibleAssignment (s, ltyp, typ))
       | If (Typed (typ, _, _), _, _, _) as s -> 
         (match typ with 
          |Bool _ -> success s
-         | _ -> error @@ TypeError IfRequiresBoolean)
+         | _ -> error @@ TypeError (IfRequiresBoolean s))
       | While (Typed (typ, _, _), _, _) as s ->
         (match typ with 
          |Bool _ -> success s
-         | _ -> error @@ TypeError WhileRequiresBoolean)
+         | _ -> error @@ TypeError (WhileRequiresBoolean s))
       | Do (Typed (typ, _, _), _, _) as s ->
         (match typ with 
          |Bool _ -> success s
-         | _ -> error @@ TypeError DoRequiresBoolean)
+         | _ -> error @@ TypeError (DoRequiresBoolean s))
       | Break _ as s -> success s
       | BlockStmt _ as s -> success s
       | _ as s -> error @@ TypeError (UntypedStatementFragment s)
@@ -89,11 +89,11 @@ module Walker_TypeCheck = Common.Walker.Make(struct
       | BinOp (Typed (lt, _, _), op, Typed (rt, _, _), m) as e -> (
           match binop_result (lt, op, rt, m) with
           | Some merged_type -> wrap_type merged_type e m
-          | None -> error @@ TypeError (IncompatibleBinOp (lt, op, rt)))
+          | None -> error @@ TypeError (IncompatibleBinOp (e, lt, op, rt)))
       | UnOp (op, Typed (typ, _, _), m) as e ->
         if unop_compatible (op, typ)
         then wrap_type typ e m
-        else error @@ TypeError (IncompatibleUnOp (op, typ))
+        else error @@ TypeError (IncompatibleUnOp (e, op, typ))
       | Const (Num (_, nm), m) as v -> success @@ Typed (Int nm, v, m)
       | Const (Real (_, rm), m) as v -> success @@ Typed (Float rm, v, m)
       | Const (Bool (_, bm), m) as v -> success @@ Typed (Bool bm, v, m)

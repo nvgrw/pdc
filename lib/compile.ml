@@ -11,17 +11,17 @@ let generate (p: meta program) =
   in match post_semant with
   | Success (_, final_ast) -> print_endline @@ show_program pp_meta final_ast
   | Error err -> print_endline (match err with
-      | TypeError (IncompatibleBinOp (lt, op, rt)) -> 
+      | TypeError (IncompatibleBinOp (expr, lt, op, rt)) -> 
         sprintf "%s incompatible with types %s and %s." (show_binop pp_meta op) (show_typ pp_meta lt) (show_typ pp_meta rt)
-      | TypeError (IncompatibleUnOp (op, t)) -> 
+      | TypeError (IncompatibleUnOp (expr, op, t)) -> 
         sprintf "%s incompatible with type %s." (show_unop pp_meta op) (show_typ pp_meta t)
-      | TypeError (IncompatibleAssignment (ltyp, typ)) ->
+      | TypeError (IncompatibleAssignment (stmt, ltyp, typ)) ->
         sprintf "incompatible assignment between types %s and %s." (show_typ pp_meta ltyp) (show_typ pp_meta typ)
-      | TypeError IfRequiresBoolean ->
+      | TypeError (IfRequiresBoolean stmt)->
         "if statement requires condition to evaluate to boolean expression."
-      | TypeError WhileRequiresBoolean ->
+      | TypeError (WhileRequiresBoolean stmt) ->
         "while statement requires condition to evaluate to boolean expression."
-      | TypeError DoRequiresBoolean ->
+      | TypeError (DoRequiresBoolean stmt) ->
         "do statement requires condition to evaluate to a boolean expression."
       | TypeError (UntypedSubExpressions expr) ->
         sprintf "untyped subexpressions in expression:\n%s" (show_expr pp_meta expr)
