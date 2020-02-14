@@ -39,24 +39,32 @@ let generate (p: meta program) (get_lines: int -> int -> string list) =
   | Success (_, final_ast) -> print_endline @@ show_program pp_meta final_ast
   | Error err -> print_endline (match err with
       | TypeError (IncompatibleBinOp (expr, lt, op, rt)) -> 
-        sprintf "%s incompatible with types %s and %s." (show_binop pp_meta op) (show_typ pp_meta lt) (show_typ pp_meta rt)
+        let context = (match get_meta_expr expr with Position (s_pos, e_pos) -> generate_context get_lines s_pos e_pos) in
+        sprintf "%s incompatible with types %s and %s.\n%s" (show_binop pp_meta op) (show_typ pp_meta lt) (show_typ pp_meta rt) context
       | TypeError (IncompatibleUnOp (expr, op, t)) -> 
-        sprintf "%s incompatible with type %s." (show_unop pp_meta op) (show_typ pp_meta t)
+        let context = (match get_meta_expr expr with Position (s_pos, e_pos) -> generate_context get_lines s_pos e_pos) in
+        sprintf "%s incompatible with type %s.\n%s" (show_unop pp_meta op) (show_typ pp_meta t) context
       | TypeError (IncompatibleAssignment (stmt, ltyp, typ)) ->
         let context = (match get_meta_stmt stmt with Position (s_pos, e_pos) -> generate_context get_lines s_pos e_pos) in
         sprintf "incompatible assignment between types %s and %s.\n%s" (show_typ pp_meta ltyp) (show_typ pp_meta typ) context
       | TypeError (IfRequiresBoolean stmt)->
-        "if statement requires condition to evaluate to boolean expression."
+        let context = (match get_meta_stmt stmt with Position (s_pos, e_pos) -> generate_context get_lines s_pos e_pos) in
+        sprintf "if statement requires condition to evaluate to boolean expression.\n%s" context
       | TypeError (WhileRequiresBoolean stmt) ->
-        "while statement requires condition to evaluate to boolean expression."
+        let context = (match get_meta_stmt stmt with Position (s_pos, e_pos) -> generate_context get_lines s_pos e_pos) in
+        sprintf "while statement requires condition to evaluate to boolean expression.\n%s" context
       | TypeError (DoRequiresBoolean stmt) ->
-        "do statement requires condition to evaluate to a boolean expression."
+        let context = (match get_meta_stmt stmt with Position (s_pos, e_pos) -> generate_context get_lines s_pos e_pos) in
+        sprintf "do statement requires condition to evaluate to a boolean expression.\n%s" context
       | TypeError (UntypedSubExpressions expr) ->
-        sprintf "untyped subexpressions in expression:\n%s" (show_expr pp_meta expr)
+        let context = (match get_meta_expr expr with Position (s_pos, e_pos) -> generate_context get_lines s_pos e_pos) in
+        sprintf "untyped subexpressions in expression %s.\n%s" (show_expr pp_meta expr) context
       | TypeError (UntypedSubLocations loc) ->
-        sprintf "untyped sublocations in location:\n%s." (show_loc pp_meta loc)
+        let context = (match get_meta_loc loc with Position (s_pos, e_pos) -> generate_context get_lines s_pos e_pos) in
+        sprintf "untyped sublocations in location %s.\n%s" (show_loc pp_meta loc) context
       | TypeError (UntypedStatementFragment stmt) ->
-        sprintf "untyped statement fragment %s." (show_stmt pp_meta stmt)
+        let context = (match get_meta_stmt stmt with Position (s_pos, e_pos) -> generate_context get_lines s_pos e_pos) in
+        sprintf "untyped statement fragment %s.\n%s" (show_stmt pp_meta stmt) context
       | StructuralError (BadIdentifier ident) -> 
         sprintf "identifier `%s' not declared in scope." ident
       | StructuralError (DuplicateIdentifier ident) -> 
