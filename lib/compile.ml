@@ -72,15 +72,6 @@ let generate (p: meta program) (get_lines: int -> int -> string list) =
       | Message m -> m
     ) 
 
-let get_pos (buf: Lexing.lexbuf) = 
-  let pos = buf.lex_curr_p in
-  (pos.pos_fname, pos.pos_lnum, (pos.pos_cnum - pos.pos_bol + 1))
-
-let print_pos out_channel p = 
-  match p with (file, line, col) -> 
-    let file = match file with | "" -> "<no file>" | _ -> file in
-    fprintf out_channel "%s:%d:%d" file line col
-
 let compile buf get_lines = 
   try generate (Parser.program Lexer.token buf) get_lines with
   | Lexer.SyntaxError msg -> print_endline msg
