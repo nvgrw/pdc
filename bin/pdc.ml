@@ -3,7 +3,7 @@ open Setup
 
 (* Main *)
 let () = 
-  let () = print_endline "This is PDC, your friendly neighborhood Probabilistic Dragon Compiler!" in
+  let () = print_endline "  *** PDC ***" in
   let options: (doc * spec * doc) list = [
     ("--parse", String print_endline, "this is the help text i think") 
   ] in
@@ -21,6 +21,6 @@ let () =
   }
 }|test} in
   match make_buf input_string with
-    (buf, get_line) -> Compile.compile buf get_line 
+    (buf, get_lines) -> Compile.compile buf get_lines 
 
 (* x = true; *)

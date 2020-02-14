@@ -13,9 +13,10 @@ let default_conf = { parseOnly = false }
 let make_buf = function
   | File path -> (
       Lexing.from_string path, 
-      fun lnum -> "todo -- implement"
+      fun _ _ -> ["todo -- implement"]
     )
   | String code -> (
       Lexing.from_string code, 
-      List.nth (Core.String.split_lines code)
+      fun lstart lend ->
+        Core.List.slice (Core.String.split_lines code) lstart (lend + 1)
     )

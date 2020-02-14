@@ -6,7 +6,34 @@ open PassContext
 
 open Printf
 
-let generate (p: meta program) = 
+let generate_context get_lines s_pos e_pos =
+  let num_digits = e_pos.pos_lnum |> float_of_int  |> log10 |> int_of_float |> (+) 1 in
+  let num_lines = e_pos.pos_lnum - s_pos.pos_lnum + 1 in
+  let s_off = s_pos.pos_cnum - s_pos.pos_bol in
+  let e_off = e_pos.pos_cnum - e_pos.pos_bol in
+  let pointer i line =
+    let padding = String.make num_digits ' ' ^ " : " in
+    (* three cases: num_lines is 1, first or last line *)
+    if num_lines == 1 then
+      if s_off == e_off then
+        (* single pointer *)
+        [padding ^ String.make s_off ' ' ^ "^"]
+      else
+        (* multiple pointers *)
+        [padding ^ String.make s_off ' ' ^ "^" ^ String.make (e_off - s_off - 1) '-' ^ "^"]
+    else if i == 0 then
+      [padding ^ String.make s_off ' ' ^ "^" ^ String.make (String.length line - s_off - 1) '-']
+    else if i == num_lines - 1 then
+      [padding ^ String.make (e_off - 1) '-' ^ "^"]
+    else 
+      []
+  in
+  let each i line = sprintf "%0*d | %s" num_digits (s_pos.pos_lnum + i) line :: pointer i line in
+  let code = List.mapi each @@ get_lines (s_pos.pos_lnum - 1) (e_pos.pos_lnum - 1) |> List.concat |> String.concat "\n" in
+  let fname = match s_pos.pos_fname with | "" -> "<no file>" | _ -> s_pos.pos_fname in
+  sprintf "%s\n%s:%d:%d;%d:%d" code fname s_pos.pos_lnum (s_off + 1)  e_pos.pos_lnum (e_off + 1)
+
+let generate (p: meta program) (get_lines: int -> int -> string list) = 
   let post_semant = Semant.check p
   in match post_semant with
   | Success (_, final_ast) -> print_endline @@ show_program pp_meta final_ast
@@ -16,7 +43,8 @@ let generate (p: meta program) =
       | TypeError (IncompatibleUnOp (expr, op, t)) -> 
         sprintf "%s incompatible with type %s." (show_unop pp_meta op) (show_typ pp_meta t)
       | TypeError (IncompatibleAssignment (stmt, ltyp, typ)) ->
-        sprintf "incompatible assignment between types %s and %s." (show_typ pp_meta ltyp) (show_typ pp_meta typ)
+        let context = (match get_meta_stmt stmt with Position (s_pos, e_pos) -> generate_context get_lines s_pos e_pos) in
+        sprintf "incompatible assignment between types %s and %s.\n%s" (show_typ pp_meta ltyp) (show_typ pp_meta typ) context
       | TypeError (IfRequiresBoolean stmt)->
         "if statement requires condition to evaluate to boolean expression."
       | TypeError (WhileRequiresBoolean stmt) ->
@@ -45,17 +73,9 @@ let print_pos out_channel p =
     let file = match file with | "" -> "<no file>" | _ -> file in
     fprintf out_channel "%s:%d:%d" file line col
 
-let get_context buf get_line = 
-  let pos = buf.lex_curr_p in
-  let lnum = pos.pos_lnum in
-  let line_number_str = sprintf "%d |" lnum in
-  let pointer_pos = pos.pos_cnum - pos.pos_bol - 1 + String.length line_number_str in
-  let pointer = String.make pointer_pos  ' ' ^ "^" in
-  sprintf "%s%s\n%s" line_number_str (get_line (lnum - 1)) pointer
-
-let compile buf get_line = 
-  try generate (Parser.program Lexer.token buf) with
+let compile buf get_lines = 
+  try generate (Parser.program Lexer.token buf) get_lines with
   | Lexer.SyntaxError msg -> print_endline msg
   | Parser.Error -> 
-    print_endline @@ get_context buf get_line;
-    printf "%a: parser error\n" print_pos (get_pos buf)
+    let context = generate_context get_lines buf.lex_start_p buf.lex_curr_p in
+    printf "%s: parser error\n" context
