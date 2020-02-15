@@ -15,12 +15,12 @@ let generate_context get_lines s_pos e_pos =
     let padding = String.make num_digits ' ' ^ " : " in
     (* three cases: num_lines is 1, first or last line *)
     if num_lines == 1 then
-      if s_off == e_off then
+      if s_off == e_off || e_off - s_off == 1 then
         (* single pointer *)
         [padding ^ String.make s_off ' ' ^ "^"]
       else
         (* multiple pointers *)
-        [padding ^ String.make s_off ' ' ^ "^" ^ String.make (e_off - s_off - 1) '-' ^ "^"]
+        [padding ^ String.make s_off ' ' ^ "^" ^ String.make (e_off - s_off - 2) '-' ^ "^"]
     else if i == 0 then
       [padding ^ String.make s_off ' ' ^ "^" ^ String.make (String.length line - s_off - 1) '-']
     else if i == num_lines - 1 then
