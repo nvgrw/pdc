@@ -1,6 +1,6 @@
 (library
  (name compile)
- (libraries passes passContext))
+ (libraries semantic))
 
 (ocamllex lexer)
 

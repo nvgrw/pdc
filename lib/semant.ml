@@ -1,12 +1,13 @@
 open Common.VisitorMonad
-open PassContext
+
+open Semantic.Context
 
 let empty_context: context = { scopes = []; other = 0 }
 
 let passes = [
-  Passes.ScopeRes.process;
-  (* Passes.Print.process; *)
-  Passes.TypeCheck.process
+  Semantic.ScopeRes.process;
+  (* Semantic.Print.process; *)
+  Semantic.TypeCheck.process
 ]
 
 let check p = 

@@ -1,7 +1,9 @@
 open Common.AST
 open Common.VisitorMonad
-open PassContext
 open Common.Data
+
+open Context
+
 module Option = Core.Option
 
 let scope_block_pre = function

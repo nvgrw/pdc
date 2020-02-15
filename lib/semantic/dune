@@ -1,0 +1,7 @@
+(library 
+ (name semantic) 
+ (libraries common) 
+ (modules 
+  context scope 
+  scopeRes typeCheck print)
+ (preprocess (pps ppx_import ppx_deriving.show)))

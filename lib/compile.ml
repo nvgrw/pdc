@@ -1,9 +1,10 @@
 open Common.AST
 open Common.VisitorMonad
 open Common.Meta
-open Lexing
-open PassContext
 
+open Semantic.Context
+
+open Lexing
 open Printf
 
 let generate_context get_lines s_pos e_pos =
