@@ -1,8 +1,5 @@
 open Common.VisitorMonad
-
-open Semantic.Context
-
-let empty_context: context = { scopes = []; other = 0 }
+open Common.Meta
 
 let passes = [
   Semantic.ScopePass.process;

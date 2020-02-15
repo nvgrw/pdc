@@ -1,6 +1,6 @@
 (library
  (name compile)
- (libraries semantic))
+ (libraries semantic codegen))
 
 (ocamllex lexer)
 

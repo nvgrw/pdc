@@ -37,7 +37,6 @@ let generate_context get_lines s_pos e_pos =
 let generate (p: meta program) (get_lines: int -> int -> string list) = 
   let post_semant = Semant.check p
   in match post_semant with
-  | Success (_, final_ast) -> print_endline @@ show_program pp_meta final_ast
   | Error err -> print_endline (match err with
       | TypeError (IncompatibleBinOp (expr, lt, op, rt)) -> 
         let context = (match get_meta_expr expr with Position (s_pos, e_pos) -> generate_context get_lines s_pos e_pos) in
@@ -74,6 +73,7 @@ let generate (p: meta program) (get_lines: int -> int -> string list) =
         sprintf "%s: identifier `%s' already declared in scope." context ident
       | Message m -> m
     ) 
+  | Success (_, final_ast) -> print_endline @@ show_program pp_meta final_ast
 
 let compile buf get_lines = 
   try generate (Parser.program Lexer.token buf) get_lines with
