@@ -13,8 +13,8 @@ type type_error =
   | UntypedSubLocations of meta loc
   | UntypedStatementFragment of meta stmt
 type structural_error =
-  | BadIdentifier of string
-  | DuplicateIdentifier of string
+  | BadIdentifier of meta * string
+  | DuplicateIdentifier of meta decl * string
 type pass_error = 
   | TypeError of type_error
   | StructuralError of structural_error

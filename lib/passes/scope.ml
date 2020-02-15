@@ -17,13 +17,13 @@ let scope_block_pos = function
     (* Pop scope from state *)
     success @@ Block (List.hd state.scopes, decls, stmts, m)
 
-let rec lookup ident scopes = match scopes with
+let rec lookup m ident scopes = match scopes with
   | s :: ss ->
     let ident_type = StringMap.find_opt ident s in
     let state_type = Option.map ~f:(fun t -> success t) ident_type in
-    Option.value state_type ~default:(lookup ident ss)
-  | _ -> error @@ StructuralError (BadIdentifier ident)
+    Option.value state_type ~default:(lookup m ident ss)
+  | _ -> error @@ StructuralError (BadIdentifier (m, ident))
 
-let get_type ident = 
+let get_type m ident = 
   get >>= fun state ->
-  lookup ident state.scopes
+  lookup m ident state.scopes
