@@ -5,7 +5,7 @@ open Common.Meta
 
 open Context
 
-module Walker_ScopeRes = Common.Walker.Make(struct 
+module Walker_ScopePass = Common.Walker.Make(struct 
     type ctx = context
     type err = pass_error
     type mta = meta
@@ -44,4 +44,4 @@ module Walker_ScopeRes = Common.Walker.Make(struct
     let visit_typ_pos t = success t
   end)
 
-let process = Walker_ScopeRes.walk_program
+let process = Walker_ScopePass.walk_program

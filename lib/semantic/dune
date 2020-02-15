@@ -3,5 +3,5 @@
  (libraries common) 
  (modules 
   context scope 
-  scopeRes typeCheck print)
+  scopePass typeCheckPass printPass)
  (preprocess (pps ppx_import ppx_deriving.show)))

@@ -48,7 +48,7 @@ let rec same_typ = function
   | (Bool _, Char _) -> true
   | _ -> false
 
-module Walker_TypeCheck = Common.Walker.Make(struct 
+module Walker_TypeCheckPass = Common.Walker.Make(struct 
     type ctx = context
     type err = pass_error
     type mta = meta
@@ -116,4 +116,4 @@ module Walker_TypeCheck = Common.Walker.Make(struct
     let visit_typ_pos t = success t
   end)
 
-let process = Walker_TypeCheck.walk_program
+let process = Walker_TypeCheckPass.walk_program

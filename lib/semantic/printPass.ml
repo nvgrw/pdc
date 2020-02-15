@@ -5,7 +5,7 @@ open Common.Meta
 
 open Context
 
-module Walker_Print = Common.Walker.Make(struct 
+module Walker_PrintPass = Common.Walker.Make(struct 
     type ctx = context
     type err = pass_error
     type mta = meta
@@ -37,4 +37,4 @@ module Walker_Print = Common.Walker.Make(struct
     let visit_typ_pos t = print_endline "Pos Typ"; success t
   end)
 
-let process = Walker_Print.walk_program
+let process = Walker_PrintPass.walk_program

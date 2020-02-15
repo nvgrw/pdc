@@ -5,9 +5,9 @@ open Semantic.Context
 let empty_context: context = { scopes = []; other = 0 }
 
 let passes = [
-  Semantic.ScopeRes.process;
+  Semantic.ScopePass.process;
   (* Semantic.Print.process; *)
-  Semantic.TypeCheck.process
+  Semantic.TypeCheckPass.process
 ]
 
 let check p = 
