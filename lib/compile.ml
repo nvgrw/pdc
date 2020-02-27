@@ -73,7 +73,14 @@ let generate (p: meta program) (get_lines: int -> int -> string list) =
         sprintf "%s: identifier `%s' already declared in scope." context ident
       | Message m -> m
     ) 
-  | Success (_, final_ast) -> print_endline @@ show_program pp_meta final_ast
+  | Success (_, semant_ast) -> 
+    let post_gen = Gen.generate semant_ast
+    in (match post_gen with
+        | Error err -> print_endline (match err with
+            | Message m -> m
+          )
+        | Success (_, gen_ast) ->
+          print_endline @@ show_program pp_meta gen_ast)
 
 let compile buf get_lines = 
   try generate (Parser.program Lexer.token buf) get_lines with
