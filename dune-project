@@ -17,4 +17,5 @@
   (core (= v0.12.4))
   (ppx_deriving (= 4.4))
   (menhir (>= 2.0))
+  (llvm (= 9.0.0))
   (ppx_import (>= 1.6.2))))

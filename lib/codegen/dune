@@ -1,5 +1,5 @@
 (library 
  (name codegen) 
- (libraries common) 
+ (libraries common llvm) 
  (modules 
-  context)) 
+  context llvmPass)) 
