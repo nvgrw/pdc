@@ -3,3 +3,7 @@
  (libraries common llvm) 
  (modules 
   context llvmPass)) 
+
+(env
+ (dev
+  (flags (:standard -w -32 -w -27))))

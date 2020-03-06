@@ -1,6 +1,6 @@
-type context = { other: int }
+type context = { values: Llvm.llvalue list }
 
-let empty_context = { other = 0 }
+let empty_context = { values = [] }
 
 type pass_error = 
   | Message of string
