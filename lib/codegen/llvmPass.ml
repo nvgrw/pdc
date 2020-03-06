@@ -11,8 +11,8 @@ module Walker_LlvmPass = Common.Walker.Make(struct
     type err = pass_error
     type mta = meta
 
-    let context = Llvm.global_context ()
-    let the_module = Llvm.create_module context "llpdc"
+    (* let context = Llvm.global_context () *)
+    (* let the_module = Llvm.create_module context "llpdc" *)
 
     let visit_program_pre p = success p
     let visit_program_pos p = success p

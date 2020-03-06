@@ -1,7 +1,6 @@
 open Common.AST
 open Common.VisitorMonad
 open Common.Data
-open Common.Meta
 
 open Context
 
@@ -11,12 +10,12 @@ let scope_block_pre = function
   | Block (scope, _, _, _) as e ->
     get >>= fun state ->
     (* Push scope to state *)
-    put { state with scopes = scope :: state.scopes } >>= fun _ -> 
+    put { scopes = scope :: state.scopes } >>= fun _ -> 
     success e
 let scope_block_pos = function
   | Block (_, decls, stmts, m) ->
     get >>= fun state ->
-    put { state with scopes = List.tl state.scopes } >>= fun _ ->
+    put { scopes = List.tl state.scopes } >>= fun _ ->
     (* Pop scope from state *)
     success @@ Block (List.hd state.scopes, decls, stmts, m)
 

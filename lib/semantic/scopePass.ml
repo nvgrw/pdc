@@ -30,7 +30,7 @@ module Walker_ScopePass = Common.Walker.Make(struct
         | Some _ -> error @@ StructuralError (DuplicateIdentifier (d, ident))
         | None ->
           let new_scope = StringMap.add ident typ @@ curr in
-          let new_state = { state with scopes = new_scope :: List.tl state.scopes } in
+          let new_state = { scopes = new_scope :: List.tl state.scopes } in
           put new_state >>= fun _ ->
           success d
 

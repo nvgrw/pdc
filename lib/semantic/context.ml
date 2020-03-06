@@ -1,5 +1,10 @@
 open Common.AST
 open Common.Meta
+open Common.Data
+
+type context = { scopes: meta typ StringMap.t list }
+
+let empty_context: context = { scopes = [] }
 
 type type_error =
   | IncompatibleBinOp of meta expr * meta typ * meta binop * meta typ
