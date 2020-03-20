@@ -1,6 +1,7 @@
 open Common.AST
 open Common.VisitorMonad
 open Common.Data
+open Common.Meta
 
 open Context
 

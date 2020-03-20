@@ -2,8 +2,6 @@ open Common.AST
 open Common.VisitorMonad
 open Common.Meta
 
-open Semantic.Context
-
 open Lexing
 open Printf
 
@@ -78,6 +76,7 @@ let generate (p: meta program) (get_lines: int -> int -> string list) =
     in (match post_gen with
         | Error err -> print_endline (match err with
             | Message m -> m
+            | _ -> "no message"
           )
         | Success (_, gen_ast) ->
           print_endline @@ show_program pp_meta gen_ast)

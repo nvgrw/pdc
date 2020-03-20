@@ -13,14 +13,14 @@ module Walker_LlvmPass = Common.Walker.Make(struct
     let pop_val =
       get >>= fun state -> 
       match state.values with
-      | [] -> error @@ Message "popped empty values list"
-      | vl :: rest ->
-        put { values = rest } >>= fun () ->
+      | `Codegen [] -> error @@ Message "popped empty values list"
+      | `Codegen (vl :: rest) ->
+        put { state with values = rest } >>= fun () ->
         success vl
 
     let push_val vl =
       get >>= fun state ->
-      put { values = vl :: state.values }
+      put { state with values = vl :: state.values }
 
     let con = Llvm.global_context ()
     let mdl = Llvm.create_module con "llpdc"
@@ -47,9 +47,10 @@ module Walker_LlvmPass = Common.Walker.Make(struct
 
     let visit_expr_pre e = success e
     let visit_expr_pos = function
-
+      (* Operations *)
       | BinOp (lhs, op, rhs, _) as e -> success e
       | UnOp (op, expr, _) as e -> success e
+      (* Constants *)
       | Const (Num (i, _), _) as e -> 
         push_val (Llvm.const_int int_type i) >>= fun () ->
         success e
@@ -59,10 +60,11 @@ module Walker_LlvmPass = Common.Walker.Make(struct
       | Const (Bool (b, _), _) as e -> 
         push_val (Llvm.const_int bool_type (if b then 1 else 0)) >>= fun () ->
         success e
+      (* Variables *)
       | Var (loc, _) as e -> success e
       (* maintain a mapping from var to llvm variables. they must be defined already *)
       | Typed (typ, expr, _) as e -> success e
-    (* keep track of type information to generate the right code? *)
+    (* keep track of type information to generate the right code? --> YES *)
 
     let visit_loc_pre l = success l
     let visit_loc_pos l = success l

@@ -1,6 +1,6 @@
-type context = { values: Llvm.llvalue list }
+open Common.Data
 
-let empty_context = { values = [] }
+type context_t = { values: Llvm.llvalue list; scopes: Llvm.llvalue StringMap.t list }
+type context = [ `Codegen of context_t ]
 
-type pass_error = 
-  | Message of string
+let empty_context = { values = []; scopes = [] }
