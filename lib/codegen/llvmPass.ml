@@ -11,16 +11,16 @@ module Walker_LlvmPass = Common.Walker.Make(struct
     type mta = meta
 
     let pop_val =
-      get >>= fun state -> 
+      get >>= fun (`Codegen state) ->
       match state.values with
-      | `Codegen [] -> error @@ Message "popped empty values list"
-      | `Codegen (vl :: rest) ->
-        put { state with values = rest } >>= fun () ->
+      | [] -> error @@ Message "popped empty values list"
+      | (vl :: rest) ->
+        put @@ `Codegen { state with values = rest } >>= fun () ->
         success vl
 
     let push_val vl =
-      get >>= fun state ->
-      put { state with values = vl :: state.values }
+      get >>= fun (`Codegen state) ->
+      put @@ `Codegen { state with values = vl :: state.values }
 
     let con = Llvm.global_context ()
     let mdl = Llvm.create_module con "llpdc"

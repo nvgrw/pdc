@@ -9,14 +9,14 @@ module Option = Core.Option
 
 let scope_block_pre = function
   | Block (scope, _, _, _) as e ->
-    get >>= fun state ->
+    get >>= fun (`Semantic state) ->
     (* Push scope to state *)
-    put { scopes = scope :: state.scopes } >>= fun _ -> 
+    put @@ `Semantic { scopes = scope :: state.scopes } >>= fun _ -> 
     success e
 let scope_block_pos = function
   | Block (_, decls, stmts, m) ->
-    get >>= fun state ->
-    put { scopes = List.tl state.scopes } >>= fun _ ->
+    get >>= fun (`Semantic state) ->
+    put @@ `Semantic { scopes = List.tl state.scopes } >>= fun _ ->
     (* Pop scope from state *)
     success @@ Block (List.hd state.scopes, decls, stmts, m)
 
@@ -27,6 +27,6 @@ let rec lookup m ident scopes = match scopes with
     Option.value state_type ~default:(lookup m ident ss)
   | _ -> error @@ StructuralError (BadIdentifier (m, ident))
 
-let get_type m ident = 
-  get >>= fun state ->
+let get m ident = 
+  get >>= fun (`Semantic state) ->
   lookup m ident state.scopes

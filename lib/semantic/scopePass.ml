@@ -24,13 +24,13 @@ module Walker_ScopePass = Common.Walker.Make(struct
     let visit_decl_pre d = success d
     let visit_decl_pos = function
       | Decl (typ, ident, _) as d -> 
-        get >>= fun state ->
+        get >>= fun (`Semantic state) ->
         let curr = List.hd state.scopes in
         match StringMap.find_opt ident curr with
         | Some _ -> error @@ StructuralError (DuplicateIdentifier (d, ident))
         | None ->
           let new_scope = StringMap.add ident typ @@ curr in
-          let new_state = { scopes = new_scope :: List.tl state.scopes } in
+          let new_state = `Semantic { scopes = new_scope :: List.tl state.scopes } in
           put new_state >>= fun _ ->
           success d
 
