@@ -1,6 +1,5 @@
 open Common.VisitorMonad
-
-open Codegen.Context
+open Common.Context
 
 let passes = [
   Codegen.LlvmPass.process

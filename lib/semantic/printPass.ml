@@ -2,8 +2,7 @@ open Common.VisitorMonad
 open Common.AST
 open Common.Data
 open Common.Meta
-
-open Context
+open Common.Context
 
 module Walker_PrintPass = Common.Walker.Make(struct 
     type ctx = context

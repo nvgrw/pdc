@@ -1,7 +1,6 @@
 open Common.AST
 open Common.VisitorMonad
 open Common.Meta
-
-open Context
+open Common.Context
 
 val process: meta program -> (context, meta program, pass_error) state

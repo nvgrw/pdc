@@ -1,7 +1,6 @@
-open Common.AST
-open Common.VisitorMonad
-open Common.Meta
-
+open AST
+open VisitorMonad
+open Meta
 open Context
 
 val scope_block_pre: meta block -> (context, meta block, pass_error) state

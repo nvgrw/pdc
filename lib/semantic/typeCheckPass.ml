@@ -1,8 +1,9 @@
 open Common.VisitorMonad
 open Common.AST
 open Common.Meta
+open Common.Context
 
-open Context
+module Scope = Common.Scope
 
 let unop_compatible = function
   | (Negate _, Int _) | (Negate _, Float _) -> true

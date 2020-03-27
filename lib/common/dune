@@ -1,5 +1,9 @@
 (library 
     (name common)
-    (libraries core)
-    (modules aST visitorMonad walker data meta contextCommon)
+    (libraries core llvm)
+    (modules aST visitorMonad walker data meta context scope)
     (preprocess (pps ppx_import ppx_deriving.show)))
+
+(env
+ (dev
+  (flags (:standard -w -32 -w -27))))

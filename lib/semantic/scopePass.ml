@@ -2,8 +2,9 @@ open Common.VisitorMonad
 open Common.AST
 open Common.Data
 open Common.Meta
+open Common.Context
 
-open Context
+module Scope = Common.Scope
 
 module Walker_ScopePass = Common.Walker.Make(struct 
     type ctx = context
@@ -24,15 +25,19 @@ module Walker_ScopePass = Common.Walker.Make(struct
     let visit_decl_pre d = success d
     let visit_decl_pos = function
       | Decl (typ, ident, _) as d -> 
-        get >>= fun (`Semantic state) ->
-        let curr = List.hd state.scopes in
-        match StringMap.find_opt ident curr with
-        | Some _ -> error @@ StructuralError (DuplicateIdentifier (d, ident))
-        | None ->
-          let new_scope = StringMap.add ident typ @@ curr in
-          let new_state = `Semantic { scopes = new_scope :: List.tl state.scopes } in
-          put new_state >>= fun _ ->
-          success d
+        get >>= fun wrapped_state -> match wrapped_state with
+        | `Semantic state ->
+          let curr = List.hd state.S.scopes in
+          begin
+            match StringMap.find_opt ident curr with
+            | Some _ -> error @@ StructuralError (DuplicateIdentifier (d, ident))
+            | None ->
+              let new_scope = StringMap.add ident typ @@ curr in
+              let new_state = `Semantic { S.scopes = new_scope :: List.tl state.S.scopes } in
+              put new_state >>= fun _ ->
+              success d
+          end
+        | _ -> raise Unknown
 
     let visit_expr_pre e = success e
     let visit_expr_pos e = success e

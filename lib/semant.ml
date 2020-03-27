@@ -1,6 +1,5 @@
 open Common.VisitorMonad
-
-open Semantic.Context
+open Common.Context
 
 let passes = [
   Semantic.ScopePass.process;
