@@ -10,16 +10,21 @@ module Walker_LlvmPass = Common.Walker.Make(struct
     type mta = meta
 
     let pop_val =
-      get >>= fun (`Codegen state) ->
-      match state.C.values with
-      | [] -> error @@ Message "popped empty values list"
-      | (vl :: rest) ->
-        put @@ `Codegen { state with values = rest } >>= fun () ->
-        success vl
+      get >>= fun wrapped_state -> match wrapped_state with
+      | `Codegen state -> begin
+          match state.C.values with
+          | [] -> error @@ Message "popped empty values list"
+          | (vl :: rest) ->
+            put @@ `Codegen { state with values = rest } >>= fun () ->
+            success vl
+        end
+      | _ -> raise Unknown
 
     let push_val vl =
-      get >>= fun (`Codegen state) ->
-      put @@ `Codegen { state with C.values = vl :: state.C.values }
+      get >>= fun wrapped_state -> match wrapped_state with
+      | `Codegen state ->
+        put @@ `Codegen { state with C.values = vl :: state.C.values }
+      | _ -> raise Unknown
 
     let con = Llvm.global_context ()
     let mdl = Llvm.create_module con "llpdc"
@@ -51,17 +56,18 @@ module Walker_LlvmPass = Common.Walker.Make(struct
       | UnOp (op, expr, _) as e -> success e
       (* Constants *)
       | Const (Num (i, _), _) as e -> 
-        (* push_val (Llvm.const_int int_type i) >>= fun () -> *)
+        push_val (Llvm.const_int int_type i) >>= fun () ->
         success e
       | Const (Real (r, _), _) as e -> 
-        (* push_val (Llvm.const_float real_type r) >>= fun () -> *)
+        push_val (Llvm.const_float real_type r) >>= fun () ->
         success e
       | Const (Bool (b, _), _) as e -> 
-        (* push_val (Llvm.const_int bool_type (if b then 1 else 0)) >>= fun () -> *)
+        push_val (Llvm.const_int bool_type (if b then 1 else 0)) >>= fun () ->
         success e
       (* Variables *)
       | Var (loc, _) as e -> success e
       (* maintain a mapping from var to llvm variables. they must be defined already *)
+      (* LLVM scope in AST --> then use the same scoping code *)
       | Typed (typ, expr, _) as e -> success e
     (* keep track of type information to generate the right code? --> YES *)
 
