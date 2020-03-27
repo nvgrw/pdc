@@ -23,7 +23,10 @@ type type_error =
 type structural_error =
   | BadIdentifier of meta * string
   | DuplicateIdentifier of meta decl * string
+type codegen_error =
+  | CannotGenerateExpression of meta expr
 type pass_error = 
   | TypeError of type_error
   | StructuralError of structural_error
+  | CodegenError of codegen_error
   | Message of string

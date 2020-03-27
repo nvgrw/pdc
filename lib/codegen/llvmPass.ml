@@ -52,7 +52,56 @@ module Walker_LlvmPass = Common.Walker.Make(struct
     let visit_expr_pre e = success e
     let visit_expr_pos = function
       (* Operations *)
-      | BinOp (lhs, op, rhs, _) as e -> success e
+      | BinOp (Typed(typ, _lhs, _), op, _rhs, _) as e ->
+        pop_val >>= fun rhs_llval ->
+        pop_val >>= fun lhs_llval ->
+        let build f ff ident = 
+          begin match typ with
+            | Float _ -> ff
+            | _ -> f
+          end lhs_llval rhs_llval ident bdr in
+        push_val @@ begin match op with
+          (* Arithmetic *)
+          | Add _ -> 
+            build Llvm.build_add Llvm.build_fadd "addtmp"
+          | Subtract _ -> 
+            build Llvm.build_sub Llvm.build_fsub "subtmp"
+          | Multiply _ -> 
+            build Llvm.build_mul Llvm.build_fmul "multmp"
+          | Divide _ -> 
+            build Llvm.build_sdiv Llvm.build_fdiv "divtmp"
+          (* Boolean *)
+          | Or _ -> 
+            Llvm.build_or lhs_llval rhs_llval "ortmp" bdr
+          | And _ -> 
+            Llvm.build_and lhs_llval rhs_llval "andtmp" bdr
+          (* Comparative *)
+          | Eq _ -> 
+            let ieq = Llvm.build_icmp Llvm.Icmp.Eq in
+            let feq = Llvm.build_fcmp Llvm.Fcmp.Oeq in
+            build ieq feq "eqtmp"
+          | Neq _ -> 
+            let ineq = Llvm.build_icmp Llvm.Icmp.Ne in
+            let fneq = Llvm.build_fcmp Llvm.Fcmp.One in
+            build ineq fneq "neqtmp"
+          | Lt _ -> 
+            let ilt = Llvm.build_icmp Llvm.Icmp.Slt in
+            let flt = Llvm.build_fcmp Llvm.Fcmp.Olt in
+            build ilt flt "lttmp"
+          | Leq _ -> 
+            let ileq = Llvm.build_icmp Llvm.Icmp.Sle in
+            let fleq = Llvm.build_fcmp Llvm.Fcmp.Ole in
+            build ileq fleq "leqtmp"
+          | Geq _ -> 
+            let igeq = Llvm.build_icmp Llvm.Icmp.Sge in
+            let fgeq = Llvm.build_fcmp Llvm.Fcmp.Oge in
+            build igeq fgeq "geqtmp"
+          | Gt _ -> 
+            let igt = Llvm.build_icmp Llvm.Icmp.Sgt in
+            let fgt = Llvm.build_fcmp Llvm.Fcmp.Ogt in
+            build igt fgt "gttmp"
+        end >>= fun _ -> 
+        success e
       | UnOp (op, expr, _) as e -> success e
       (* Constants *)
       | Const (Num (i, _), _) as e -> 
@@ -69,6 +118,7 @@ module Walker_LlvmPass = Common.Walker.Make(struct
       (* maintain a mapping from var to llvm variables. they must be defined already *)
       (* LLVM scope in AST --> then use the same scoping code *)
       | Typed (typ, expr, _) as e -> success e
+      | _ as e -> error @@ CodegenError (CannotGenerateExpression e)
     (* keep track of type information to generate the right code? --> YES *)
 
     let visit_loc_pre l = success l

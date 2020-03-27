@@ -70,6 +70,9 @@ let generate (p: meta program) (get_lines: int -> int -> string list) =
       | StructuralError (DuplicateIdentifier (decl, ident)) -> 
         let context = (match get_meta_decl decl with Position (s_pos, e_pos) -> generate_context get_lines s_pos e_pos) in
         sprintf "%s: identifier `%s' already declared in scope." context ident
+      | CodegenError (CannotGenerateExpression expr) ->
+        let context = (match get_meta_expr expr with Position (s_pos, e_pos) -> generate_context get_lines s_pos e_pos) in
+        sprintf "%s: cannot generate expression %s." context (show_expr pp_meta expr)
       | Message m -> m
     end
   | Success (_, semant_ast) -> 
