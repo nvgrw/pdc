@@ -25,6 +25,7 @@ type structural_error =
   | DuplicateIdentifier of meta decl * string
 type codegen_error =
   | CannotGenerateExpression of meta expr
+  | NegateOnlyIntOrFloat of meta expr
 type pass_error = 
   | TypeError of type_error
   | StructuralError of structural_error

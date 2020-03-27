@@ -102,7 +102,18 @@ module Walker_LlvmPass = Common.Walker.Make(struct
             build igt fgt "gttmp"
         end >>= fun _ -> 
         success e
-      | UnOp (op, expr, _) as e -> success e
+      | UnOp (op, Typed (typ, _expr, _), _) as e -> 
+        pop_val >>= fun llval ->
+        begin match op with
+          | Negate _ -> begin match typ with 
+              | Int _ -> push_val @@ Llvm.build_neg llval "tmpineg" bdr
+              | Float _ -> push_val @@ Llvm.build_fneg llval "tmpfneg" bdr
+              | _ -> error @@ CodegenError (NegateOnlyIntOrFloat e)
+            end
+          | Not _ -> (* bool *) 
+            push_val @@ Llvm.build_not llval "tmpnot" bdr
+        end >>= fun _ -> 
+        success e
       (* Constants *)
       | Const (Num (i, _), _) as e -> 
         push_val (Llvm.const_int int_type i) >>= fun () ->
@@ -115,8 +126,6 @@ module Walker_LlvmPass = Common.Walker.Make(struct
         success e
       (* Variables *)
       | Var (loc, _) as e -> success e
-      (* maintain a mapping from var to llvm variables. they must be defined already *)
-      (* LLVM scope in AST --> then use the same scoping code *)
       | Typed (typ, expr, _) as e -> success e
       | _ as e -> error @@ CodegenError (CannotGenerateExpression e)
     (* keep track of type information to generate the right code? --> YES *)
