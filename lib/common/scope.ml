@@ -30,8 +30,14 @@ let rec lookup m ident scopes = match scopes with
     Option.value state_type ~default:(lookup m ident ss)
   | _ -> error @@ StructuralError (BadIdentifier (m, ident))
 
-let get m ident = 
+let get_typ m ident = 
   get >>= fun wrapped_state -> match wrapped_state with
   | `Semantic state ->
     lookup m ident state.S.scopes
+  | _ -> raise Unknown
+
+let get_llvalue m ident = 
+  get >>= fun wrapped_state -> match wrapped_state with
+  | `Codegen state ->
+    lookup m ident state.C.scopes
   | _ -> raise Unknown

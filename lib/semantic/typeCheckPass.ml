@@ -111,7 +111,7 @@ module Walker_TypeCheckPass = Common.Walker.Make(struct
       | Deref (LTyped (Array (atyp, _, _) as arr, loc, lm), expr, m) -> 
         success @@ LTyped (atyp, Deref (LTyped (arr, loc, lm), expr, m), m)
       | Id (ident, m) as l -> 
-        Scope.get m ident >>= fun ident_typ ->
+        Scope.get_typ m ident >>= fun ident_typ ->
         success @@ LTyped (ident_typ, l, m)
       | LTyped _ as typed -> success typed
       | _ as l  -> error @@ TypeError (UntypedSubLocations l)
