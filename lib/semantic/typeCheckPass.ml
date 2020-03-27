@@ -67,18 +67,21 @@ module Walker_TypeCheckPass = Common.Walker.Make(struct
       | Assign (LTyped(ltyp, _, _), Typed(typ, _, _), _) as s ->
         if (same_typ (ltyp, typ)) then success s
         else error @@ TypeError (IncompatibleAssignment (s, ltyp, typ))
-      | If (Typed (typ, _, _), _, _, _) as s -> 
-        (match typ with 
-         |Bool _ -> success s
-         | _ -> error @@ TypeError (IfRequiresBoolean s))
-      | While (Typed (typ, _, _), _, _) as s ->
-        (match typ with 
-         |Bool _ -> success s
-         | _ -> error @@ TypeError (WhileRequiresBoolean s))
-      | Do (Typed (typ, _, _), _, _) as s ->
-        (match typ with 
-         |Bool _ -> success s
-         | _ -> error @@ TypeError (DoRequiresBoolean s))
+      | If (Typed (typ, _, _), _, _, _) as s -> begin 
+          match typ with 
+          | Bool _ -> success s
+          | _ -> error @@ TypeError (IfRequiresBoolean s)
+        end
+      | While (Typed (typ, _, _), _, _) as s -> begin
+          match typ with 
+          | Bool _ -> success s
+          | _ -> error @@ TypeError (WhileRequiresBoolean s)
+        end
+      | Do (Typed (typ, _, _), _, _) as s -> begin
+          match typ with 
+          | Bool _ -> success s
+          | _ -> error @@ TypeError (DoRequiresBoolean s)
+        end
       | Break _ as s -> success s
       | BlockStmt _ as s -> success s
       | _ as s -> error @@ TypeError (UntypedStatementFragment s)

@@ -35,7 +35,8 @@ let generate_context get_lines s_pos e_pos =
 let generate (p: meta program) (get_lines: int -> int -> string list) = 
   let post_semant = Semant.check p
   in match post_semant with
-  | Error err -> print_endline (match err with
+  | Error err -> print_endline @@ begin
+      match err with
       | TypeError (IncompatibleBinOp (expr, lt, op, rt)) -> 
         let context = (match get_meta_expr expr with Position (s_pos, e_pos) -> generate_context get_lines s_pos e_pos) in
         sprintf "%s: %s incompatible with types %s and %s." context (show_binop pp_meta op) (show_typ pp_meta lt) (show_typ pp_meta rt) 
@@ -70,16 +71,19 @@ let generate (p: meta program) (get_lines: int -> int -> string list) =
         let context = (match get_meta_decl decl with Position (s_pos, e_pos) -> generate_context get_lines s_pos e_pos) in
         sprintf "%s: identifier `%s' already declared in scope." context ident
       | Message m -> m
-    ) 
+    end
   | Success (_, semant_ast) -> 
     let post_gen = Gen.generate semant_ast
-    in (match post_gen with
-        | Error err -> print_endline (match err with
-            | Message m -> m
-            | _ -> "no message"
-          )
-        | Success (_, gen_ast) ->
-          print_endline @@ show_program pp_meta gen_ast)
+    in begin 
+      match post_gen with
+      | Error err -> print_endline @@ begin 
+          match err with
+          | Message m -> m
+          | _ -> "no message"
+        end
+      | Success (_, gen_ast) ->
+        print_endline @@ show_program pp_meta gen_ast 
+    end
 
 let compile buf get_lines = 
   try generate (Parser.program Lexer.token buf) get_lines with
