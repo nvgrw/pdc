@@ -33,47 +33,52 @@ let generate_context get_lines s_pos e_pos =
   sprintf "%s\n%s:%d:%d;%d:%d" code fname s_pos.pos_lnum (s_off + 1)  e_pos.pos_lnum (e_off + 1)
 
 let error_string err get_lines =
-  match err with
+  let type_str = match err with 
+    | TypeError _ -> "type"
+    | StructuralError _ -> "structural"
+    | CodegenError _ -> "codegen"
+    | Message _ -> "misc"
+  in match err with
   | TypeError (IncompatibleBinOp (expr, lt, op, rt)) -> 
     let context = (match get_meta_expr expr with Position (s_pos, e_pos) -> generate_context get_lines s_pos e_pos) in
-    sprintf "%s: %s incompatible with types %s and %s." context (show_binop pp_meta op) (show_typ pp_meta lt) (show_typ pp_meta rt) 
+    sprintf "%s: [%s] %s incompatible with types %s and %s." context type_str (show_binop pp_meta op) (show_typ pp_meta lt) (show_typ pp_meta rt) 
   | TypeError (IncompatibleUnOp (expr, op, t)) -> 
     let context = (match get_meta_expr expr with Position (s_pos, e_pos) -> generate_context get_lines s_pos e_pos) in
-    sprintf "%s: %s incompatible with type %s." context (show_unop pp_meta op) (show_typ pp_meta t)
+    sprintf "%s: [%s] %s incompatible with type %s." context type_str (show_unop pp_meta op) (show_typ pp_meta t)
   | TypeError (IncompatibleAssignment (stmt, ltyp, typ)) ->
     let context = (match get_meta_stmt stmt with Position (s_pos, e_pos) -> generate_context get_lines s_pos e_pos) in
-    sprintf "%s: incompatible assignment between types %s and %s." context (show_typ pp_meta ltyp) (show_typ pp_meta typ)
+    sprintf "%s: [%s] incompatible assignment between types %s and %s." context type_str (show_typ pp_meta ltyp) (show_typ pp_meta typ)
   | TypeError (IfRequiresBoolean stmt)->
     let context = (match get_meta_stmt stmt with Position (s_pos, e_pos) -> generate_context get_lines s_pos e_pos) in
-    sprintf "%s: if statement requires condition to evaluate to boolean expression." context
+    sprintf "%s: [%s] if statement requires condition to evaluate to boolean expression." context type_str
   | TypeError (WhileRequiresBoolean stmt) ->
     let context = (match get_meta_stmt stmt with Position (s_pos, e_pos) -> generate_context get_lines s_pos e_pos) in
-    sprintf "%s: while statement requires condition to evaluate to boolean expression." context
+    sprintf "%s: [%s] while statement requires condition to evaluate to boolean expression." context type_str
   | TypeError (DoRequiresBoolean stmt) ->
     let context = (match get_meta_stmt stmt with Position (s_pos, e_pos) -> generate_context get_lines s_pos e_pos) in
-    sprintf "%s: do statement requires condition to evaluate to a boolean expression." context
+    sprintf "%s: [%s] do statement requires condition to evaluate to a boolean expression." context type_str
   | TypeError (UntypedSubExpressions expr) ->
     let context = (match get_meta_expr expr with Position (s_pos, e_pos) -> generate_context get_lines s_pos e_pos) in
-    sprintf "%s: untyped subexpressions in expression %s." context (show_expr pp_meta expr)
+    sprintf "%s: [%s] untyped subexpressions in expression %s." context type_str (show_expr pp_meta expr)
   | TypeError (UntypedSubLocations loc) ->
     let context = (match get_meta_loc loc with Position (s_pos, e_pos) -> generate_context get_lines s_pos e_pos) in
-    sprintf "%s: untyped sublocations in location %s." context (show_loc pp_meta loc)
+    sprintf "%s: [%s] untyped sublocations in location %s." context type_str (show_loc pp_meta loc)
   | TypeError (UntypedStatementFragment stmt) ->
     let context = (match get_meta_stmt stmt with Position (s_pos, e_pos) -> generate_context get_lines s_pos e_pos) in
-    sprintf "%s: untyped statement fragment %s." context (show_stmt pp_meta stmt)
+    sprintf "%s: [%s] untyped statement fragment %s." context type_str (show_stmt pp_meta stmt)
   | StructuralError (BadIdentifier (m, ident)) -> 
     let context = (match m with Position (s_pos, e_pos) -> generate_context get_lines s_pos e_pos) in
-    sprintf "%s: identifier `%s' not declared in scope." context ident
+    sprintf "%s: [%s] identifier `%s' not declared in scope." context type_str ident
   | StructuralError (DuplicateIdentifier (decl, ident)) -> 
     let context = (match get_meta_decl decl with Position (s_pos, e_pos) -> generate_context get_lines s_pos e_pos) in
-    sprintf "%s: identifier `%s' already declared in scope." context ident
+    sprintf "%s: [%s] identifier `%s' already declared in scope." context type_str ident
   | CodegenError (CannotGenerateExpression expr) ->
     let context = (match get_meta_expr expr with Position (s_pos, e_pos) -> generate_context get_lines s_pos e_pos) in
-    sprintf "%s: cannot generate expression %s." context (show_expr pp_meta expr)
+    sprintf "%s: [%s] cannot generate expression %s." context type_str (show_expr pp_meta expr)
   | CodegenError (NegateOnlyIntOrFloat expr) ->
     let context = (match get_meta_expr expr with Position (s_pos, e_pos) -> generate_context get_lines s_pos e_pos) in
-    sprintf "%s: can only negate int or float %s." context (show_expr pp_meta expr)
-  | Message m -> m
+    sprintf "%s: [%s] can only negate int or float %s." context type_str (show_expr pp_meta expr)
+  | Message m -> sprintf "[%s] %s" type_str m
 
 let generate (p: meta program) (get_lines: int -> int -> string list) = 
   let post_semant = Semant.check p
