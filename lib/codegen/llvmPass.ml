@@ -4,6 +4,8 @@ open Common.AST
 open Common.Meta
 open Common.Context
 
+module Scope = Common.Scope
+
 module Walker_LlvmPass = Common.Walker.Make(struct 
     type ctx = context
     type err = pass_error
@@ -116,22 +118,27 @@ module Walker_LlvmPass = Common.Walker.Make(struct
         success e
       (* Constants *)
       | Const (Num (i, _), _) as e -> 
-        push_val (Llvm.const_int int_type i) >>= fun () ->
+        push_val @@ Llvm.const_int int_type i >>= fun () ->
         success e
       | Const (Real (r, _), _) as e -> 
-        push_val (Llvm.const_float real_type r) >>= fun () ->
+        push_val @@ Llvm.const_float real_type r >>= fun () ->
         success e
       | Const (Bool (b, _), _) as e -> 
-        push_val (Llvm.const_int bool_type (if b then 1 else 0)) >>= fun () ->
+        push_val @@ Llvm.const_int bool_type (if b then 1 else 0) >>= fun () ->
         success e
       (* Variables *)
       | Var (loc, _) as e -> success e
       | Typed (typ, expr, _) as e -> success e
       | _ as e -> error @@ CodegenError (CannotGenerateExpression e)
-    (* keep track of type information to generate the right code? --> YES *)
 
     let visit_loc_pre l = success l
-    let visit_loc_pos l = success l
+    let visit_loc_pos = function
+      | Id (ident, m) as l -> 
+        Scope.get_llvalue m ident >>= fun llval ->
+        push_val llval >>= fun _ ->
+        success l
+      | Deref (loc, expr, _) as l -> success l
+      | LTyped (typ, loc, _) as l -> success l
 
     let visit_typ_pre t = success t
     let visit_typ_pos t = success t
