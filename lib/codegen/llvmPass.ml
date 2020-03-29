@@ -3,6 +3,7 @@ open Common.VisitorMonad
 open Common.AST
 open Common.Meta
 open Common.Context
+open Common.Data
 
 module Scope = Common.Scope
 
@@ -52,7 +53,23 @@ module Walker_LlvmPass = Common.Walker.Make(struct
     let visit_stmt_pos s = success s
 
     let visit_decl_pre d = success d
-    let visit_decl_pos d = success d
+    let visit_decl_pos = function 
+      | Decl (typ, ident, _) as d ->
+        let lltyp = typ_to_llvm typ in
+        get >>= fun wrapped_state -> begin match wrapped_state with
+          | `Codegen state ->
+            begin match state.C.scopes with
+              | curr :: others ->
+                (* CAUSES SEGFAULT *)
+                let llval = Llvm.build_alloca lltyp "tmpalloca" bdr in
+                let new_scope = StringMap.add ident llval curr in
+                let new_state = { state with C.scopes = new_scope :: others } in
+                put @@ `Codegen new_state >>= fun _ ->
+                success d
+              | _ -> assert false
+            end
+          | _ -> assert false
+        end
 
     let visit_expr_pre e = success e
     let visit_expr_pos = function
