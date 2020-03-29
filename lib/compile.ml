@@ -78,6 +78,9 @@ let error_string err get_lines =
   | CodegenError (NegateOnlyIntOrFloat expr) ->
     let context = (match get_meta_expr expr with Position (s_pos, e_pos) -> generate_context get_lines s_pos e_pos) in
     sprintf "%s: [%s] can only negate int or float %s." context type_str (show_expr pp_meta expr)
+  | CodegenError (CannotGenerateLocation loc) ->
+    let context = (match get_meta_loc loc with Position (s_pos, e_pos) -> generate_context get_lines s_pos e_pos) in
+    sprintf "%s: [%s] cannot generate expression %s." context type_str (show_loc pp_meta loc)
   | Message m -> sprintf "[%s] %s" type_str m
 
 let generate (p: meta program) (get_lines: int -> int -> string list) = 
