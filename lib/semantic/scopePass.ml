@@ -37,7 +37,7 @@ module Walker_ScopePass = Common.Walker.Make(struct
               put new_state >>= fun _ ->
               success d
           end
-        | _ -> raise Unknown
+        | _ -> assert false
 
     let visit_expr_pre e = success e
     let visit_expr_pos e = success e

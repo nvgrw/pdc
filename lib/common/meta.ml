@@ -8,8 +8,6 @@ type meta =
 
 let dummy_meta = Position ((Lexing.dummy_pos, Lexing.dummy_pos))
 
-exception Unknown
-
 type type_error =
   | IncompatibleBinOp of meta expr * meta typ * meta binop * meta typ
   | IncompatibleUnOp of meta expr * meta unop * meta typ

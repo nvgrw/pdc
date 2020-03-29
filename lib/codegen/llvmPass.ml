@@ -20,13 +20,13 @@ module Walker_LlvmPass = Common.Walker.Make(struct
             put @@ `Codegen { state with values = rest } >>= fun () ->
             success vl
         end
-      | _ -> raise Unknown
+      | _ -> assert false
 
     let push_val vl =
       get >>= fun wrapped_state -> match wrapped_state with
       | `Codegen state ->
         put @@ `Codegen { state with C.values = vl :: state.C.values }
-      | _ -> raise Unknown
+      | _ -> assert false
 
     let con = Llvm.global_context ()
     let mdl = Llvm.create_module con "llpdc"
