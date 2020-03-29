@@ -41,11 +41,30 @@ module Walker_LlvmPass = Common.Walker.Make(struct
       | Char _ -> Llvm.i8_type con
       | Bool _ -> Llvm.i1_type con
 
-    let visit_program_pre p = success p
+    let visit_program_pre p = 
+      (* Llvm.define *)
+      let main_type = Llvm.function_type (Llvm.i64_type con) [||] in 
+      let main = Llvm.declare_function "main" main_type mdl in
+      let main_bb = Llvm.append_block con "entry" main in
+      let () = Llvm.position_at_end main_bb bdr in
+      success p
     let visit_program_pos p = success p
 
-    let scope_block_pre b = success b
-    let scope_block_pos b = success b
+    let scope_block_pre b = 
+      get >>= fun wrapped_state -> match wrapped_state with 
+      | `Codegen state ->
+        let new_state = { state with C.scopes = StringMap.empty :: state.C.scopes } in
+        put @@ `Codegen new_state >>= fun _ ->
+        success b
+      | _ -> assert false
+
+    let scope_block_pos b = 
+      get >>= fun wrapped_state -> match wrapped_state with
+      | `Codegen state ->
+        let new_state = { state with C.scopes = List.tl state.C.scopes } in
+        put @@ `Codegen new_state >>= fun _ ->
+        success b
+      | _ -> assert false
     let visit_block_pre b = success b
     let visit_block_pos b = success b
 
@@ -164,7 +183,7 @@ module Walker_LlvmPass = Common.Walker.Make(struct
       | Deref (LTyped (Array (atyp, _, _), _size, _), _expr, _) as l -> 
         pop_val >>= fun expr_llval ->
         pop_val >>= fun loc_llval ->
-        let indices = Array.of_list [Llvm.const_int (Llvm.i64_type con) 0; expr_llval] in
+        let indices = [| Llvm.const_int (Llvm.i64_type con) 0; expr_llval |] in
         let element = Llvm.const_gep expr_llval indices in
         push_val @@ Llvm.build_load element "tmpload" bdr >>= fun _ ->
         success l
