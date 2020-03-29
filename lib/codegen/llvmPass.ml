@@ -79,7 +79,6 @@ module Walker_LlvmPass = Common.Walker.Make(struct
           | `Codegen state ->
             begin match state.C.scopes with
               | curr :: others ->
-                (* CAUSES SEGFAULT *)
                 let llval = Llvm.build_alloca lltyp "tmpalloca" bdr in
                 let new_scope = StringMap.add ident llval curr in
                 let new_state = { state with C.scopes = new_scope :: others } in
@@ -174,7 +173,8 @@ module Walker_LlvmPass = Common.Walker.Make(struct
     let visit_loc_pos = function
       (* Identifiers *)
       | Id (ident, m) as l -> 
-        Scope.get_llvalue m ident >>= fun llval ->
+        Scope.get_llvalue m ident >>= fun llval_ptr ->
+        let llval = Llvm.build_load llval_ptr "tmpload" bdr in
         push_val llval >>= fun _ ->
         success l
       (* Array Dereferences (enforced through tcp) *)
