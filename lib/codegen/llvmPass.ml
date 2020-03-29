@@ -32,10 +32,13 @@ module Walker_LlvmPass = Common.Walker.Make(struct
     let mdl = Llvm.create_module con "llpdc"
     let bdr = Llvm.builder con
 
-    let int_type = Llvm.i64_type con
-    let real_type = Llvm.double_type con
-
-    let bool_type = Llvm.i1_type con
+    let rec typ_to_llvm = function
+      | Array (typ, size, _) ->
+        Llvm.array_type (typ_to_llvm typ) size
+      | Int _ -> Llvm.i64_type con
+      | Float _ -> Llvm.double_type con
+      | Char _ -> Llvm.i8_type con
+      | Bool _ -> Llvm.i1_type con
 
     let visit_program_pre p = success p
     let visit_program_pos p = success p
@@ -118,13 +121,13 @@ module Walker_LlvmPass = Common.Walker.Make(struct
         success e
       (* Constants *)
       | Const (Num (i, _), _) as e -> 
-        push_val @@ Llvm.const_int int_type i >>= fun () ->
+        push_val @@ Llvm.const_int (Llvm.i64_type con) i >>= fun () ->
         success e
       | Const (Real (r, _), _) as e -> 
-        push_val @@ Llvm.const_float real_type r >>= fun () ->
+        push_val @@ Llvm.const_float (Llvm.double_type con) r >>= fun () ->
         success e
       | Const (Bool (b, _), _) as e -> 
-        push_val @@ Llvm.const_int bool_type (if b then 1 else 0) >>= fun () ->
+        push_val @@ Llvm.const_int (Llvm.i1_type con) (if b then 1 else 0) >>= fun () ->
         success e
       (* Variables *)
       | Var (loc, _) as e -> success e
@@ -144,7 +147,7 @@ module Walker_LlvmPass = Common.Walker.Make(struct
       | Deref (LTyped (Array (atyp, _, _), _size, _), _expr, _) as l -> 
         pop_val >>= fun expr_llval ->
         pop_val >>= fun loc_llval ->
-        let indices = Array.of_list [Llvm.const_int int_type 0; expr_llval] in
+        let indices = Array.of_list [Llvm.const_int (Llvm.i64_type con) 0; expr_llval] in
         let element = Llvm.const_gep expr_llval indices in
         push_val @@ Llvm.build_load element "tmpload" bdr >>= fun _ ->
         success l
