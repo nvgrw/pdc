@@ -16,7 +16,7 @@ module Walker_LlvmPass = Common.Walker.Make(struct
       get >>= fun wrapped_state -> match wrapped_state with
       | `Codegen state -> begin
           match state.C.values with
-          | [] -> error @@ Message "popped empty values list"
+          | [] -> error @@ CodegenError ValueStackEmpty
           | (vl :: rest) ->
             put @@ `Codegen { state with values = rest } >>= fun () ->
             success vl
@@ -42,7 +42,6 @@ module Walker_LlvmPass = Common.Walker.Make(struct
       | Bool _ -> Llvm.i1_type con
 
     let visit_program_pre p = 
-      (* Llvm.define *)
       let main_type = Llvm.function_type (Llvm.i64_type con) [||] in 
       let main = Llvm.declare_function "main" main_type mdl in
       let main_bb = Llvm.append_block con "entry" main in
@@ -61,7 +60,6 @@ module Walker_LlvmPass = Common.Walker.Make(struct
         put @@ `Codegen new_state >>= fun _ ->
         success b
       | _ -> assert false
-
     let scope_block_pos b = 
       get >>= fun wrapped_state -> match wrapped_state with
       | `Codegen state ->

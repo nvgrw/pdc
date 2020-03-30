@@ -72,6 +72,8 @@ let error_string err get_lines =
   | StructuralError (DuplicateIdentifier (decl, ident)) -> 
     let context = (match get_meta_decl decl with Position (s_pos, e_pos) -> generate_context get_lines s_pos e_pos) in
     sprintf "%s: [%s] identifier `%s' already declared in scope." context type_str ident
+  | CodegenError ValueStackEmpty ->
+    sprintf "[%s] value stack empty" type_str
   | CodegenError (CannotGenerateExpression expr) ->
     let context = (match get_meta_expr expr with Position (s_pos, e_pos) -> generate_context get_lines s_pos e_pos) in
     sprintf "%s: [%s] cannot generate expression %s." context type_str (show_expr pp_meta expr)
