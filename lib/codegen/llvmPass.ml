@@ -169,7 +169,10 @@ module Walker_LlvmPass = Common.Walker.Make(struct
         push_val @@ Llvm.const_int (Llvm.i1_type con) (if b then 1 else 0) >>= fun () ->
         success e
       (* Variables *)
-      | Var (loc, _) as e -> success e
+      | Var (loc, _) as e -> 
+        pop_val >>= fun llval_ptr ->
+        push_val @@ Llvm.build_load llval_ptr "tmpload" bdr >>= fun _ ->
+        success e
       | Typed (typ, expr, _) as e -> success e
       | _ as e -> error @@ CodegenError (CannotGenerateExpression e)
 
@@ -177,8 +180,7 @@ module Walker_LlvmPass = Common.Walker.Make(struct
     let visit_loc_pos = function
       (* Identifiers *)
       | Id (ident, m) as l -> 
-        Scope.get_llvalue m ident >>= fun llval_ptr ->
-        let llval = Llvm.build_load llval_ptr "tmpload" bdr in
+        Scope.get_llvalue m ident >>= fun llval ->
         push_val llval >>= fun _ ->
         success l
       (* Array Dereferences (enforced through tcp) *)
