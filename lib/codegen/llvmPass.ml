@@ -29,6 +29,16 @@ module Walker_LlvmPass = Common.Walker.Make(struct
         put @@ `Codegen { state with C.values = vl :: state.C.values }
       | _ -> assert false
 
+    let print_stack =
+      get >>= fun wrapped_state -> match wrapped_state with
+      | `Codegen state ->
+        let stringify v = 
+          String.concat "|" [Llvm.string_of_llvalue v; Llvm.string_of_lltype @@ Llvm.type_of v] in
+        let mapper v = print_endline @@ stringify v in
+        let _ = List.map mapper state.C.values in
+        success ()
+      | _ -> assert false
+
     let con = Llvm.global_context ()
     let mdl = Llvm.create_module con "llpdc"
     let bdr = Llvm.builder con
