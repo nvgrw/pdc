@@ -44,8 +44,15 @@ module Walker_LlvmPass = Common.Walker.Make(struct
     let bdr = Llvm.builder con
 
     let rec typ_to_llvm = function
-      | Array (typ, size, _) ->
-        Llvm.array_type (typ_to_llvm typ) size
+      | Array (_typ, _size, _) as t ->
+        let rec resolve_array typ accum = begin match typ with 
+          | Array (inner, size, _) ->
+            let (accum, leaf) = resolve_array inner accum in
+            (size :: accum, leaf)
+          | _ as leaf -> (accum, typ_to_llvm leaf)
+        end in 
+        let (accum, leaf) = resolve_array t [] in
+        List.fold_left Llvm.array_type leaf accum
       | Int _ -> Llvm.i64_type con
       | Float _ -> Llvm.double_type con
       | Char _ -> Llvm.i8_type con
