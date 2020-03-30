@@ -202,16 +202,17 @@ module Walker_LlvmPass = Common.Walker.Make(struct
         push_val llval >>= fun _ ->
         success l
       (* Array Dereferences (enforced through tcp) *)
-      (* TODO: CONSTANT INDICES CAN BE OPTIMIZED *)
-      (* double deref?? --> stack with non-array derefs *)
-      | Deref (LTyped (Array (atyp, _, _), _size, _), _expr, _) as l -> 
+      | Deref (loc, expr, _) as l ->
         pop_val >>= fun expr_llval ->
         pop_val >>= fun loc_llval ->
-        let indices = [| Llvm.const_int (Llvm.i64_type con) 0; expr_llval |] in
-        push_val @@ Llvm.const_gep expr_llval indices >>= fun _ ->
+        let indices = [|
+          Llvm.const_int (Llvm.i64_type con) 0;
+          expr_llval
+        |] in
+        push_val @@ Llvm.build_gep loc_llval indices "tmpgep" bdr >>= fun _ ->
         success l
       | LTyped (typ, loc, _) as l -> success l
-      | _ as l -> error @@ CodegenError (CannotGenerateLocation l)
+    (* | _ as l -> error @@ CodegenError (CannotGenerateLocation l) *)
 
     let visit_typ_pre t = success t
     let visit_typ_pos t = success t
