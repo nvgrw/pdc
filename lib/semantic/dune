@@ -2,5 +2,5 @@
  (name semantic) 
  (libraries common) 
  (modules 
-  scopePass typeCheckPass printPass)
+  fixASTPass scopePass typeCheckPass printPass)
  (preprocess (pps ppx_import ppx_deriving.show)))
