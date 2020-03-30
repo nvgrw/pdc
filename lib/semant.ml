@@ -2,7 +2,6 @@ open Common.VisitorMonad
 open Common.Context
 
 let passes = [
-  Semantic.FixASTPass.process;
   Semantic.ScopePass.process;
   (* Semantic.Print.process; *)
   Semantic.TypeCheckPass.process
