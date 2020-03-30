@@ -73,7 +73,17 @@ module Walker_LlvmPass = Common.Walker.Make(struct
     let visit_block_pos b = success b
 
     let visit_stmt_pre s = success s
-    let visit_stmt_pos s = success s
+    let visit_stmt_pos = function
+      | Assign (loc, expr, _) as s -> 
+        pop_val >>= fun expr_llval ->
+        pop_val >>= fun loc_llval ->
+        let _ = Llvm.build_store expr_llval loc_llval bdr in
+        success s
+      | If (expr, stmt, stmt_opt, _) as s -> success s
+      | While (expr, stmt, _) as s -> success s
+      | Do (expr, stmt, _) as s -> success s
+      | Break _ as s -> success s
+      | BlockStmt (block, _) as s -> success s
 
     let visit_decl_pre d = success d
     let visit_decl_pos = function 
@@ -190,8 +200,7 @@ module Walker_LlvmPass = Common.Walker.Make(struct
         pop_val >>= fun expr_llval ->
         pop_val >>= fun loc_llval ->
         let indices = [| Llvm.const_int (Llvm.i64_type con) 0; expr_llval |] in
-        let element = Llvm.const_gep expr_llval indices in
-        push_val @@ Llvm.build_load element "tmpload" bdr >>= fun _ ->
+        push_val @@ Llvm.const_gep expr_llval indices >>= fun _ ->
         success l
       | LTyped (typ, loc, _) as l -> success l
       | _ as l -> error @@ CodegenError (CannotGenerateLocation l)
