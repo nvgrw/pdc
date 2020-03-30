@@ -48,7 +48,11 @@ module Walker_LlvmPass = Common.Walker.Make(struct
       let main_bb = Llvm.append_block con "entry" main in
       let () = Llvm.position_at_end main_bb bdr in
       success p
-    let visit_program_pos p = success p
+    let visit_program_pos p = 
+      Llvm.dump_module mdl;
+      Llvm.dispose_module mdl;
+      Llvm.dispose_context con;
+      success p
 
     let scope_block_pre b = 
       get >>= fun wrapped_state -> match wrapped_state with 
