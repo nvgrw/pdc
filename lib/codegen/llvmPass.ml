@@ -42,6 +42,9 @@ module Walker_LlvmPass = Common.Walker.Make(struct
     let con = Llvm.global_context ()
     let mdl = Llvm.create_module con "llpdc"
     let bdr = Llvm.builder con
+    let main = 
+      let main_type = Llvm.function_type (Llvm.i64_type con) [||] in 
+      Llvm.declare_function "main" main_type mdl
 
     let rec typ_to_llvm = function
       | Array (_typ, _size, _) as t ->
@@ -59,8 +62,6 @@ module Walker_LlvmPass = Common.Walker.Make(struct
       | Bool _ -> Llvm.i1_type con
 
     let visit_program_pre p = 
-      let main_type = Llvm.function_type (Llvm.i64_type con) [||] in 
-      let main = Llvm.declare_function "main" main_type mdl in
       let main_bb = Llvm.append_block con "entry" main in
       let () = Llvm.position_at_end main_bb bdr in
       success p
@@ -87,14 +88,19 @@ module Walker_LlvmPass = Common.Walker.Make(struct
     let visit_block_pre b = success b
     let visit_block_pos b = success b
 
-    let visit_stmt_pre s = success s
+    let visit_stmt_pre s = 
+      (* Llvm.insertion *)
+      (* Llvm.insertion_block *)
+      ignore @@ Llvm.append_block con "" main;
+      success s
     let visit_stmt_pos = function
       | Assign (loc, expr, _) as s -> 
         pop_val >>= fun expr_llval ->
         pop_val >>= fun loc_llval ->
         let _ = Llvm.build_store expr_llval loc_llval bdr in
         success s
-      | If (expr, stmt, stmt_opt, _) as s -> success s
+      | If (expr, stmt, stmt_opt, _) as s -> 
+        success s
       | While (expr, stmt, _) as s -> success s
       | Do (expr, stmt, _) as s -> success s
       | Break _ as s -> success s
