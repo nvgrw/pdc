@@ -12,9 +12,18 @@ let unop_compatible = function
 
 let wrap_type typ e m = success @@ Typed (typ, e, m)
 
+let rec same_typ = function
+  | (Array (left_typ, left_size, _), Array (right_typ, right_size, _)) 
+    -> same_typ (left_typ, right_typ) && left_size == right_size
+  | (Int _, Int _)
+  | (Float _, Float _)
+  | (Char _, Char _) 
+  | (Bool _, Char _) -> true
+  | _ -> false
+
 let binop_result = function
   (* Equality *)
-  | (t, Eq _, t', m) | (t, Neq _, t', m) when (t == t') -> Some (Bool m)
+  | (t, Eq _, t', m) | (t, Neq _, t', m) when (same_typ (t, t')) -> Some (Bool m)
   (* (Int) Inequality *)
   | (Int _, Lt _, Int _, m) 
   | (Int _, Leq _, Int _, m) 
@@ -39,15 +48,6 @@ let binop_result = function
   | (Float _, Multiply _, Float _, m) 
   | (Float _, Divide _, Float _, m) -> Some (Float m)
   | _ -> None
-
-let rec same_typ = function
-  | (Array (left_typ, left_size, _), Array (right_typ, right_size, _)) 
-    -> same_typ (left_typ, right_typ) && left_size == right_size
-  | (Int _, Int _)
-  | (Float _, Float _)
-  | (Char _, Char _) 
-  | (Bool _, Char _) -> true
-  | _ -> false
 
 module Walker_TypeCheckPass = Common.Walker.Make(struct 
     type ctx = context
