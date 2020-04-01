@@ -8,8 +8,12 @@ module S = struct
 end
 
 module C = struct
-  type context = { values: Llvm.llvalue list; scopes: Llvm.llvalue StringMap.t list }
-  let empty = `Codegen { values = []; scopes = [] }
+  type context = { 
+    values: Llvm.llvalue list; 
+    blocks: Llvm.llbasicblock list;
+    scopes: Llvm.llvalue StringMap.t list 
+  }
+  let empty = `Codegen { values = []; blocks = []; scopes = [] }
 end
 
 type context = [ 

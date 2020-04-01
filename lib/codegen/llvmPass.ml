@@ -22,11 +22,26 @@ module Walker_LlvmPass = Common.Walker.Make(struct
             success vl
         end
       | _ -> assert false
-
     let push_val vl =
       get >>= fun wrapped_state -> match wrapped_state with
       | `Codegen state ->
         put @@ `Codegen { state with C.values = vl :: state.C.values }
+      | _ -> assert false
+
+    let pop_blk =
+      get >>= fun wrapped_state -> match wrapped_state with
+      | `Codegen state -> begin
+          match state.C.blocks with
+          | [] -> error @@ CodegenError BlockStackEmpty
+          | (vl :: rest) ->
+            put @@ `Codegen { state with blocks = rest } >>= fun () ->
+            success vl
+        end
+      | _ -> assert false
+    let push_blk bl =
+      get >>= fun wrapped_state -> match wrapped_state with
+      | `Codegen state ->
+        put @@ `Codegen { state with C.blocks = bl :: state.C.blocks }
       | _ -> assert false
 
     let print_stack =
@@ -89,9 +104,8 @@ module Walker_LlvmPass = Common.Walker.Make(struct
     let visit_block_pos b = success b
 
     let visit_stmt_pre s = 
-      (* Llvm.insertion *)
-      (* Llvm.insertion_block *)
-      ignore @@ Llvm.append_block con "" main;
+      (* why don't we communicate parent & match on that
+         statement -> if parent is if then create label *)
       success s
     let visit_stmt_pos = function
       | Assign (loc, expr, _) as s -> 

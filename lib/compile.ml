@@ -74,6 +74,8 @@ let error_string err get_lines =
     sprintf "%s: [%s] identifier `%s' already declared in scope." context type_str ident
   | CodegenError ValueStackEmpty ->
     sprintf "[%s] value stack empty" type_str
+  | CodegenError BlockStackEmpty ->
+    sprintf "[%s] block stack empty" type_str
   | CodegenError (CannotGenerateExpression expr) ->
     let context = (match get_meta_expr expr with Position (s_pos, e_pos) -> generate_context get_lines s_pos e_pos) in
     sprintf "%s: [%s] cannot generate expression %s." context type_str (show_expr pp_meta expr)
@@ -93,8 +95,9 @@ let generate (p: meta program) (get_lines: int -> int -> string list) =
       let post_gen = Gen.generate semant_ast
       in begin match post_gen with
         | Error err -> print_endline @@ error_string err get_lines
-        | Success (_, gen_ast) ->
-          print_endline @@ show_program pp_meta gen_ast 
+        | Success (_, _gen_ast) ->
+          print_endline "OK"
+          (* print_endline @@ show_program pp_meta gen_ast  *)
       end
   end
 

@@ -23,6 +23,7 @@ type structural_error =
   | DuplicateIdentifier of meta decl * string
 type codegen_error =
   | ValueStackEmpty
+  | BlockStackEmpty
   | CannotGenerateExpression of meta expr
   | NegateOnlyIntOrFloat of meta expr
   | CannotGenerateLocation of meta loc

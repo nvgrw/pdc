@@ -93,7 +93,7 @@ type 'm decl =
 let get_meta_decl = function
   | Decl (_, _, m) -> m
 
-let pp_scope (fmt: Format.formatter) (scope: ('m typ) Data.StringMap.t) = 
+let pp_scope (fmt: Format.formatter) (scope: ('m typ) Data.StringMap.t) =
   let pp_opaque = fun ofmt _ -> Format.pp_print_string ofmt "<opaque>" in
   Data.StringMap.iter (fun k v -> Format.fprintf fmt "%s %s" k (show_typ pp_opaque v)) scope
 
