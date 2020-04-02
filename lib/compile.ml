@@ -87,11 +87,11 @@ let error_string err get_lines =
     sprintf "%s: [%s] cannot generate expression %s." context type_str (show_loc pp_meta loc)
   | Message m -> sprintf "[%s] %s" type_str m
 
-let generate (p: meta program) (get_lines: int -> int -> string list) = 
+let generate (p: meta program) (get_lines: int -> int -> string list) =
   let post_semant = Semant.check p
   in begin match post_semant with
     | Error err -> print_endline @@ error_string err get_lines
-    | Success (_, semant_ast) -> 
+    | Success (_, semant_ast) ->
       let post_gen = Gen.generate semant_ast
       in begin match post_gen with
         | Error err -> print_endline @@ error_string err get_lines
@@ -101,9 +101,9 @@ let generate (p: meta program) (get_lines: int -> int -> string list) =
       end
   end
 
-let compile buf get_lines = 
+let compile buf get_lines =
   try generate (Parser.program Lexer.token buf) get_lines with
   | Lexer.SyntaxError msg -> print_endline msg
-  | Parser.Error -> 
+  | Parser.Error ->
     let context = generate_context get_lines buf.lex_start_p buf.lex_curr_p in
     printf "%s: parser error\n" context

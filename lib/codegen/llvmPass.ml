@@ -35,14 +35,24 @@ module Walker_LlvmPass = Common.Walker.Make(struct
           | [] -> error @@ CodegenError BlockStackEmpty
           | (vl :: rest) ->
             put @@ `Codegen { state with blocks = rest } >>= fun () ->
+            print_string "POP ";
+            print_endline @@ Llvm.value_name @@ Llvm.value_of_block vl;
             success vl
         end
       | _ -> assert false
     let push_blk bl =
       get >>= function
       | `Codegen state ->
+        print_string "PUT ";
+        print_endline @@ Llvm.value_name @@ Llvm.value_of_block bl;
         put @@ `Codegen { state with C.blocks = bl :: state.C.blocks }
       | _ -> assert false
+
+    let pek_blk =
+      get >>= function
+      | `Codegen { C.blocks = bl :: other; _ } ->
+        success bl
+      | _ -> error @@ CodegenError BlockStackEmpty
 
     let print_stack =
       get >>= function
@@ -78,6 +88,7 @@ module Walker_LlvmPass = Common.Walker.Make(struct
       let main = Llvm.declare_function "main" main_type mdl in
       let main_bb = Llvm.append_block con "entry" main in
       let () = Llvm.position_at_end main_bb bdr in
+      push_blk main_bb >>= fun () ->
       success p
     let visit_program_pos _ p =
       (* ignore @@ Base.Option.map (Llvm_analysis.verify_module mdl) ~f:print_endline; *)
@@ -120,13 +131,8 @@ module Walker_LlvmPass = Common.Walker.Make(struct
           push_blk block >>= fun _ ->
           success s
         | _ -> success s
-      end >>= function
-      | If (_expr, _stmt, _stmt_opt, _) as s ->
-        push_blk @@ Llvm.insertion_block bdr >>= fun _ ->
-        success s
-      | _ as s ->
-        success s
-    let visit_stmt_pos parent = function
+      end
+    let visit_stmt_pos parent s = begin match s with
       | Assign (loc, expr, _) as s ->
         pop_val >>= fun expr_llval ->
         pop_val >>= fun loc_llval ->
@@ -135,12 +141,14 @@ module Walker_LlvmPass = Common.Walker.Make(struct
       | If (expr, stmt, stmt_opt, _) as s ->
         let func = Llvm.block_parent @@ Llvm.insertion_block bdr in
         pop_blk >>= fun cond_false ->
+        pop_blk >>= fun cond_false_begin ->
         pop_blk >>= fun cond_true ->
-        pop_blk >>= fun previous ->
+        pop_blk >>= fun cond_true_begin ->
+        pek_blk >>= fun previous ->
         pop_val >>= fun cond ->
         (* jump to previous block and create the branch instr *)
         Llvm.position_at_end previous bdr;
-        ignore @@ Llvm.build_cond_br cond cond_true cond_false bdr;
+        ignore @@ Llvm.build_cond_br cond cond_true_begin cond_false_begin bdr;
         (* link to post block *)
         let post_block = Llvm.append_block con "ifend" func in
         (* branch true to end *)
@@ -156,6 +164,12 @@ module Walker_LlvmPass = Common.Walker.Make(struct
       | Do (expr, stmt, _) as s -> success s
       | Break _ as s -> success s
       | BlockStmt (block, _) as s -> success s
+    end >>= fun s ->
+      success parent >>= function
+      | `Stmt If _ ->
+        push_blk @@ Llvm.insertion_block bdr >>= fun () ->
+        success s
+      | _ -> success s
 
     let visit_decl_pre _ d = success d
     let visit_decl_pos _ = function
