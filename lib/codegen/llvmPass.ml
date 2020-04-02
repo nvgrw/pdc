@@ -13,7 +13,7 @@ module Walker_LlvmPass = Common.Walker.Make(struct
     type mta = meta
 
     let pop_val =
-      get >>= fun wrapped_state -> match wrapped_state with
+      get >>= function
       | `Codegen state -> begin
           match state.C.values with
           | [] -> error @@ CodegenError ValueStackEmpty
@@ -23,13 +23,13 @@ module Walker_LlvmPass = Common.Walker.Make(struct
         end
       | _ -> assert false
     let push_val vl =
-      get >>= fun wrapped_state -> match wrapped_state with
+      get >>= function
       | `Codegen state ->
         put @@ `Codegen { state with C.values = vl :: state.C.values }
       | _ -> assert false
 
     let pop_blk =
-      get >>= fun wrapped_state -> match wrapped_state with
+      get >>= function
       | `Codegen state -> begin
           match state.C.blocks with
           | [] -> error @@ CodegenError BlockStackEmpty
@@ -39,13 +39,13 @@ module Walker_LlvmPass = Common.Walker.Make(struct
         end
       | _ -> assert false
     let push_blk bl =
-      get >>= fun wrapped_state -> match wrapped_state with
+      get >>= function
       | `Codegen state ->
         put @@ `Codegen { state with C.blocks = bl :: state.C.blocks }
       | _ -> assert false
 
     let print_stack =
-      get >>= fun wrapped_state -> match wrapped_state with
+      get >>= function
       | `Codegen state ->
         let stringify v = 
           String.concat "|" [Llvm.string_of_llvalue v; Llvm.string_of_lltype @@ Llvm.type_of v] in
@@ -76,25 +76,25 @@ module Walker_LlvmPass = Common.Walker.Make(struct
       | Char _ -> Llvm.i8_type con
       | Bool _ -> Llvm.i1_type con
 
-    let visit_program_pre parent p = 
+    let visit_program_pre _ p = 
       let main_bb = Llvm.append_block con "entry" main in
       let () = Llvm.position_at_end main_bb bdr in
       success p
-    let visit_program_pos parent p = 
+    let visit_program_pos _ p = 
       Llvm.dump_module mdl;
       Llvm.dispose_module mdl;
       Llvm.dispose_context con;
       success p
 
     let scope_block_pre _ b = 
-      get >>= fun wrapped_state -> match wrapped_state with 
+      get >>= function
       | `Codegen state ->
         let new_state = { state with C.scopes = StringMap.empty :: state.C.scopes } in
         put @@ `Codegen new_state >>= fun _ ->
         success b
       | _ -> assert false
     let scope_block_pos _ b = 
-      get >>= fun wrapped_state -> match wrapped_state with
+      get >>= function
       | `Codegen state ->
         let new_state = { state with C.scopes = List.tl state.C.scopes } in
         put @@ `Codegen new_state >>= fun _ ->
@@ -124,7 +124,7 @@ module Walker_LlvmPass = Common.Walker.Make(struct
     let visit_decl_pos _ = function 
       | Decl (typ, ident, _) as d ->
         let lltyp = typ_to_llvm typ in
-        get >>= fun wrapped_state -> begin match wrapped_state with
+        get >>= begin function
           | `Codegen state ->
             begin match state.C.scopes with
               | curr :: others ->
@@ -157,39 +157,39 @@ module Walker_LlvmPass = Common.Walker.Make(struct
             build Llvm.build_sub Llvm.build_fsub "subtmp"
           | Multiply _ -> 
             build Llvm.build_mul Llvm.build_fmul "multmp"
-          | Divide _ -> 
+          | Divide _ ->
             build Llvm.build_sdiv Llvm.build_fdiv "divtmp"
           (* Boolean *)
-          | Or _ -> 
+          | Or _ ->
             Llvm.build_or lhs_llval rhs_llval "ortmp" bdr
-          | And _ -> 
+          | And _ ->
             Llvm.build_and lhs_llval rhs_llval "andtmp" bdr
           (* Comparative *)
-          | Eq _ -> 
+          | Eq _ ->
             let ieq = Llvm.build_icmp Llvm.Icmp.Eq in
             let feq = Llvm.build_fcmp Llvm.Fcmp.Oeq in
             build ieq feq "eqtmp"
-          | Neq _ -> 
+          | Neq _ ->
             let ineq = Llvm.build_icmp Llvm.Icmp.Ne in
             let fneq = Llvm.build_fcmp Llvm.Fcmp.One in
             build ineq fneq "neqtmp"
-          | Lt _ -> 
+          | Lt _ ->
             let ilt = Llvm.build_icmp Llvm.Icmp.Slt in
             let flt = Llvm.build_fcmp Llvm.Fcmp.Olt in
             build ilt flt "lttmp"
-          | Leq _ -> 
+          | Leq _ ->
             let ileq = Llvm.build_icmp Llvm.Icmp.Sle in
             let fleq = Llvm.build_fcmp Llvm.Fcmp.Ole in
             build ileq fleq "leqtmp"
-          | Geq _ -> 
+          | Geq _ ->
             let igeq = Llvm.build_icmp Llvm.Icmp.Sge in
             let fgeq = Llvm.build_fcmp Llvm.Fcmp.Oge in
             build igeq fgeq "geqtmp"
-          | Gt _ -> 
+          | Gt _ ->
             let igt = Llvm.build_icmp Llvm.Icmp.Sgt in
             let fgt = Llvm.build_fcmp Llvm.Fcmp.Ogt in
             build igt fgt "gttmp"
-        end >>= fun _ -> 
+        end >>= fun _ ->
         success e
       | UnOp (op, Typed (typ, _expr, _), _) as e ->
         pop_val >>= fun llval ->

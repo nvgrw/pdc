@@ -25,7 +25,7 @@ module Walker_ScopePass = Common.Walker.Make(struct
     let visit_decl_pre _ d = success d
     let visit_decl_pos _ = function
       | Decl (typ, ident, _) as d ->
-        get >>= fun wrapped_state -> match wrapped_state with
+        get >>= function
         | `Semantic state ->
           let curr = List.hd state.S.scopes in
           begin

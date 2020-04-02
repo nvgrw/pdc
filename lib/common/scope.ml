@@ -9,15 +9,15 @@ module Option = Core.Option
 (* Semantic Only *)
 let scope_block_pre _ = function
   | Block (scope, _, _, _) as e ->
-    get >>= fun wrapped_state -> match wrapped_state with
+    get >>= function
     | `Semantic state ->
       (* Push scope to state *)
-      put @@ `Semantic { S.scopes = scope :: state.S.scopes } >>= fun _ -> 
+      put @@ `Semantic { S.scopes = scope :: state.S.scopes } >>= fun _ ->
       success e
     | _ -> assert false
 let scope_block_pos _ = function
   | Block (_, decls, stmts, m) ->
-    get >>= fun wrapped_state -> match wrapped_state with
+    get >>= function
     | `Semantic state ->
       put @@ `Semantic { S.scopes = List.tl state.S.scopes } >>= fun _ ->
       (* Pop scope from state *)
@@ -32,13 +32,13 @@ let rec lookup m ident scopes = match scopes with
   | _ -> error @@ StructuralError (BadIdentifier (m, ident))
 
 let get_typ m ident =
-  get >>= fun wrapped_state -> match wrapped_state with
+  get >>= function
   | `Semantic state ->
     lookup m ident state.S.scopes
   | _ -> assert false
 
 let get_llvalue m ident =
-  get >>= fun wrapped_state -> match wrapped_state with
+  get >>= function
   | `Codegen state ->
     lookup m ident state.C.scopes
   | _ -> assert false
