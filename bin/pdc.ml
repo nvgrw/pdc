@@ -23,19 +23,13 @@ let () =
   let input_string = String {test|{
   int i; i = 0;
   if (i == 0) {
-    if (i == 1) {
-      if (i == 2) {
-      } else {
-      }
-
-      i = 1;
+    if (i > 1) {
+      i = i + 1;
     } else {
-      i = 2;
+      i = i + 2;
     }
-    i = 4;
-  } else {
-    i = 3;
   }
+  i = 3;
 }|test} in
   match make_buf input_string with
     (buf, get_lines) -> Compile.compile buf get_lines

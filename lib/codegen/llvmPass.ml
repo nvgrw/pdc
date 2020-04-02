@@ -6,6 +6,7 @@ open Common.Context
 open Common.Data
 
 module Scope = Common.Scope
+module Option = Base.Option
 
 module Walker_LlvmPass = Common.Walker.Make(struct
     type ctx = context
@@ -124,7 +125,7 @@ module Walker_LlvmPass = Common.Walker.Make(struct
         pop_val >>= fun loc_llval ->
         let _ = Llvm.build_store expr_llval loc_llval bdr in
         success s
-      | If (expr, stmt, stmt_opt, _) as s ->
+      | If (expr, stmt, Some stmt_opt, _) as s ->
         let func = Llvm.block_parent @@ Llvm.insertion_block bdr in
         pop_blk >>= fun cond_false ->
         pop_blk >>= fun cond_false_begin ->
@@ -140,8 +141,25 @@ module Walker_LlvmPass = Common.Walker.Make(struct
         (* branch true to end *)
         Llvm.position_at_end cond_true bdr;
         ignore @@ Llvm.build_br post_block bdr;
-        (* branch false to end TODO if it exists *)
+        (* branch false to end *)
         Llvm.position_at_end cond_false bdr;
+        ignore @@ Llvm.build_br post_block bdr;
+        (* do the phi node stuff *)
+        Llvm.position_at_end post_block bdr;
+        success s
+      | If (expr, stmt, None, _) as s ->
+        let func = Llvm.block_parent @@ Llvm.insertion_block bdr in
+        pop_blk >>= fun cond_true ->
+        pop_blk >>= fun cond_true_begin ->
+        pop_blk >>= fun previous ->
+        pop_val >>= fun cond ->
+        (* jump to previous block and create the branch instr *)
+        Llvm.position_at_end previous bdr;
+        (* link to post block *)
+        let post_block = Llvm.append_block con "ifend" func in
+        ignore @@ Llvm.build_cond_br cond cond_true_begin post_block bdr;
+        (* branch true to end *)
+        Llvm.position_at_end cond_true bdr;
         ignore @@ Llvm.build_br post_block bdr;
         (* do the phi node stuff *)
         Llvm.position_at_end post_block bdr;
