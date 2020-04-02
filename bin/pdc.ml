@@ -24,6 +24,10 @@ let () =
   int i; i = 0;
   if (i == 0) {
     if (i == 1) {
+      if (i == 2) {
+      } else {
+      }
+
       i = 1;
     } else {
       i = 2;
