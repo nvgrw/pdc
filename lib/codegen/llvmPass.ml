@@ -7,7 +7,7 @@ open Common.Data
 
 module Scope = Common.Scope
 
-module Walker_LlvmPass = Common.Walker.Make(struct 
+module Walker_LlvmPass = Common.Walker.Make(struct
     type ctx = context
     type err = pass_error
     type mta = meta
@@ -47,7 +47,7 @@ module Walker_LlvmPass = Common.Walker.Make(struct
     let print_stack =
       get >>= function
       | `Codegen state ->
-        let stringify v = 
+        let stringify v =
           String.concat "|" [Llvm.string_of_llvalue v; Llvm.string_of_lltype @@ Llvm.type_of v] in
         let mapper v = print_endline @@ stringify v in
         let _ = List.map mapper state.C.values in
@@ -57,18 +57,15 @@ module Walker_LlvmPass = Common.Walker.Make(struct
     let con = Llvm.global_context ()
     let mdl = Llvm.create_module con "llpdc"
     let bdr = Llvm.builder con
-    let main = 
-      let main_type = Llvm.function_type (Llvm.i64_type con) [||] in 
-      Llvm.declare_function "main" main_type mdl
 
     let rec typ_to_llvm = function
       | Array (_typ, _size, _) as t ->
-        let rec resolve_array typ accum = begin match typ with 
+        let rec resolve_array typ accum = begin match typ with
           | Array (inner, size, _) ->
             let (accum, leaf) = resolve_array inner accum in
             (size :: accum, leaf)
           | _ as leaf -> (accum, typ_to_llvm leaf)
-        end in 
+        end in
         let (accum, leaf) = resolve_array t [] in
         List.fold_left Llvm.array_type leaf accum
       | Int _ -> Llvm.i64_type con
@@ -76,24 +73,27 @@ module Walker_LlvmPass = Common.Walker.Make(struct
       | Char _ -> Llvm.i8_type con
       | Bool _ -> Llvm.i1_type con
 
-    let visit_program_pre _ p = 
+    let visit_program_pre _ p =
+      let main_type = Llvm.function_type (Llvm.i64_type con) [||] in
+      let main = Llvm.declare_function "main" main_type mdl in
       let main_bb = Llvm.append_block con "entry" main in
       let () = Llvm.position_at_end main_bb bdr in
       success p
-    let visit_program_pos _ p = 
+    let visit_program_pos _ p =
+      (* ignore @@ Base.Option.map (Llvm_analysis.verify_module mdl) ~f:print_endline; *)
       Llvm.dump_module mdl;
       Llvm.dispose_module mdl;
       Llvm.dispose_context con;
       success p
 
-    let scope_block_pre _ b = 
+    let scope_block_pre _ b =
       get >>= function
       | `Codegen state ->
         let new_state = { state with C.scopes = StringMap.empty :: state.C.scopes } in
         put @@ `Codegen new_state >>= fun _ ->
         success b
       | _ -> assert false
-    let scope_block_pos _ b = 
+    let scope_block_pos _ b =
       get >>= function
       | `Codegen state ->
         let new_state = { state with C.scopes = List.tl state.C.scopes } in
@@ -103,17 +103,54 @@ module Walker_LlvmPass = Common.Walker.Make(struct
     let visit_block_pre _ b = success b
     let visit_block_pos _ b = success b
 
-    let visit_stmt_pre _ s = 
-      (* why don't we communicate parent & match on that
-         statement -> if parent is if then create label *)
-      success s
-    let visit_stmt_pos _ = function
-      | Assign (loc, expr, _) as s -> 
+    (* Llvm. *)
+    (* LLVM
+       br
+       if:
+       then:
+       endif:
+        merge blk
+    *)
+    let visit_stmt_pre parent s =
+      begin match parent with
+        | `Stmt If _ ->
+          let func = Llvm.block_parent @@ Llvm.insertion_block bdr in
+          let block = Llvm.append_block con "cond" func in
+          Llvm.position_at_end block bdr;
+          push_blk block >>= fun _ ->
+          success s
+        | _ -> success s
+      end >>= function
+      | If (_expr, _stmt, _stmt_opt, _) as s ->
+        push_blk @@ Llvm.insertion_block bdr >>= fun _ ->
+        success s
+      | _ as s ->
+        success s
+    let visit_stmt_pos parent = function
+      | Assign (loc, expr, _) as s ->
         pop_val >>= fun expr_llval ->
         pop_val >>= fun loc_llval ->
         let _ = Llvm.build_store expr_llval loc_llval bdr in
         success s
-      | If (expr, stmt, stmt_opt, _) as s -> 
+      | If (expr, stmt, stmt_opt, _) as s ->
+        let func = Llvm.block_parent @@ Llvm.insertion_block bdr in
+        pop_blk >>= fun cond_false ->
+        pop_blk >>= fun cond_true ->
+        pop_blk >>= fun previous ->
+        pop_val >>= fun cond ->
+        (* jump to previous block and create the branch instr *)
+        Llvm.position_at_end previous bdr;
+        ignore @@ Llvm.build_cond_br cond cond_true cond_false bdr;
+        (* link to post block *)
+        let post_block = Llvm.append_block con "ifend" func in
+        (* branch true to end *)
+        Llvm.position_at_end cond_true bdr;
+        ignore @@ Llvm.build_br post_block bdr;
+        (* branch false to end TODO if it exists *)
+        Llvm.position_at_end cond_false bdr;
+        ignore @@ Llvm.build_br post_block bdr;
+        (* do the phi node stuff *)
+        Llvm.position_at_end post_block bdr;
         success s
       | While (expr, stmt, _) as s -> success s
       | Do (expr, stmt, _) as s -> success s
@@ -121,7 +158,7 @@ module Walker_LlvmPass = Common.Walker.Make(struct
       | BlockStmt (block, _) as s -> success s
 
     let visit_decl_pre _ d = success d
-    let visit_decl_pos _ = function 
+    let visit_decl_pos _ = function
       | Decl (typ, ident, _) as d ->
         let lltyp = typ_to_llvm typ in
         get >>= begin function
@@ -144,18 +181,18 @@ module Walker_LlvmPass = Common.Walker.Make(struct
       | BinOp (Typed(typ, _lhs, _), op, _rhs, _) as e ->
         pop_val >>= fun rhs_llval ->
         pop_val >>= fun lhs_llval ->
-        let build f ff ident = 
+        let build f ff ident =
           begin match typ with
             | Float _ -> ff
             | _ -> f
           end lhs_llval rhs_llval ident bdr in
         push_val @@ begin match op with
           (* Arithmetic *)
-          | Add _ -> 
+          | Add _ ->
             build Llvm.build_add Llvm.build_fadd "addtmp"
-          | Subtract _ -> 
+          | Subtract _ ->
             build Llvm.build_sub Llvm.build_fsub "subtmp"
-          | Multiply _ -> 
+          | Multiply _ ->
             build Llvm.build_mul Llvm.build_fmul "multmp"
           | Divide _ ->
             build Llvm.build_sdiv Llvm.build_fdiv "divtmp"

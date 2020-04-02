@@ -2,10 +2,10 @@ open Arg
 open Setup
 
 (* Main *)
-let () = 
+let () =
   let () = print_endline "  *** PDC ***" in
   let options: (doc * spec * doc) list = [
-    ("--parse", String print_endline, "this is the help text i think") 
+    ("--parse", String print_endline, "this is the help text i think")
   ] in
   let anon_handle x = print_endline @@ Printf.sprintf "Anonymous argument %s" x in
   let exec_name = Sys.argv.(0) in
@@ -23,12 +23,17 @@ let () =
   let input_string = String {test|{
   int i; i = 0;
   if (i == 0) {
-    i = 1;
+    if (i == 1) {
+      i = 1;
+    } else {
+      i = 2;
+    }
+    i = 4;
   } else {
-    i = 2;
+    i = 3;
   }
 }|test} in
   match make_buf input_string with
-    (buf, get_lines) -> Compile.compile buf get_lines 
+    (buf, get_lines) -> Compile.compile buf get_lines
 
 (* x = true; *)

@@ -1,7 +1,7 @@
-(library 
- (name codegen) 
- (libraries common llvm) 
- (modules llvmPass)) 
+(library
+ (name codegen)
+ (libraries common llvm)
+ (modules llvmPass))
 
 (env
  (dev
