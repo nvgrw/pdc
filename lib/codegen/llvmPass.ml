@@ -76,38 +76,38 @@ module Walker_LlvmPass = Common.Walker.Make(struct
       | Char _ -> Llvm.i8_type con
       | Bool _ -> Llvm.i1_type con
 
-    let visit_program_pre p = 
+    let visit_program_pre parent p = 
       let main_bb = Llvm.append_block con "entry" main in
       let () = Llvm.position_at_end main_bb bdr in
       success p
-    let visit_program_pos p = 
+    let visit_program_pos parent p = 
       Llvm.dump_module mdl;
       Llvm.dispose_module mdl;
       Llvm.dispose_context con;
       success p
 
-    let scope_block_pre b = 
+    let scope_block_pre _ b = 
       get >>= fun wrapped_state -> match wrapped_state with 
       | `Codegen state ->
         let new_state = { state with C.scopes = StringMap.empty :: state.C.scopes } in
         put @@ `Codegen new_state >>= fun _ ->
         success b
       | _ -> assert false
-    let scope_block_pos b = 
+    let scope_block_pos _ b = 
       get >>= fun wrapped_state -> match wrapped_state with
       | `Codegen state ->
         let new_state = { state with C.scopes = List.tl state.C.scopes } in
         put @@ `Codegen new_state >>= fun _ ->
         success b
       | _ -> assert false
-    let visit_block_pre b = success b
-    let visit_block_pos b = success b
+    let visit_block_pre _ b = success b
+    let visit_block_pos _ b = success b
 
-    let visit_stmt_pre s = 
+    let visit_stmt_pre _ s = 
       (* why don't we communicate parent & match on that
          statement -> if parent is if then create label *)
       success s
-    let visit_stmt_pos = function
+    let visit_stmt_pos _ = function
       | Assign (loc, expr, _) as s -> 
         pop_val >>= fun expr_llval ->
         pop_val >>= fun loc_llval ->
@@ -120,8 +120,8 @@ module Walker_LlvmPass = Common.Walker.Make(struct
       | Break _ as s -> success s
       | BlockStmt (block, _) as s -> success s
 
-    let visit_decl_pre d = success d
-    let visit_decl_pos = function 
+    let visit_decl_pre _ d = success d
+    let visit_decl_pos _ = function 
       | Decl (typ, ident, _) as d ->
         let lltyp = typ_to_llvm typ in
         get >>= fun wrapped_state -> begin match wrapped_state with
@@ -138,8 +138,8 @@ module Walker_LlvmPass = Common.Walker.Make(struct
           | _ -> assert false
         end
 
-    let visit_expr_pre e = success e
-    let visit_expr_pos = function
+    let visit_expr_pre _ e = success e
+    let visit_expr_pos _ = function
       (* Operations *)
       | BinOp (Typed(typ, _lhs, _), op, _rhs, _) as e ->
         pop_val >>= fun rhs_llval ->
@@ -191,40 +191,40 @@ module Walker_LlvmPass = Common.Walker.Make(struct
             build igt fgt "gttmp"
         end >>= fun _ -> 
         success e
-      | UnOp (op, Typed (typ, _expr, _), _) as e -> 
+      | UnOp (op, Typed (typ, _expr, _), _) as e ->
         pop_val >>= fun llval ->
         begin match op with
-          | Negate _ -> begin match typ with 
+          | Negate _ -> begin match typ with
               | Int _ -> push_val @@ Llvm.build_neg llval "tmpineg" bdr
               | Float _ -> push_val @@ Llvm.build_fneg llval "tmpfneg" bdr
               | _ -> error @@ CodegenError (NegateOnlyIntOrFloat e)
             end
-          | Not _ -> (* bool *) 
+          | Not _ -> (* bool *)
             push_val @@ Llvm.build_not llval "tmpnot" bdr
-        end >>= fun _ -> 
+        end >>= fun _ ->
         success e
       (* Constants *)
-      | Const (Num (i, _), _) as e -> 
+      | Const (Num (i, _), _) as e ->
         push_val @@ Llvm.const_int (Llvm.i64_type con) i >>= fun () ->
         success e
-      | Const (Real (r, _), _) as e -> 
+      | Const (Real (r, _), _) as e ->
         push_val @@ Llvm.const_float (Llvm.double_type con) r >>= fun () ->
         success e
-      | Const (Bool (b, _), _) as e -> 
+      | Const (Bool (b, _), _) as e ->
         push_val @@ Llvm.const_int (Llvm.i1_type con) (if b then 1 else 0) >>= fun () ->
         success e
       (* Variables *)
-      | Var (loc, _) as e -> 
+      | Var (loc, _) as e ->
         pop_val >>= fun llval_ptr ->
         push_val @@ Llvm.build_load llval_ptr "tmpload" bdr >>= fun _ ->
         success e
       | Typed (typ, expr, _) as e -> success e
       | _ as e -> error @@ CodegenError (CannotGenerateExpression e)
 
-    let visit_loc_pre l = success l
-    let visit_loc_pos = function
+    let visit_loc_pre _ l = success l
+    let visit_loc_pos _ = function
       (* Identifiers *)
-      | Id (ident, m) as l -> 
+      | Id (ident, m) as l ->
         Scope.get_llvalue m ident >>= fun llval ->
         push_val llval >>= fun _ ->
         success l
@@ -241,7 +241,7 @@ module Walker_LlvmPass = Common.Walker.Make(struct
       | LTyped (typ, loc, _) as l -> success l
     (* | _ as l -> error @@ CodegenError (CannotGenerateLocation l) *)
 
-    let visit_typ_pre t = success t
-    let visit_typ_pos t = success t
+    let visit_typ_pre _ t = success t
+    let visit_typ_pos _ t = success t
   end)
-let process = Walker_LlvmPass.walk_program
+let process = Walker_LlvmPass.walk_program `Root

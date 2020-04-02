@@ -7,7 +7,7 @@ open Context
 module Option = Core.Option
 
 (* Semantic Only *)
-let scope_block_pre = function
+let scope_block_pre _ = function
   | Block (scope, _, _, _) as e ->
     get >>= fun wrapped_state -> match wrapped_state with
     | `Semantic state ->
@@ -15,7 +15,7 @@ let scope_block_pre = function
       put @@ `Semantic { S.scopes = scope :: state.S.scopes } >>= fun _ -> 
       success e
     | _ -> assert false
-let scope_block_pos = function
+let scope_block_pos _ = function
   | Block (_, decls, stmts, m) ->
     get >>= fun wrapped_state -> match wrapped_state with
     | `Semantic state ->
@@ -31,13 +31,13 @@ let rec lookup m ident scopes = match scopes with
     Option.value state_type ~default:(lookup m ident ss)
   | _ -> error @@ StructuralError (BadIdentifier (m, ident))
 
-let get_typ m ident = 
+let get_typ m ident =
   get >>= fun wrapped_state -> match wrapped_state with
   | `Semantic state ->
     lookup m ident state.S.scopes
   | _ -> assert false
 
-let get_llvalue m ident = 
+let get_llvalue m ident =
   get >>= fun wrapped_state -> match wrapped_state with
   | `Codegen state ->
     lookup m ident state.C.scopes

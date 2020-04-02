@@ -121,3 +121,17 @@ let get_meta_block = function
 
 type 'm program = 'm block
 [@@deriving show]
+
+type 'm ast = [
+  | `Binop of 'm binop
+  | `Unop of 'm unop
+  | `Value of 'm value
+  | `Typ of 'm typ
+  | `Expr of 'm expr
+  | `Loc of 'm loc
+  | `Decl of 'm decl
+  | `Stmt of 'm stmt
+  | `Block of 'm block
+  | `Program of 'm program
+  | `Root
+]

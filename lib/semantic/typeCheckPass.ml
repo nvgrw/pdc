@@ -54,16 +54,16 @@ module Walker_TypeCheckPass = Common.Walker.Make(struct
     type err = pass_error
     type mta = meta
 
-    let visit_program_pre p = success p
-    let visit_program_pos p = success p
+    let visit_program_pre _ p = success p
+    let visit_program_pos _ p = success p
 
     let scope_block_pre = Scope.scope_block_pre
     let scope_block_pos = Scope.scope_block_pos
-    let visit_block_pre b = success b
-    let visit_block_pos b = success b
+    let visit_block_pre _ b = success b
+    let visit_block_pos _ b = success b
 
-    let visit_stmt_pre s = success s
-    let visit_stmt_pos = function
+    let visit_stmt_pre _ s = success s
+    let visit_stmt_pos _ = function
       | Assign (LTyped(ltyp, _, _), Typed(typ, _, _), _) as s ->
         if (same_typ (ltyp, typ)) then success s
         else error @@ TypeError (IncompatibleAssignment (s, ltyp, typ))
@@ -73,12 +73,12 @@ module Walker_TypeCheckPass = Common.Walker.Make(struct
           | _ -> error @@ TypeError (IfRequiresBoolean s)
         end
       | While (Typed (typ, _, _), _, _) as s -> begin
-          match typ with 
+          match typ with
           | Bool _ -> success s
           | _ -> error @@ TypeError (WhileRequiresBoolean s)
         end
       | Do (Typed (typ, _, _), _, _) as s -> begin
-          match typ with 
+          match typ with
           | Bool _ -> success s
           | _ -> error @@ TypeError (DoRequiresBoolean s)
         end
@@ -86,11 +86,11 @@ module Walker_TypeCheckPass = Common.Walker.Make(struct
       | BlockStmt _ as s -> success s
       | _ as s -> error @@ TypeError (UntypedStatementFragment s)
 
-    let visit_decl_pre d = success d
-    let visit_decl_pos d = success d
+    let visit_decl_pre _ d = success d
+    let visit_decl_pos _ d = success d
 
-    let visit_expr_pre e = success e
-    let visit_expr_pos = function
+    let visit_expr_pre _ e = success e
+    let visit_expr_pos _ = function
       | BinOp (Typed (lt, _, _), op, Typed (rt, _, _), m) as e -> (
           match binop_result (lt, op, rt, m) with
           | Some merged_type -> wrap_type merged_type e m
@@ -106,18 +106,18 @@ module Walker_TypeCheckPass = Common.Walker.Make(struct
       | Typed _ as typed -> success typed
       | _ as e -> error @@ TypeError (UntypedSubExpressions e)
 
-    let visit_loc_pre l = success l
-    let visit_loc_pos = function
-      | Deref (LTyped (Array (atyp, _, _) as arr, loc, lm), expr, m) -> 
+    let visit_loc_pre _ l = success l
+    let visit_loc_pos _ = function
+      | Deref (LTyped (Array (atyp, _, _) as arr, loc, lm), expr, m) ->
         success @@ LTyped (atyp, Deref (LTyped (arr, loc, lm), expr, m), m)
-      | Id (ident, m) as l -> 
+      | Id (ident, m) as l ->
         Scope.get_typ m ident >>= fun ident_typ ->
         success @@ LTyped (ident_typ, l, m)
       | LTyped _ as typed -> success typed
       | _ as l  -> error @@ TypeError (UntypedSubLocations l)
 
-    let visit_typ_pre t = success t
-    let visit_typ_pos t = success t
+    let visit_typ_pre _ t = success t
+    let visit_typ_pos _ t = success t
   end)
 
-let process = Walker_TypeCheckPass.walk_program
+let process = Walker_TypeCheckPass.walk_program `Root
