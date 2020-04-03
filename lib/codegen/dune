@@ -1,6 +1,6 @@
 (library
  (name codegen)
- (libraries common llvm)
+ (libraries common llvm llvm.analysis)
  (modules llvmPass))
 
 (env

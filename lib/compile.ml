@@ -69,7 +69,7 @@ let error_string err get_lines =
   | StructuralError (BadIdentifier (m, ident)) -> 
     let context = (match m with Position (s_pos, e_pos) -> generate_context get_lines s_pos e_pos) in
     sprintf "%s: [%s] identifier `%s' not declared in scope." context type_str ident
-  | StructuralError (DuplicateIdentifier (decl, ident)) -> 
+  | StructuralError (DuplicateIdentifier (decl, ident)) ->
     let context = (match get_meta_decl decl with Position (s_pos, e_pos) -> generate_context get_lines s_pos e_pos) in
     sprintf "%s: [%s] identifier `%s' already declared in scope." context type_str ident
   | CodegenError ValueStackEmpty ->
@@ -85,6 +85,8 @@ let error_string err get_lines =
   | CodegenError (CannotGenerateLocation loc) ->
     let context = (match get_meta_loc loc with Position (s_pos, e_pos) -> generate_context get_lines s_pos e_pos) in
     sprintf "%s: [%s] cannot generate expression %s." context type_str (show_loc pp_meta loc)
+  | CodegenError (ModuleVerification msg) ->
+    sprintf "[%s] module verification error: %s" type_str msg
   | Message m -> sprintf "[%s] %s" type_str m
 
 let generate (p: meta program) (get_lines: int -> int -> string list) =

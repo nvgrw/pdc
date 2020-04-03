@@ -119,8 +119,17 @@ module Walker_LlvmPass = Common.Walker.Make(struct
       let () = Llvm.position_at_end main_bb bdr in
       success p
     let visit_program_pos _ p =
-      ignore @@ Llvm.build_ret_void bdr;
-      (* ignore @@ Base.Option.map (Llvm_analysis.verify_module mdl) ~f:print_endline; *)
+      ignore @@ Llvm.build_ret (Llvm.const_int (Llvm.i64_type con) 0) bdr;
+
+      (* Verify *)
+      begin match Llvm_analysis.verify_module mdl with
+        | Some message ->
+          Llvm.dump_module mdl;
+          error @@ CodegenError (ModuleVerification message)
+        | None -> success ()
+      end >>= fun () ->
+      (* End of Verification *)
+
       Llvm.dump_module mdl;
       Llvm.dispose_module mdl;
       Llvm.dispose_context con;

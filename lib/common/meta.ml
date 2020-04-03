@@ -27,7 +27,8 @@ type codegen_error =
   | CannotGenerateExpression of meta expr
   | NegateOnlyIntOrFloat of meta expr
   | CannotGenerateLocation of meta loc
-type pass_error = 
+  | ModuleVerification of string
+type pass_error =
   | TypeError of type_error
   | StructuralError of structural_error
   | CodegenError of codegen_error
