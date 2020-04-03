@@ -105,70 +105,89 @@ module Walker_LlvmPass = Common.Walker.Make(struct
     let visit_block_pos _ b = success b
 
     let visit_stmt_pre parent s =
+      let func = Llvm.block_parent @@ Llvm.insertion_block bdr in
       begin match parent with
         | `Stmt If _ ->
-          let func = Llvm.block_parent @@ Llvm.insertion_block bdr in
           let block = Llvm.append_block con "cond" func in
           Llvm.position_at_end block bdr;
-          push_blk block >>= fun _ ->
+          push_blk block >>= fun () ->
+          success s
+        | `Stmt While _ ->
+          let block = Llvm.append_block con "wbody" func in
+          Llvm.position_at_end block bdr;
+          push_blk block >>= fun () ->
           success s
         | _ -> success s
       end >>= function
       | If _ ->
         push_blk @@ Llvm.insertion_block bdr >>= fun () ->
         success s
+      | While _ ->
+        let block = Llvm.append_block con "whead" func in
+        ignore @@ Llvm.build_br block bdr;
+        push_blk block >>= fun () ->
+        success s
       | _ ->
         success s
-    let visit_stmt_pos parent s = begin match s with
-      | Assign (loc, expr, _) as s ->
-        pop_val >>= fun expr_llval ->
-        pop_val >>= fun loc_llval ->
-        let _ = Llvm.build_store expr_llval loc_llval bdr in
-        success s
-      | If (expr, stmt, Some stmt_opt, _) as s ->
-        let func = Llvm.block_parent @@ Llvm.insertion_block bdr in
-        pop_blk >>= fun cond_false ->
-        pop_blk >>= fun cond_false_begin ->
-        pop_blk >>= fun cond_true ->
-        pop_blk >>= fun cond_true_begin ->
-        pop_blk >>= fun previous ->
-        pop_val >>= fun cond ->
-        (* jump to previous block and create the branch instr *)
-        Llvm.position_at_end previous bdr;
-        ignore @@ Llvm.build_cond_br cond cond_true_begin cond_false_begin bdr;
-        (* link to post block *)
-        let post_block = Llvm.append_block con "ifend" func in
-        (* branch true to end *)
-        Llvm.position_at_end cond_true bdr;
-        ignore @@ Llvm.build_br post_block bdr;
-        (* branch false to end *)
-        Llvm.position_at_end cond_false bdr;
-        ignore @@ Llvm.build_br post_block bdr;
-        (* do the phi node stuff *)
-        Llvm.position_at_end post_block bdr;
-        success s
-      | If (expr, stmt, None, _) as s ->
-        let func = Llvm.block_parent @@ Llvm.insertion_block bdr in
-        pop_blk >>= fun cond_true ->
-        pop_blk >>= fun cond_true_begin ->
-        pop_blk >>= fun previous ->
-        pop_val >>= fun cond ->
-        (* jump to previous block and create the branch instr *)
-        Llvm.position_at_end previous bdr;
-        (* link to post block *)
-        let post_block = Llvm.append_block con "ifend" func in
-        ignore @@ Llvm.build_cond_br cond cond_true_begin post_block bdr;
-        (* branch true to end *)
-        Llvm.position_at_end cond_true bdr;
-        ignore @@ Llvm.build_br post_block bdr;
-        (* do the phi node stuff *)
-        Llvm.position_at_end post_block bdr;
-        success s
-      | While (expr, stmt, _) as s -> success s
-      | Do (expr, stmt, _) as s -> success s
-      | Break _ as s -> success s
-      | BlockStmt (block, _) as s -> success s
-    end >>= fun s ->
+    let visit_stmt_pos parent s =
+      let func = Llvm.block_parent @@ Llvm.insertion_block bdr in
+      begin match s with
+        | Assign (loc, expr, _) as s ->
+          pop_val >>= fun expr_llval ->
+          pop_val >>= fun loc_llval ->
+          let _ = Llvm.build_store expr_llval loc_llval bdr in
+          success s
+        | If (expr, stmt, Some stmt_opt, _) as s ->
+          pop_blk >>= fun cond_false ->
+          pop_blk >>= fun cond_false_begin ->
+          pop_blk >>= fun cond_true ->
+          pop_blk >>= fun cond_true_begin ->
+          pop_blk >>= fun previous ->
+          pop_val >>= fun cond ->
+          (* jump to previous block and create the branch instr *)
+          Llvm.position_at_end previous bdr;
+          ignore @@ Llvm.build_cond_br cond cond_true_begin cond_false_begin bdr;
+          (* link to post block *)
+          let post_block = Llvm.append_block con "ifend" func in
+          (* branch true to end *)
+          Llvm.position_at_end cond_true bdr;
+          ignore @@ Llvm.build_br post_block bdr;
+          (* branch false to end *)
+          Llvm.position_at_end cond_false bdr;
+          ignore @@ Llvm.build_br post_block bdr;
+          (* do the phi node stuff *)
+          Llvm.position_at_end post_block bdr;
+          success s
+        | If (expr, stmt, None, _) as s ->
+          pop_blk >>= fun cond_true ->
+          pop_blk >>= fun cond_true_begin ->
+          pop_blk >>= fun previous ->
+          pop_val >>= fun cond ->
+          (* jump to previous block and create the branch instr *)
+          Llvm.position_at_end previous bdr;
+          (* link to post block *)
+          let post_block = Llvm.append_block con "ifend" func in
+          ignore @@ Llvm.build_cond_br cond cond_true_begin post_block bdr;
+          (* branch true to end *)
+          Llvm.position_at_end cond_true bdr;
+          ignore @@ Llvm.build_br post_block bdr;
+          (* do the phi node stuff *)
+          Llvm.position_at_end post_block bdr;
+          success s
+        | While (expr, stmt, _) as s ->
+          pop_blk >>= fun body ->
+          pop_blk >>= fun head ->
+          pop_val >>= fun cond ->
+          ignore @@ Llvm.build_br head bdr;
+          let wend = Llvm.append_block con "wend" func in
+          Llvm.position_at_end head bdr;
+          ignore @@ Llvm.build_cond_br cond body wend bdr;
+          Llvm.position_at_end wend bdr;
+          success s
+        | Do (expr, stmt, _) as s -> success s
+        | Break _ as s -> success s
+        | BlockStmt (block, _) as s -> success s
+      end >>= fun s ->
       success parent >>= function
       | `Stmt If _ ->
         push_blk @@ Llvm.insertion_block bdr >>= fun () ->

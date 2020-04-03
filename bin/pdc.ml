@@ -21,15 +21,10 @@ let () =
      } *)
      (* }|test} in *)
   let input_string = String {test|{
-  int i; i = 0;
-  if (i == 0) {
-    if (i > 1) {
-      i = i + 1;
-    } else {
-      i = i + 2;
-    }
+  int i;
+  while (true) {
+    i = i + 1;
   }
-  i = 3;
 }|test} in
   match make_buf input_string with
     (buf, get_lines) -> Compile.compile buf get_lines
