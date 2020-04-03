@@ -103,15 +103,15 @@ let generate (p: meta program) (get_lines: int -> int -> string list) =
           let passManager = Llvm.PassManager.create () in
           (* SET UP OPTIMIZATION PASSES *)
           (*  allocas to registers *)
-          Llvm_scalar_opts.add_memory_to_register_promotion passManager;
+          (* Llvm_scalar_opts.add_memory_to_register_promotion passManager; *)
           (*  simplify adjacent instructions *)
-          Llvm_scalar_opts.add_instruction_combination passManager;
+          (* Llvm_scalar_opts.add_instruction_combination passManager; *)
           (*  reassociate for better constant propagation *)
-          Llvm_scalar_opts.add_reassociation passManager;
+          (* Llvm_scalar_opts.add_reassociation passManager; *)
           (*  global value numbering / common subex elimination *)
-          Llvm_scalar_opts.add_gvn passManager;
+          (* Llvm_scalar_opts.add_gvn passManager; *)
           (*  simplification of the cfg. DCE + block merging *)
-          Llvm_scalar_opts.add_cfg_simplification passManager;
+          (* Llvm_scalar_opts.add_cfg_simplification passManager; *)
           (* COMPLETED OPTIMIZATION PASS SETUP *)
           ignore @@ Llvm.PassManager.run_module mdl passManager;
           Llvm.PassManager.dispose passManager;
