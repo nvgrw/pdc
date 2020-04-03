@@ -22,7 +22,8 @@ let make_buf = function
       begin
         let file = open_in path in
         try
-          Lexing.from_channel file
+          let buf = Lexing.from_channel file in
+          buf.lex_curr_p <- { buf.lex_curr_p with pos_fname = path }; buf
         with e ->
           close_in file;
           raise e
@@ -31,7 +32,10 @@ let make_buf = function
         Core.List.slice (Core.In_channel.read_lines path) lstart (lend + 1)
     )
   | InString code -> (
-      Lexing.from_string code,
+      begin
+        let buf = Lexing.from_string code in
+        buf.lex_curr_p <- { buf.lex_curr_p with pos_fname = "<no file>" }; buf
+      end,
       fun lstart lend ->
         Core.List.slice (Core.String.split_lines code) lstart (lend + 1)
     )
