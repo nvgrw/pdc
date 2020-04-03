@@ -117,6 +117,11 @@ module Walker_LlvmPass = Common.Walker.Make(struct
           Llvm.position_at_end block bdr;
           push_blk block >>= fun () ->
           success s
+        | `Stmt Do _ ->
+          let block = Llvm.append_block con "dbody" func in
+          Llvm.position_at_end block bdr;
+          push_blk block >>= fun () ->
+          success s
         | _ -> success s
       end >>= function
       | If _ ->
@@ -126,6 +131,9 @@ module Walker_LlvmPass = Common.Walker.Make(struct
         let block = Llvm.append_block con "whead" func in
         ignore @@ Llvm.build_br block bdr;
         push_blk block >>= fun () ->
+        success s
+      | Do _ ->
+        push_blk @@ Llvm.insertion_block bdr >>= fun () ->
         success s
       | _ ->
         success s
@@ -184,7 +192,18 @@ module Walker_LlvmPass = Common.Walker.Make(struct
           ignore @@ Llvm.build_cond_br cond body wend bdr;
           Llvm.position_at_end wend bdr;
           success s
-        | Do (expr, stmt, _) as s -> success s
+        | Do (expr, stmt, _) as s ->
+          pop_blk >>= fun body ->
+          pop_blk >>= fun previous ->
+          pop_val >>= fun cond ->
+          let current_block = Llvm.insertion_block bdr in
+          Llvm.position_at_end previous bdr;
+          ignore @@ Llvm.build_br body bdr;
+          Llvm.position_at_end current_block bdr;
+          let dend = Llvm.append_block con "dend" func in
+          ignore @@ Llvm.build_cond_br cond body dend bdr;
+          Llvm.position_at_end dend bdr;
+          success s
         | Break _ as s -> success s
         | BlockStmt (block, _) as s -> success s
       end >>= fun s ->
