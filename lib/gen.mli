@@ -3,4 +3,4 @@ open Common.VisitorMonad
 open Common.Meta
 open Common.Context
 
-val generate: meta program -> (context, meta program, pass_error) res
+val generate: Llvm.llmodule -> meta program -> (context, meta program, pass_error) res

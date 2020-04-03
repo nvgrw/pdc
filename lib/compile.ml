@@ -24,7 +24,7 @@ let generate_context get_lines s_pos e_pos =
       [padding ^ String.make s_off ' ' ^ "^" ^ String.make (String.length line - s_off - 1) '-']
     else if i == num_lines - 1 then
       [padding ^ String.make (e_off - 1) '-' ^ "^"]
-    else 
+    else
       []
   in
   let each i line = sprintf "%0*d | %s" num_digits (s_pos.pos_lnum + i) line :: pointer i line in
@@ -33,16 +33,16 @@ let generate_context get_lines s_pos e_pos =
   sprintf "%s\n%s:%d:%d;%d:%d" code fname s_pos.pos_lnum (s_off + 1)  e_pos.pos_lnum (e_off + 1)
 
 let error_string err get_lines =
-  let type_str = match err with 
+  let type_str = match err with
     | TypeError _ -> "type"
     | StructuralError _ -> "structural"
     | CodegenError _ -> "codegen"
     | Message _ -> "misc"
   in match err with
-  | TypeError (IncompatibleBinOp (expr, lt, op, rt)) -> 
+  | TypeError (IncompatibleBinOp (expr, lt, op, rt)) ->
     let context = (match get_meta_expr expr with Position (s_pos, e_pos) -> generate_context get_lines s_pos e_pos) in
-    sprintf "%s: [%s] %s incompatible with types %s and %s." context type_str (show_binop pp_meta op) (show_typ pp_meta lt) (show_typ pp_meta rt) 
-  | TypeError (IncompatibleUnOp (expr, op, t)) -> 
+    sprintf "%s: [%s] %s incompatible with types %s and %s." context type_str (show_binop pp_meta op) (show_typ pp_meta lt) (show_typ pp_meta rt)
+  | TypeError (IncompatibleUnOp (expr, op, t)) ->
     let context = (match get_meta_expr expr with Position (s_pos, e_pos) -> generate_context get_lines s_pos e_pos) in
     sprintf "%s: [%s] %s incompatible with type %s." context type_str (show_unop pp_meta op) (show_typ pp_meta t)
   | TypeError (IncompatibleAssignment (stmt, ltyp, typ)) ->
@@ -66,7 +66,7 @@ let error_string err get_lines =
   | TypeError (UntypedStatementFragment stmt) ->
     let context = (match get_meta_stmt stmt with Position (s_pos, e_pos) -> generate_context get_lines s_pos e_pos) in
     sprintf "%s: [%s] untyped statement fragment %s." context type_str (show_stmt pp_meta stmt)
-  | StructuralError (BadIdentifier (m, ident)) -> 
+  | StructuralError (BadIdentifier (m, ident)) ->
     let context = (match m with Position (s_pos, e_pos) -> generate_context get_lines s_pos e_pos) in
     sprintf "%s: [%s] identifier `%s' not declared in scope." context type_str ident
   | StructuralError (DuplicateIdentifier (decl, ident)) ->
@@ -94,13 +94,35 @@ let generate (p: meta program) (get_lines: int -> int -> string list) =
   in begin match post_semant with
     | Error err -> print_endline @@ error_string err get_lines
     | Success (_, semant_ast) ->
-      let post_gen = Gen.generate semant_ast
+      let con = Llvm.global_context () in
+      let mdl = Llvm.create_module con "llpdc" in
+      let post_gen = Gen.generate mdl semant_ast
       in begin match post_gen with
         | Error err -> print_endline @@ error_string err get_lines
         | Success (_, _gen_ast) ->
-          print_endline "OK"
+          let passManager = Llvm.PassManager.create () in
+          (* SET UP OPTIMIZATION PASSES *)
+          (*  allocas to registers *)
+          Llvm_scalar_opts.add_memory_to_register_promotion passManager;
+          (*  simplify adjacent instructions *)
+          Llvm_scalar_opts.add_instruction_combination passManager;
+          (*  reassociate for better constant propagation *)
+          Llvm_scalar_opts.add_reassociation passManager;
+          (*  global value numbering / common subex elimination *)
+          Llvm_scalar_opts.add_gvn passManager;
+          (*  simplification of the cfg. DCE + block merging *)
+          Llvm_scalar_opts.add_cfg_simplification passManager;
+          (* COMPLETED OPTIMIZATION PASS SETUP *)
+          ignore @@ Llvm.PassManager.run_module mdl passManager;
+          Llvm.PassManager.dispose passManager;
+
+          Llvm.dump_module mdl;
+          print_endline "OK";
+
           (* print_endline @@ show_program pp_meta gen_ast  *)
-      end
+      end;
+      Llvm.dispose_module mdl;
+      Llvm.dispose_context con
   end
 
 let compile buf get_lines =

@@ -8,6 +8,9 @@ open Common.Data
 module Scope = Common.Scope
 module Option = Base.Option
 
+let mdl_ref = ref None
+let initialize mdl = mdl_ref := Some mdl
+
 module Walker_LlvmPass = Common.Walker.Make(struct
     type ctx = context
     type err = pass_error
@@ -66,7 +69,6 @@ module Walker_LlvmPass = Common.Walker.Make(struct
       | _ -> assert false
 
     let con = Llvm.global_context ()
-    let mdl = Llvm.create_module con "llpdc"
     let bdr = Llvm.builder con
 
     let push_break_block func =
@@ -124,6 +126,7 @@ module Walker_LlvmPass = Common.Walker.Make(struct
       | Some _ -> None
 
     let visit_program_pre _ p =
+      let mdl = match !mdl_ref with | Some mdl -> mdl | None -> assert false in
       let main_type = Llvm.function_type (Llvm.i64_type con) [||] in
       let main = Llvm.declare_function "main" main_type mdl in
       let main_bb = Llvm.append_block con "entry" main in
@@ -131,6 +134,9 @@ module Walker_LlvmPass = Common.Walker.Make(struct
       success p
     let visit_program_pos _ p =
       ignore @@ Llvm.build_ret (Llvm.const_int (Llvm.i64_type con) 0) bdr;
+
+      let mdl = match !mdl_ref with | Some mdl -> mdl | None -> assert false in
+      mdl_ref := None;
 
       (* Verify *)
       begin match Llvm_analysis.verify_module mdl with
@@ -141,25 +147,6 @@ module Walker_LlvmPass = Common.Walker.Make(struct
       end >>= fun () ->
       (* End of Verification *)
 
-      let passManager = Llvm.PassManager.create () in
-      (* SET UP OPTIMIZATION PASSES *)
-      (*  allocas to registers *)
-      Llvm_scalar_opts.add_memory_to_register_promotion passManager;
-      (*  simplify adjacent instructions *)
-      Llvm_scalar_opts.add_instruction_combination passManager;
-      (*  reassociate for better constant propagation *)
-      Llvm_scalar_opts.add_reassociation passManager;
-      (*  global value numbering / common subex elimination *)
-      Llvm_scalar_opts.add_gvn passManager;
-      (*  simplification of the cfg. DCE + block merging *)
-      Llvm_scalar_opts.add_cfg_simplification passManager;
-      (* COMPLETED OPTIMIZATION PASS SETUP *)
-      ignore @@ Llvm.PassManager.run_module mdl passManager;
-      Llvm.PassManager.dispose passManager;
-
-      Llvm.dump_module mdl;
-      Llvm.dispose_module mdl;
-      Llvm.dispose_context con;
       success p
 
     let scope_block_pre _ b =

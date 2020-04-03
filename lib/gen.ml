@@ -1,10 +1,5 @@
-open Common.VisitorMonad
 open Common.Context
 
-let passes = [
-  Codegen.LlvmPass.process
-]
-
-let generate p =
-  let run = List.fold_left (fun acc elem -> acc >>= fun newP -> elem newP) (success p) passes
-  in run C.empty
+let generate mdl p =
+  Codegen.LlvmPass.initialize mdl;
+  Codegen.LlvmPass.process p C.empty
