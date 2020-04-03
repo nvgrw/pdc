@@ -119,6 +119,7 @@ module Walker_LlvmPass = Common.Walker.Make(struct
       let () = Llvm.position_at_end main_bb bdr in
       success p
     let visit_program_pos _ p =
+      ignore @@ Llvm.build_ret_void bdr;
       (* ignore @@ Base.Option.map (Llvm_analysis.verify_module mdl) ~f:print_endline; *)
       Llvm.dump_module mdl;
       Llvm.dispose_module mdl;
