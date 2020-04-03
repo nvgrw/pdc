@@ -2,7 +2,7 @@ open AST
 
 let pp_position fmt (pos: Lexing.position) = Format.fprintf fmt "%d:%d" pos.pos_lnum (pos.pos_cnum - pos.pos_bol + 1)
 
-type meta = 
+type meta =
   | Position of ((Lexing.position [@printer pp_position]) * (Lexing.position [@printer pp_position]))
 [@@deriving show]
 

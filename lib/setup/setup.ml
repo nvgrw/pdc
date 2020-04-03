@@ -18,12 +18,17 @@ let default_conf = { optimize = true; dump_ir = false }
 
 let make_buf = function
   | InFile path ->
-    (* TODO figure out a more efficient approach *)
-    let code = Core.In_channel.read_all path in
     (
-      Lexing.from_string code,
+      begin
+        let file = open_in path in
+        try
+          Lexing.from_channel file
+        with e ->
+          close_in file;
+          raise e
+      end,
       fun lstart lend ->
-        Core.List.slice (Core.String.split_lines code) lstart (lend + 1)
+        Core.List.slice (Core.In_channel.read_lines path) lstart (lend + 1)
     )
   | InString code -> (
       Lexing.from_string code,
