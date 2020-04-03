@@ -9,14 +9,15 @@ end
 
 module C = struct
   type context = { 
-    values: Llvm.llvalue list; 
+    values: Llvm.llvalue list;
     blocks: Llvm.llbasicblock list;
-    scopes: Llvm.llvalue StringMap.t list 
+    scopes: Llvm.llvalue StringMap.t list;
+    breakBlocks: Llvm.llbasicblock list
   }
-  let empty = `Codegen { values = []; blocks = []; scopes = [] }
+  let empty = `Codegen { values = []; blocks = []; scopes = []; breakBlocks = [] }
 end
 
-type context = [ 
+type context = [
   | `Semantic of S.context
   | `Codegen of C.context
 ]

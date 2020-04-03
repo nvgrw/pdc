@@ -45,7 +45,7 @@ module Walker_LlvmPass = Common.Walker.Make(struct
         put @@ `Codegen { state with C.blocks = bl :: state.C.blocks }
       | _ -> assert false
 
-    let print_stack =
+    let print_val_stack =
       get >>= function
       | `Codegen state ->
         let stringify v =
@@ -55,9 +55,47 @@ module Walker_LlvmPass = Common.Walker.Make(struct
         success ()
       | _ -> assert false
 
+    let print_blk_stack =
+      get >>= function
+      | `Codegen { C.blocks = blocks; _ } ->
+        let block_ident b = Llvm.value_name @@ Llvm.value_of_block b in
+        print_endline "v Block Stack Dump";
+        ignore @@ List.map (fun b -> print_endline @@ block_ident b) blocks;
+        print_endline "^ Block Stack Dump";
+        success ()
+      | _ -> assert false
+
     let con = Llvm.global_context ()
     let mdl = Llvm.create_module con "llpdc"
     let bdr = Llvm.builder con
+
+    let push_break_block func =
+      get >>= function
+      | `Codegen ({ C.breakBlocks = breakBlocks; _ } as state) ->
+        put @@ `Codegen {
+          state with C.breakBlocks =
+                       (Llvm.append_block con "break" func) :: breakBlocks
+        }
+      | _ -> assert false
+
+    let configure_break_block end_block =
+      get >>= begin function
+        | `Codegen ({ C.breakBlocks = bb :: rest; _ } as state) ->
+          put @@ `Codegen { state with C.breakBlocks = rest } >>= fun () ->
+          success bb
+        | _ -> assert false end
+      >>= fun break_block ->
+      Llvm.move_block_before end_block break_block;
+      begin match Llvm.use_begin (Llvm.value_of_block break_block) with
+        | None ->
+          (* remove redundant break block *)
+          Llvm.delete_block break_block
+        | Some _ ->
+          (* branch break block to end of construct *)
+          Llvm.position_at_end break_block bdr;
+          ignore @@ Llvm.build_br end_block bdr
+      end;
+      success ()
 
     let rec typ_to_llvm = function
       | Array (_typ, _size, _) as t ->
@@ -131,9 +169,13 @@ module Walker_LlvmPass = Common.Walker.Make(struct
         let block = Llvm.append_block con "whead" func in
         ignore @@ Llvm.build_br block bdr;
         push_blk block >>= fun () ->
+        (* add break block *)
+        push_break_block func >>= fun () ->
         success s
       | Do _ ->
         push_blk @@ Llvm.insertion_block bdr >>= fun () ->
+        (* add break block *)
+        push_break_block func >>= fun () ->
         success s
       | _ ->
         success s
@@ -190,6 +232,9 @@ module Walker_LlvmPass = Common.Walker.Make(struct
           let wend = Llvm.append_block con "wend" func in
           Llvm.position_at_end head bdr;
           ignore @@ Llvm.build_cond_br cond body wend bdr;
+          (* move break block *)
+          configure_break_block wend >>= fun () ->
+          (* move to end *)
           Llvm.position_at_end wend bdr;
           success s
         | Do (expr, stmt, _) as s ->
@@ -202,9 +247,19 @@ module Walker_LlvmPass = Common.Walker.Make(struct
           Llvm.position_at_end current_block bdr;
           let dend = Llvm.append_block con "dend" func in
           ignore @@ Llvm.build_cond_br cond body dend bdr;
+          (* move break block *)
+          configure_break_block dend >>= fun () ->
+          (* move to end *)
           Llvm.position_at_end dend bdr;
           success s
-        | Break _ as s -> success s
+        | Break _ as s ->
+          get >>= begin function
+            | `Codegen { C.breakBlocks = bb :: _; _ } ->
+              success bb
+            | _ -> assert false
+          end >>= fun break_block ->
+          ignore @@ Llvm.build_br break_block bdr;
+          success s
         | BlockStmt (block, _) as s -> success s
       end >>= fun s ->
       success parent >>= function

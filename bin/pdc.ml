@@ -18,14 +18,16 @@ let () =
      if( i >= j ) break;
      x = a[i]; a[i] = a[j] * b[i][j]; a[j] = x;
      do { j = j + 1; } while (true);
-     } *)
-     (* }|test} in *)
+     }
+     }|test} in *)
   let input_string = String {test|{
     int i;
-    do {
-      i = i + 1;
-      while (true) {}
-    } while( true );
+  while (true) {
+    break;
+    do
+      break;
+    while (true);
+  }
 }|test} in
   match make_buf input_string with
     (buf, get_lines) -> Compile.compile buf get_lines
