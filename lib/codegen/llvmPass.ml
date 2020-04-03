@@ -141,7 +141,6 @@ module Walker_LlvmPass = Common.Walker.Make(struct
       (* Verify *)
       begin match Llvm_analysis.verify_module mdl with
         | Some message ->
-          Llvm.dump_module mdl;
           error @@ CodegenError (ModuleVerification message)
         | None -> success ()
       end >>= fun () ->

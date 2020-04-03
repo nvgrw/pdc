@@ -10,10 +10,11 @@ type compile_out =
 (* Maybe here we can have different types of configuration, options, etc *)
 type compile_conf =
   {
-    parseOnly: bool
+    optimize: bool;
+    dump_ir: bool
   }
 
-let default_conf = { parseOnly = false }
+let default_conf = { optimize = true; dump_ir = false }
 
 let make_buf = function
   | InFile path -> (

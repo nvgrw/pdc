@@ -91,7 +91,7 @@ let error_string err get_lines =
     sprintf "[%s] module verification error: %s" type_str msg
   | Message m -> sprintf "[%s] %s" type_str m
 
-let generate (p: meta program) (get_lines: int -> int -> string list) out =
+let generate (config:compile_conf) (p: meta program) (get_lines: int -> int -> string list) out =
   let post_semant = Semant.check p
   in begin match post_semant with
     | Error err -> print_endline @@ error_string err get_lines
@@ -102,21 +102,23 @@ let generate (p: meta program) (get_lines: int -> int -> string list) out =
       in begin match post_gen with
         | Error err -> print_endline @@ error_string err get_lines
         | Success (_, _gen_ast) ->
-          let passManager = Llvm.PassManager.create () in
-          (* SET UP OPTIMIZATION PASSES *)
-          (*  allocas to registers *)
-          (* Llvm_scalar_opts.add_memory_to_register_promotion passManager; *)
-          (*  simplify adjacent instructions *)
-          (* Llvm_scalar_opts.add_instruction_combination passManager; *)
-          (*  reassociate for better constant propagation *)
-          (* Llvm_scalar_opts.add_reassociation passManager; *)
-          (*  global value numbering / common subex elimination *)
-          (* Llvm_scalar_opts.add_gvn passManager; *)
-          (*  simplification of the cfg. DCE + block merging *)
-          (* Llvm_scalar_opts.add_cfg_simplification passManager; *)
-          (* COMPLETED OPTIMIZATION PASS SETUP *)
-          ignore @@ Llvm.PassManager.run_module mdl passManager;
-          Llvm.PassManager.dispose passManager;
+          if config.optimize then begin
+            let passManager = Llvm.PassManager.create () in
+            (* SET UP OPTIMIZATION PASSES *)
+            (*  allocas to registers *)
+            Llvm_scalar_opts.add_memory_to_register_promotion passManager;
+            (*  simplify adjacent instructions *)
+            Llvm_scalar_opts.add_instruction_combination passManager;
+            (*  reassociate for better constant propagation *)
+            Llvm_scalar_opts.add_reassociation passManager;
+            (*  global value numbering / common subex elimination *)
+            Llvm_scalar_opts.add_gvn passManager;
+            (*  simplification of the cfg. DCE + block merging *)
+            Llvm_scalar_opts.add_cfg_simplification passManager;
+            (* COMPLETED OPTIMIZATION PASS SETUP *)
+            ignore @@ Llvm.PassManager.run_module mdl passManager;
+            Llvm.PassManager.dispose passManager
+          end;
 
           let successful_output = match out with
             | OutFile f ->
@@ -128,12 +130,14 @@ let generate (p: meta program) (get_lines: int -> int -> string list) out =
 
           (* print_endline @@ show_program pp_meta gen_ast  *)
       end;
+      if config.dump_ir then Llvm.dump_module mdl;
       Llvm.dispose_module mdl;
       Llvm.dispose_context con
   end
 
-let compile buf get_lines out =
-  try generate (Parser.program Lexer.token buf) get_lines out with
+let compile config input output =
+  let (buf, get_lines) = Setup.make_buf input in
+  try generate config (Parser.program Lexer.token buf) get_lines output with
   | Lexer.SyntaxError msg -> print_endline msg
   | Parser.Error ->
     let context = generate_context get_lines buf.lex_start_p buf.lex_curr_p in
