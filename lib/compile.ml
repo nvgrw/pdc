@@ -136,9 +136,17 @@ let generate (config:compile_conf) (p: meta program) (get_lines: int -> int -> s
   end
 
 let compile config input output =
-  let (buf, get_lines) = Setup.make_buf input in
-  try generate config (Parser.program Lexer.token buf) get_lines output with
-  | Lexer.SyntaxError msg -> print_endline msg
-  | Parser.Error ->
-    let context = generate_context get_lines buf.lex_start_p buf.lex_curr_p in
-    printf "%s: parser error\n" context
+  try
+    let (buf, get_lines) = Setup.make_buf input in
+    try generate config (Parser.program Lexer.token buf) get_lines output with
+    | Lexer.SyntaxError msg ->
+      prerr_endline msg;
+      exit 1
+    | Parser.Error ->
+      let context = generate_context get_lines buf.lex_start_p buf.lex_curr_p in
+      eprintf "%s: parser error\n" context;
+      exit 1;
+  with
+  | Sys_error msg ->
+    prerr_endline msg;
+    exit 1

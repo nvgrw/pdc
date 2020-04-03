@@ -17,9 +17,13 @@ type compile_conf =
 let default_conf = { optimize = true; dump_ir = false }
 
 let make_buf = function
-  | InFile path -> (
-      Lexing.from_string path,
-      fun _ _ -> ["todo -- implement"]
+  | InFile path ->
+    (* TODO figure out a more efficient approach *)
+    let code = Core.In_channel.read_all path in
+    (
+      Lexing.from_string code,
+      fun lstart lend ->
+        Core.List.slice (Core.String.split_lines code) lstart (lend + 1)
     )
   | InString code -> (
       Lexing.from_string code,
