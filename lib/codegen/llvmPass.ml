@@ -141,6 +141,22 @@ module Walker_LlvmPass = Common.Walker.Make(struct
       end >>= fun () ->
       (* End of Verification *)
 
+      let passManager = Llvm.PassManager.create () in
+      (* SET UP OPTIMIZATION PASSES *)
+      (*  allocas to registers *)
+      Llvm_scalar_opts.add_memory_to_register_promotion passManager;
+      (*  simplify adjacent instructions *)
+      Llvm_scalar_opts.add_instruction_combination passManager;
+      (*  reassociate for better constant propagation *)
+      Llvm_scalar_opts.add_reassociation passManager;
+      (*  global value numbering / common subex elimination *)
+      Llvm_scalar_opts.add_gvn passManager;
+      (*  simplification of the cfg. DCE + block merging *)
+      Llvm_scalar_opts.add_cfg_simplification passManager;
+      (* COMPLETED OPTIMIZATION PASS SETUP *)
+      ignore @@ Llvm.PassManager.run_module mdl passManager;
+      Llvm.PassManager.dispose passManager;
+
       Llvm.dump_module mdl;
       Llvm.dispose_module mdl;
       Llvm.dispose_context con;
