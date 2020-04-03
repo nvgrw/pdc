@@ -1,0 +1,4 @@
+(library
+ (name setup)
+ (modules setup)
+ (libraries core))

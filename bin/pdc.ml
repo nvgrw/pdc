@@ -3,14 +3,16 @@ open Setup
 
 (* Main *)
 let () =
-  let () = print_endline "  *** PDC ***" in
+  let () = prerr_endline "  *** PDC ***" in
+  let out_file = ref "a.out" in
   let options: (doc * spec * doc) list = [
-    ("--parse", String print_endline, "this is the help text i think")
+    ("--dump-ir", Unit (fun () -> ()), "dump the ir to standard output"); (* todo: implement *)
+    ("-o", String ((:=) out_file), "output file name")
   ] in
   let anon_handle x = print_endline @@ Printf.sprintf "Anonymous argument %s" x in
   let exec_name = Sys.argv.(0) in
-  let () = parse options anon_handle (Printf.sprintf "%s [--parse]\n" exec_name) in
-  let input_string = String {test|{
+  let () = parse options anon_handle (Printf.sprintf "%s [--dump-ir] [-o]\n" exec_name) in
+  let input_string = InString {test|{
   int i; int j; float v; float x; float[100] a; float[100][50] b;
   while( true ) {
     do i = i + 1; while( a[i] < v);
@@ -20,7 +22,8 @@ let () =
     do { j = j + 1; } while (true);
   }
 }|test} in
+  let out = OutFile !out_file in
   match make_buf input_string with
-    (buf, get_lines) -> Compile.compile buf get_lines
+    (buf, get_lines) -> Compile.compile buf get_lines out
 
 (* x = true; *)

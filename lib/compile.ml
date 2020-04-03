@@ -2,6 +2,8 @@ open Common.AST
 open Common.VisitorMonad
 open Common.Meta
 
+open Setup
+
 open Lexing
 open Printf
 
@@ -89,13 +91,13 @@ let error_string err get_lines =
     sprintf "[%s] module verification error: %s" type_str msg
   | Message m -> sprintf "[%s] %s" type_str m
 
-let generate (p: meta program) (get_lines: int -> int -> string list) =
+let generate (p: meta program) (get_lines: int -> int -> string list) out =
   let post_semant = Semant.check p
   in begin match post_semant with
     | Error err -> print_endline @@ error_string err get_lines
     | Success (_, semant_ast) ->
       let con = Llvm.global_context () in
-      let mdl = Llvm.create_module con "llpdc" in
+      let mdl = Llvm.create_module con "llpdc" in (* TODO: name after input file name *)
       let post_gen = Gen.generate mdl semant_ast
       in begin match post_gen with
         | Error err -> print_endline @@ error_string err get_lines
@@ -116,8 +118,13 @@ let generate (p: meta program) (get_lines: int -> int -> string list) =
           ignore @@ Llvm.PassManager.run_module mdl passManager;
           Llvm.PassManager.dispose passManager;
 
-          Llvm.dump_module mdl;
-          print_endline "OK";
+          let successful_output = match out with
+            | OutFile f ->
+              Llvm_bitwriter.write_bitcode_file mdl f
+            | OutChannel ch ->
+              Llvm_bitwriter.output_bitcode ch mdl
+          in if not successful_output then
+            prerr_endline "export failed";
 
           (* print_endline @@ show_program pp_meta gen_ast  *)
       end;
@@ -125,8 +132,8 @@ let generate (p: meta program) (get_lines: int -> int -> string list) =
       Llvm.dispose_context con
   end
 
-let compile buf get_lines =
-  try generate (Parser.program Lexer.token buf) get_lines with
+let compile buf get_lines out =
+  try generate (Parser.program Lexer.token buf) get_lines out with
   | Lexer.SyntaxError msg -> print_endline msg
   | Parser.Error ->
     let context = generate_context get_lines buf.lex_start_p buf.lex_curr_p in
