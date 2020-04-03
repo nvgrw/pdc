@@ -112,6 +112,17 @@ module Walker_LlvmPass = Common.Walker.Make(struct
       | Char _ -> Llvm.i8_type con
       | Bool _ -> Llvm.i1_type con
 
+    let build_br_if_not_terminated bb bdr =
+      match Llvm.block_terminator @@ Llvm.insertion_block bdr with
+      | None ->
+        Some (Llvm.build_br bb bdr)
+      | Some _ -> None
+    let build_cond_br_if_not_terminated cond cond_true cond_false bdr =
+      match Llvm.block_terminator @@ Llvm.insertion_block bdr with
+      | None ->
+        Some (Llvm.build_cond_br cond cond_true cond_false bdr)
+      | Some _ -> None
+
     let visit_program_pre _ p =
       let main_type = Llvm.function_type (Llvm.i64_type con) [||] in
       let main = Llvm.declare_function "main" main_type mdl in
@@ -211,10 +222,10 @@ module Walker_LlvmPass = Common.Walker.Make(struct
           let post_block = Llvm.append_block con "ifend" func in
           (* branch true to end *)
           Llvm.position_at_end cond_true bdr;
-          ignore @@ Llvm.build_br post_block bdr;
+          ignore @@ build_br_if_not_terminated post_block bdr;
           (* branch false to end *)
           Llvm.position_at_end cond_false bdr;
-          ignore @@ Llvm.build_br post_block bdr;
+          ignore @@ build_br_if_not_terminated post_block bdr;
           (* do the phi node stuff *)
           Llvm.position_at_end post_block bdr;
           success s
@@ -230,7 +241,7 @@ module Walker_LlvmPass = Common.Walker.Make(struct
           ignore @@ Llvm.build_cond_br cond cond_true_begin post_block bdr;
           (* branch true to end *)
           Llvm.position_at_end cond_true bdr;
-          ignore @@ Llvm.build_br post_block bdr;
+          ignore @@ build_br_if_not_terminated post_block bdr;
           (* do the phi node stuff *)
           Llvm.position_at_end post_block bdr;
           success s
@@ -238,7 +249,7 @@ module Walker_LlvmPass = Common.Walker.Make(struct
           pop_blk >>= fun body ->
           pop_blk >>= fun head ->
           pop_val >>= fun cond ->
-          ignore @@ Llvm.build_br head bdr;
+          ignore @@ build_br_if_not_terminated head bdr;
           let wend = Llvm.append_block con "wend" func in
           Llvm.position_at_end head bdr;
           ignore @@ Llvm.build_cond_br cond body wend bdr;
@@ -256,7 +267,7 @@ module Walker_LlvmPass = Common.Walker.Make(struct
           ignore @@ Llvm.build_br body bdr;
           Llvm.position_at_end current_block bdr;
           let dend = Llvm.append_block con "dend" func in
-          ignore @@ Llvm.build_cond_br cond body dend bdr;
+          ignore @@ build_cond_br_if_not_terminated cond body dend bdr;
           (* move break block *)
           configure_break_block dend >>= fun () ->
           (* move to end *)
