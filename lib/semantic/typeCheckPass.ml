@@ -18,7 +18,7 @@ let rec same_typ = function
   | (Int _, Int _)
   | (Float _, Float _)
   | (Char _, Char _) 
-  | (Bool _, Char _) -> true
+  | (Bool _, Bool _) -> true
   | _ -> false
 
 let binop_result = function
