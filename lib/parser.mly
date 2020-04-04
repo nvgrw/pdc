@@ -108,8 +108,8 @@ stmt:
   ;
 
 choose:
-  | rest = choose GROUP_OPEN p = NUM SELECT s = stmt GROUP_CLSE { (s, p) :: rest }
-  | GROUP_OPEN p = NUM SELECT s = stmt GROUP_CLSE               { [(s, p)] }
+  | rest = choose p = NUM SELECT s = stmt { (s, p) :: rest }
+  | p = NUM SELECT s = stmt               { [(s, p)] }
 
 loc:
   | l = loc DEREF_OPEN e = bool DEREF_CLSE  { Deref (l, e, Position $loc) }
