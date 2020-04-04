@@ -26,7 +26,7 @@ let seqOpt o =
 let seqList (s: ('state, 'v, 'e) state list): ('state, 'v list, 'e) state = 
   let combine = fun acc elem ->
     acc >>= fun results -> 
-    elem >>= fun result -> success (results @ [result]) 
+    elem >>= fun result -> success (results @ [result])
   in List.fold_left combine (success []) s
 
 let get = fun s -> Success (s, s)

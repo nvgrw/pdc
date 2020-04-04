@@ -52,7 +52,7 @@ module Walker_LlvmPass = Common.Walker.Make(struct
       get >>= function
       | `Codegen state ->
         let stringify v =
-          String.concat "|" [Llvm.string_of_llvalue v; Llvm.string_of_lltype @@ Llvm.type_of v] in
+          String.concat "|" [Llvm.string_of_llvalue v; v |> Llvm.type_of |> Llvm.string_of_lltype] in
         let mapper v = print_endline @@ stringify v in
         let _ = List.map mapper state.C.values in
         success ()
@@ -61,7 +61,7 @@ module Walker_LlvmPass = Common.Walker.Make(struct
     let print_blk_stack =
       get >>= function
       | `Codegen { C.blocks = blocks; _ } ->
-        let block_ident b = Llvm.value_name @@ Llvm.value_of_block b in
+        let block_ident b = b |> Llvm.value_of_block |> Llvm.value_name in
         print_endline "v Block Stack Dump";
         ignore @@ List.map (fun b -> print_endline @@ block_ident b) blocks;
         print_endline "^ Block Stack Dump";
@@ -115,12 +115,12 @@ module Walker_LlvmPass = Common.Walker.Make(struct
       | Bool _ -> Llvm.i1_type con
 
     let build_br_if_not_terminated bb bdr =
-      match Llvm.block_terminator @@ Llvm.insertion_block bdr with
+      match bdr |> Llvm.insertion_block |> Llvm.block_terminator with
       | None ->
         Some (Llvm.build_br bb bdr)
       | Some _ -> None
     let build_cond_br_if_not_terminated cond cond_true cond_false bdr =
-      match Llvm.block_terminator @@ Llvm.insertion_block bdr with
+      match bdr |> Llvm.insertion_block |> Llvm.block_terminator with
       | None ->
         Some (Llvm.build_cond_br cond cond_true cond_false bdr)
       | Some _ -> None
@@ -166,7 +166,7 @@ module Walker_LlvmPass = Common.Walker.Make(struct
     let visit_block_pos _ b = success b
 
     let visit_stmt_pre parent s =
-      let func = Llvm.block_parent @@ Llvm.insertion_block bdr in
+      let func = bdr |> Llvm.insertion_block |> Llvm.block_parent in
       begin match parent with
         | `Stmt If _ ->
           let block = Llvm.append_block con "cond" func in
@@ -203,7 +203,7 @@ module Walker_LlvmPass = Common.Walker.Make(struct
       | _ ->
         success s
     let visit_stmt_pos parent s =
-      let func = Llvm.block_parent @@ Llvm.insertion_block bdr in
+      let func = bdr |> Llvm.insertion_block |> Llvm.block_parent in
       begin match s with
         | Assign (loc, expr, _) as s ->
           pop_val >>= fun expr_llval ->

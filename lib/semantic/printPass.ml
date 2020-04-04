@@ -4,7 +4,7 @@ open Common.Data
 open Common.Meta
 open Common.Context
 
-module Walker_PrintPass = Common.Walker.Make(struct 
+module Walker_PrintPass = Common.Walker.Make(struct
     type ctx = context
     type err = pass_error
     type mta = meta

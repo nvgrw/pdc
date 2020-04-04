@@ -49,7 +49,7 @@ let binop_result = function
   | (Float _, Divide _, Float _, m) -> Some (Float m)
   | _ -> None
 
-module Walker_TypeCheckPass = Common.Walker.Make(struct 
+module Walker_TypeCheckPass = Common.Walker.Make(struct
     type ctx = context
     type err = pass_error
     type mta = meta
@@ -67,8 +67,8 @@ module Walker_TypeCheckPass = Common.Walker.Make(struct
       | Assign (LTyped(ltyp, _, _), Typed(typ, _, _), _) as s ->
         if (same_typ (ltyp, typ)) then success s
         else error @@ TypeError (IncompatibleAssignment (s, ltyp, typ))
-      | If (Typed (typ, _, _), _, _, _) as s -> begin 
-          match typ with 
+      | If (Typed (typ, _, _), _, _, _) as s -> begin
+          match typ with
           | Bool _ -> success s
           | _ -> error @@ TypeError (IfRequiresBoolean s)
         end
