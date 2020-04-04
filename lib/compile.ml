@@ -92,43 +92,45 @@ let error_string err get_lines =
   | Message m -> sprintf "[%s] %s" type_str m
 
 let generate (config:compile_conf) (p: meta program) (get_lines: int -> int -> string list) out =
+  if config.dump_lex_ast then print_endline @@ show_program pp_meta p;
   let post_semant = Semant.check p
   in begin match post_semant with
     | Error err -> print_endline @@ error_string err get_lines
     | Success (_, semant_ast) ->
+      if config.dump_semant_ast then print_endline @@ show_program pp_meta semant_ast;
       let con = Llvm.global_context () in
       let mdl = Llvm.create_module con "llpdc" in (* TODO: name after input file name *)
-      let post_gen = Gen.generate mdl semant_ast
-      in begin match post_gen with
-        | Error err -> print_endline @@ error_string err get_lines
-        | Success (_, _gen_ast) ->
-          if config.optimize then begin
-            let passManager = Llvm.PassManager.create () in
-            (* SET UP OPTIMIZATION PASSES *)
-            (*  allocas to registers *)
-            Llvm_scalar_opts.add_memory_to_register_promotion passManager;
-            (*  simplify adjacent instructions *)
-            Llvm_scalar_opts.add_instruction_combination passManager;
-            (*  reassociate for better constant propagation *)
-            Llvm_scalar_opts.add_reassociation passManager;
-            (*  global value numbering / common subex elimination *)
-            Llvm_scalar_opts.add_gvn passManager;
-            (*  simplification of the cfg. DCE + block merging *)
-            Llvm_scalar_opts.add_cfg_simplification passManager;
-            (* COMPLETED OPTIMIZATION PASS SETUP *)
-            ignore @@ Llvm.PassManager.run_module mdl passManager;
-            Llvm.PassManager.dispose passManager
-          end;
+      if config.gen then begin
+        let post_gen = Gen.generate mdl semant_ast
+        in begin match post_gen with
+          | Error err -> print_endline @@ error_string err get_lines
+          | Success (_, _gen_ast) ->
+            if config.optimize then begin
+              let passManager = Llvm.PassManager.create () in
+              (* SET UP OPTIMIZATION PASSES *)
+              (*  allocas to registers *)
+              Llvm_scalar_opts.add_memory_to_register_promotion passManager;
+              (*  simplify adjacent instructions *)
+              Llvm_scalar_opts.add_instruction_combination passManager;
+              (*  reassociate for better constant propagation *)
+              Llvm_scalar_opts.add_reassociation passManager;
+              (*  global value numbering / common subex elimination *)
+              Llvm_scalar_opts.add_gvn passManager;
+              (*  simplification of the cfg. DCE + block merging *)
+              Llvm_scalar_opts.add_cfg_simplification passManager;
+              (* COMPLETED OPTIMIZATION PASS SETUP *)
+              ignore @@ Llvm.PassManager.run_module mdl passManager;
+              Llvm.PassManager.dispose passManager
+            end;
 
-          let successful_output = match out with
-            | OutFile f ->
-              Llvm_bitwriter.write_bitcode_file mdl f
-            | OutChannel ch ->
-              Llvm_bitwriter.output_bitcode ch mdl
-          in if not successful_output then
-            prerr_endline "export failed";
-
-          (* print_endline @@ show_program pp_meta gen_ast  *)
+            let successful_output = match out with
+              | OutFile f ->
+                Llvm_bitwriter.write_bitcode_file mdl f
+              | OutChannel ch ->
+                Llvm_bitwriter.output_bitcode ch mdl
+            in if not successful_output then
+              prerr_endline "export failed";
+        end
       end;
       if config.dump_ir then Llvm.dump_module mdl;
       Llvm.dispose_module mdl;
