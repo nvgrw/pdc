@@ -283,6 +283,7 @@ module Walker_LlvmPass = Common.Walker.Make(struct
           end >>= fun break_block ->
           ignore @@ Llvm.build_br break_block bdr;
           success s
+        | Choose _ -> assert false
         | BlockStmt (block, _) as s -> success s
       end >>= fun s ->
       success parent >>= function

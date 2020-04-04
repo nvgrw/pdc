@@ -103,6 +103,7 @@ type 'm stmt =
   | While of 'm expr * 'm stmt * 'm
   | Do of 'm expr * 'm stmt * 'm
   | Break of 'm
+  | Choose of 'm stmt list * int list * 'm
   | BlockStmt of 'm block * 'm
 and 'm block =
   | Block of (('m typ) Data.StringMap.t [@printer pp_scope]) * ('m decl list) * ('m stmt list) * 'm
@@ -114,6 +115,7 @@ let get_meta_stmt = function
   | While (_, _, m) -> m
   | Do (_, _, m) -> m
   | Break m -> m
+  | Choose (_, _, m) -> m
   | BlockStmt (_, m) -> m
 
 let get_meta_block = function

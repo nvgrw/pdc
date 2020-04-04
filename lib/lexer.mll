@@ -6,9 +6,9 @@
 
   let next_line buf =
     let curr_pos = buf.lex_curr_p in
-    buf.lex_curr_p <- { 
-      curr_pos with pos_bol = buf.lex_curr_pos; 
-                    pos_lnum = curr_pos.pos_lnum + 1 
+    buf.lex_curr_p <- {
+      curr_pos with pos_bol = buf.lex_curr_pos;
+                    pos_lnum = curr_pos.pos_lnum + 1
     }
 }
 
@@ -30,19 +30,21 @@ rule token = parse
   | "float"     { FLOAT }
   | "char"      { CHAR }
   | "bool"      { BOOL }
-  | "{"         { SCOPE_OPEN } 
+  | "{"         { SCOPE_OPEN }
   | "}"         { SCOPE_CLSE }
   | "["         { DEREF_OPEN }
   | "]"         { DEREF_CLSE }
   | "("         { GROUP_OPEN }
   | ")"         { GROUP_CLSE }
   | ";"         { STAT_SEPA }
+  | ":"         { SELECT }
   | "="         { ASSIGN }
   | "if"        { IF }
   | "else"      { ELSE }
   | "while"     { WHILE }
   | "do"        { DO }
   | "break"     { BREAK }
+  | "choose"    { CHOOSE }
   | "||"        { OR }
   | "&&"        { AND }
   | "=="        { EQ }

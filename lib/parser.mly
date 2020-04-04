@@ -12,6 +12,7 @@
 %token GROUP_OPEN
 %token GROUP_CLSE
 %token STAT_SEPA
+%token SELECT
 (* Misc *)
 %token ASSIGN
 %token <string> IDENT
@@ -21,19 +22,20 @@
 %token WHILE
 %token DO
 %token BREAK
+%token CHOOSE
 (* Relational *)
-%token OR 
+%token OR
 %token AND
-%token EQ 
+%token EQ
 %token NEQ
-%token LT 
-%token LEQ 
-%token GEQ 
+%token LT
+%token LEQ
+%token GEQ
 %token GT
 (* Arithmetic *)
-%token PLUS 
-%token MINUS 
-%token MULTIPLY 
+%token PLUS
+%token MINUS
+%token MULTIPLY
 %token DIVIDE
 (* Unary *)
 %token NOT (* | NEGATE -- negate is ambiguous, will handle this in parsing *)
@@ -42,9 +44,9 @@
 %token TRUE
 %token FALSE
 (* Types *)
-%token INT 
-%token FLOAT 
-%token CHAR 
+%token INT
+%token FLOAT
+%token CHAR
 %token BOOL
 
 %start <Common.Meta.meta Common.AST.program> program
@@ -61,7 +63,7 @@
 
 %%
 
-program: 
+program:
   | block EOF { $1 }
   ;
 
@@ -98,8 +100,16 @@ stmt:
   | WHILE GROUP_OPEN e = bool GROUP_CLSE body = stmt              { While (e, body, Position $loc) }
   | DO body = stmt WHILE GROUP_OPEN e = bool GROUP_CLSE STAT_SEPA { Do (e, body, Position $loc) }
   | BREAK STAT_SEPA                                               { Break (Position $loc) }
+  | CHOOSE c = choose STAT_SEPA                                   {
+      let (stmts, probs) = c |> List.rev |> List.split in
+      Choose (stmts, probs, Position $loc)
+    }
   | block                                                         { BlockStmt ($1, Position $loc) }
   ;
+
+choose:
+  | rest = choose GROUP_OPEN p = NUM SELECT s = stmt GROUP_CLSE { (s, p) :: rest }
+  | GROUP_OPEN p = NUM SELECT s = stmt GROUP_CLSE               { [(s, p)] }
 
 loc:
   | l = loc DEREF_OPEN e = bool DEREF_CLSE  { Deref (l, e, Position $loc) }
