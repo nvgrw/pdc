@@ -44,8 +44,8 @@ let binop_result = function
   | (Int _, Divide _, Int _, m) -> Some (Int m)
   (* (Float) Arithmetic *)
   | (Float _, Add _, Float _, m) 
-  | (Float _, Subtract _, Float _, m) 
-  | (Float _, Multiply _, Float _, m) 
+  | (Float _, Subtract _, Float _, m)
+  | (Float _, Multiply _, Float _, m)
   | (Float _, Divide _, Float _, m) -> Some (Float m)
   | _ -> None
 
@@ -83,6 +83,7 @@ module Walker_TypeCheckPass = Common.Walker.Make(struct
           | _ -> error @@ TypeError (DoRequiresBoolean s)
         end
       | Break _ as s -> success s
+      | Choose _ as s -> success s
       | BlockStmt _ as s -> success s
       | _ as s -> error @@ TypeError (UntypedStatementFragment s)
 

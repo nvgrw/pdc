@@ -183,6 +183,10 @@ module Walker_LlvmPass = Common.Walker.Make(struct
           Llvm.position_at_end block bdr;
           push_blk block >>= fun () ->
           success s
+        | `Stmt Choose _ ->
+          pop_blk >>= fun prob_block ->
+          Llvm.position_at_end prob_block bdr;
+          success s
         | _ -> success s
       end >>= function
       | If _ ->
@@ -199,6 +203,37 @@ module Walker_LlvmPass = Common.Walker.Make(struct
         push_blk @@ Llvm.insertion_block bdr >>= fun () ->
         (* add break block *)
         push_break_block func >>= fun () ->
+        success s
+      | Choose (stmts, probs, _) ->
+        let mdl = match !mdl_ref with | Some mdl -> mdl | None -> assert false in
+        (* put choose header in its own block *)
+        (* let choose_block = Llvm.append_block con "choose" func in
+           ignore @@ Llvm.build_br choose_block bdr;
+           Llvm.position_at_end choose_block bdr; *)
+
+        let random_func = match Llvm.lookup_function "random" mdl with | Some mdl -> mdl | None -> assert false in
+        let random = Llvm.build_call random_func [||] "rnd" bdr in
+        let prob_sum = List.fold_left (+) 0 probs in
+        let prob_sum_const = Llvm.const_float (Llvm.double_type con) (float_of_int prob_sum) in
+        let choice_float = Llvm.build_fmul random prob_sum_const "choicef" bdr in
+        let choice = Llvm.build_fptoui choice_float (Llvm.i64_type con) "choice" bdr in
+        let prob_blocks = List.mapi (fun i _ -> Llvm.append_block con (Printf.sprintf "prob-%d" i) func) probs in
+        let end_block = Llvm.append_block con "chooseend" func in
+
+        let switch = Llvm.build_switch choice (List.hd prob_blocks) prob_sum bdr in
+        (* add cases only for the other probs *)
+        let foreach_prob total (p, blk) = begin
+          for i = total to total + p - 1 do
+            Llvm.add_case switch (Llvm.const_int (Llvm.i64_type con) i) blk
+          done;
+          total + p
+        end in
+        let _ = List.fold_left foreach_prob (List.hd probs) (List.tl (List.combine probs prob_blocks)) in
+
+        (* push end block to position builder at end *)
+        push_blk end_block >>= fun () ->
+        (* push prob + end blocks to the stack *)
+        seqList @@ List.map (fun b -> push_blk end_block >>= fun () -> push_blk b) (List.rev prob_blocks) >>= fun _ ->
         success s
       | _ ->
         success s
@@ -283,12 +318,19 @@ module Walker_LlvmPass = Common.Walker.Make(struct
           end >>= fun break_block ->
           ignore @@ Llvm.build_br break_block bdr;
           success s
-        | Choose _ -> assert false
+        | Choose (stmts, probs, _) ->
+          pop_blk >>= fun end_block ->
+          Llvm.position_at_end end_block bdr;
+          success s
         | BlockStmt (block, _) as s -> success s
       end >>= fun s ->
       success parent >>= function
       | `Stmt If _ ->
         push_blk @@ Llvm.insertion_block bdr >>= fun () ->
+        success s
+      | `Stmt Choose _ ->
+        pop_blk >>= fun end_block ->
+        ignore @@ Llvm.build_br end_block bdr;
         success s
       | _ -> success s
 
