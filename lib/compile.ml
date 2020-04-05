@@ -74,6 +74,9 @@ let error_string err get_lines =
   | StructuralError (DuplicateIdentifier (decl, ident)) ->
     let context = (match get_meta_decl decl with Position (s_pos, e_pos) -> generate_context get_lines s_pos e_pos) in
     sprintf "%s: [%s] identifier `%s' already declared in scope." context type_str ident
+  | StructuralError (ChooseInvalidWeight (stmt, prob)) ->
+    let context = (match get_meta_stmt stmt with Position (s_pos, e_pos) -> generate_context get_lines s_pos e_pos) in
+    sprintf "%s: [%s] choice statement in choose statement has invalid weight %d." context type_str prob
   | CodegenError ValueStackEmpty ->
     sprintf "[%s] value stack empty" type_str
   | CodegenError BlockStackEmpty ->

@@ -21,6 +21,7 @@ type type_error =
 type structural_error =
   | BadIdentifier of meta * string
   | DuplicateIdentifier of meta decl * string
+  | ChooseInvalidWeight of meta stmt * int
 type codegen_error =
   | ValueStackEmpty
   | BlockStackEmpty
