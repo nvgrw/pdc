@@ -5,8 +5,6 @@ module Option = Base.Option
 
 (* Main *)
 let () =
-  let () = prerr_endline "  *** PDC ***" in
-
   (* State *)
   let in_file = ref None in
   let out_file = ref "a.out" in
