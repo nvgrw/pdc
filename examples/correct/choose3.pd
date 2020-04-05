@@ -1,0 +1,5 @@
+{
+  int i;
+  choose 1 : {}
+         5 : if (true) {};
+}
