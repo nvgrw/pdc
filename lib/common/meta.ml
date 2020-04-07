@@ -29,6 +29,7 @@ type codegen_error =
   | NegateOnlyIntOrFloat of meta expr
   | CannotGenerateLocation of meta loc
   | ModuleVerification of string
+  | ProbAssignNotLowered of meta stmt
 type pass_error =
   | TypeError of type_error
   | StructuralError of structural_error

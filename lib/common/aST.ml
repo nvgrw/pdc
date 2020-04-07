@@ -99,6 +99,7 @@ let pp_scope (fmt: Format.formatter) (scope: ('m typ) Data.StringMap.t) =
 
 type 'm stmt =
   | Assign of 'm loc * 'm expr * 'm
+  | ProbAssign of 'm loc * 'm expr list * 'm
   | If of 'm expr * 'm stmt * ('m stmt option) * 'm
   | While of 'm expr * 'm stmt * 'm
   | Do of 'm expr * 'm stmt * 'm
@@ -111,6 +112,7 @@ and 'm block =
 
 let get_meta_stmt = function
   | Assign (_, _, m) -> m
+  | ProbAssign (_, _, m) -> m
   | If (_, _, _, m) -> m
   | While (_, _, m) -> m
   | Do (_, _, m) -> m

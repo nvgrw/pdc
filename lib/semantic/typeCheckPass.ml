@@ -13,11 +13,11 @@ let unop_compatible = function
 let wrap_type typ e m = success @@ Typed (typ, e, m)
 
 let rec same_typ = function
-  | (Array (left_typ, left_size, _), Array (right_typ, right_size, _)) 
+  | (Array (left_typ, left_size, _), Array (right_typ, right_size, _))
     -> same_typ (left_typ, right_typ) && left_size == right_size
   | (Int _, Int _)
   | (Float _, Float _)
-  | (Char _, Char _) 
+  | (Char _, Char _)
   | (Bool _, Bool _) -> true
   | _ -> false
 
@@ -25,25 +25,25 @@ let binop_result = function
   (* Equality *)
   | (t, Eq _, t', m) | (t, Neq _, t', m) when (same_typ (t, t')) -> Some (Bool m)
   (* (Int) Inequality *)
-  | (Int _, Lt _, Int _, m) 
-  | (Int _, Leq _, Int _, m) 
-  | (Int _, Geq _, Int _, m) 
+  | (Int _, Lt _, Int _, m)
+  | (Int _, Leq _, Int _, m)
+  | (Int _, Geq _, Int _, m)
   | (Int _, Gt _, Int _, m) -> Some (Bool m)
   (* (Float) Inequality *)
-  | (Float _, Lt _, Float _, m) 
-  | (Float _, Leq _, Float _, m) 
-  | (Float _, Geq _, Float _, m) 
+  | (Float _, Lt _, Float _, m)
+  | (Float _, Leq _, Float _, m)
+  | (Float _, Geq _, Float _, m)
   | (Float _, Gt _, Float _, m) -> Some (Bool m)
   (* (Bool) Arithmetic *)
-  | (Bool _, Or _, Bool _, m) 
+  | (Bool _, Or _, Bool _, m)
   | (Bool _, And _, Bool _, m) -> Some (Bool m)
   (* (Int) Arithmetic *)
-  | (Int _, Add _, Int _, m) 
-  | (Int _, Subtract _, Int _, m) 
-  | (Int _, Multiply _, Int _, m) 
+  | (Int _, Add _, Int _, m)
+  | (Int _, Subtract _, Int _, m)
+  | (Int _, Multiply _, Int _, m)
   | (Int _, Divide _, Int _, m) -> Some (Int m)
   (* (Float) Arithmetic *)
-  | (Float _, Add _, Float _, m) 
+  | (Float _, Add _, Float _, m)
   | (Float _, Subtract _, Float _, m)
   | (Float _, Multiply _, Float _, m)
   | (Float _, Divide _, Float _, m) -> Some (Float m)
@@ -67,6 +67,16 @@ module Walker_TypeCheckPass = Common.Walker.Make(struct
       | Assign (LTyped(ltyp, _, _), Typed(typ, _, _), _) as s ->
         if (same_typ (ltyp, typ)) then success s
         else error @@ TypeError (IncompatibleAssignment (s, ltyp, typ))
+      | ProbAssign (LTyped(ltyp, _, _), exprs, _) as s ->
+        let rec types_match_ltyp = begin function
+          | Typed(typ, _, _) :: rest ->
+            if (same_typ (ltyp, typ)) then types_match_ltyp rest
+            else error @@ TypeError (IncompatibleAssignment (s, ltyp, typ))
+          | [] -> success ()
+          | _ -> error @@ TypeError (UntypedStatementFragment s)
+        end in
+        types_match_ltyp exprs >>= fun () ->
+        success s
       | If (Typed (typ, _, _), _, _, _) as s -> begin
           match typ with
           | Bool _ -> success s

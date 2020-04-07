@@ -220,6 +220,8 @@ module Walker_LlvmPass = Common.Walker.Make(struct
           pop_val >>= fun loc_llval ->
           let _ = Llvm.build_store expr_llval loc_llval bdr in
           success s
+        | ProbAssign _ as s ->
+          error @@ CodegenError (ProbAssignNotLowered s)
         | If (expr, stmt, Some stmt_opt, _) as s ->
           pop_blk >>= fun cond_false ->
           pop_blk >>= fun cond_false_begin ->

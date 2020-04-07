@@ -106,6 +106,10 @@ module Make(V : Visitor) = struct
         walk_loc (`Stmt pre_result) loc >>= fun walk_loc_loc ->
         walk_expr (`Stmt pre_result) expr >>= fun walk_expr_expr ->
         success (Assign (walk_loc_loc, walk_expr_expr, m))
+      | ProbAssign (loc, exprs, m) ->
+        walk_loc (`Stmt pre_result) loc >>= fun walk_loc_loc ->
+        seqList (List.map (walk_expr (`Stmt pre_result)) exprs) >>= fun walk_expr_exprs ->
+        success (ProbAssign (walk_loc_loc, walk_expr_exprs, m))
       | If (expr, stmt, stmt_opt, m) ->
         walk_expr (`Stmt pre_result) expr >>= fun walk_expr_expr ->
         walk_stmt (`Stmt pre_result) stmt >>= fun walk_stmt_stmt ->
