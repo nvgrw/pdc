@@ -12,9 +12,11 @@
 %token GROUP_OPEN
 %token GROUP_CLSE
 %token STAT_SEPA
+%token EXPR_SEPA
 %token SELECT
 (* Misc *)
 %token ASSIGN
+%token PROB_ASSIGN
 %token <string> IDENT
 (* Control Flow *)
 %token IF
@@ -94,22 +96,27 @@ stmts:
   ;
 
 stmt:
-  | l = loc ASSIGN e = bool STAT_SEPA                             { Assign (l, e, Position $loc) }
-  | IF GROUP_OPEN e = bool GROUP_CLSE t = stmt                    { If (e, t, None, Position $loc) }
-  | IF GROUP_OPEN e = bool GROUP_CLSE t = stmt ELSE f = stmt      { If (e, t, Some f, Position $loc) }
-  | WHILE GROUP_OPEN e = bool GROUP_CLSE body = stmt              { While (e, body, Position $loc) }
-  | DO body = stmt WHILE GROUP_OPEN e = bool GROUP_CLSE STAT_SEPA { Do (e, body, Position $loc) }
-  | BREAK STAT_SEPA                                               { Break (Position $loc) }
-  | CHOOSE c = choose STAT_SEPA                                   {
+  | l = loc ASSIGN e = bool STAT_SEPA                                 { Assign (l, e, Position $loc) }
+  | l = loc PROB_ASSIGN SCOPE_OPEN e = expr_list SCOPE_CLSE STAT_SEPA { ProbAssign (l, List.rev e, Position $loc) }
+  | IF GROUP_OPEN e = bool GROUP_CLSE t = stmt                        { If (e, t, None, Position $loc) }
+  | IF GROUP_OPEN e = bool GROUP_CLSE t = stmt ELSE f = stmt          { If (e, t, Some f, Position $loc) }
+  | WHILE GROUP_OPEN e = bool GROUP_CLSE body = stmt                  { While (e, body, Position $loc) }
+  | DO body = stmt WHILE GROUP_OPEN e = bool GROUP_CLSE STAT_SEPA     { Do (e, body, Position $loc) }
+  | BREAK STAT_SEPA                                                   { Break (Position $loc) }
+  | CHOOSE c = choose STAT_SEPA                                       {
       let (stmts, probs) = c |> List.rev |> List.split in
       Choose (stmts, probs, Position $loc)
     }
-  | block                                                         { BlockStmt ($1, Position $loc) }
+  | block                                                             { BlockStmt ($1, Position $loc) }
   ;
 
 choose:
   | rest = choose p = NUM SELECT s = stmt { (s, p) :: rest }
   | p = NUM SELECT s = stmt               { [(s, p)] }
+
+expr_list:
+  | rest = expr_list EXPR_SEPA e = expr { e :: rest }
+  | e = expr                            { [e] }
 
 loc:
   | l = loc DEREF_OPEN e = bool DEREF_CLSE  { Deref (l, e, Position $loc) }

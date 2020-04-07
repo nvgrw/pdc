@@ -37,8 +37,10 @@ rule token = parse
   | "("         { GROUP_OPEN }
   | ")"         { GROUP_CLSE }
   | ";"         { STAT_SEPA }
+  | ","         { EXPR_SEPA }
   | ":"         { SELECT }
   | "="         { ASSIGN }
+  | "?="        { PROB_ASSIGN }
   | "if"        { IF }
   | "else"      { ELSE }
   | "while"     { WHILE }
