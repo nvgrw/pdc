@@ -30,6 +30,7 @@ type codegen_error =
   | CannotGenerateLocation of meta loc
   | ModuleVerification of string
   | ProbAssignNotLowered of meta stmt
+  | UnimplementedStatement of meta stmt
 type pass_error =
   | TypeError of type_error
   | StructuralError of structural_error

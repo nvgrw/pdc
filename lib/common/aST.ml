@@ -104,6 +104,7 @@ type 'm stmt =
   | While of 'm expr * 'm stmt * 'm
   | Do of 'm expr * 'm stmt * 'm
   | Break of 'm
+  | Print of 'm expr * 'm
   | Choose of 'm stmt list * int list * 'm
   | BlockStmt of 'm block * 'm
 and 'm block =
@@ -117,6 +118,7 @@ let get_meta_stmt = function
   | While (_, _, m) -> m
   | Do (_, _, m) -> m
   | Break m -> m
+  | Print (_, m) -> m
   | Choose (_, _, m) -> m
   | BlockStmt (_, m) -> m
 

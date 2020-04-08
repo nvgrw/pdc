@@ -95,6 +95,9 @@ let error_string err get_lines =
   | CodegenError (ProbAssignNotLowered stmt) ->
     let context = (match get_meta_stmt stmt with Position (s_pos, e_pos) -> generate_context get_lines s_pos e_pos) in
     sprintf "%s: [%s] probabilistic assignment not lowered to choose before code generation." context type_str
+  | CodegenError (UnimplementedStatement stmt) ->
+    let context = (match get_meta_stmt stmt with Position (s_pos, e_pos) -> generate_context get_lines s_pos e_pos) in
+    sprintf "%s: [%s] statement not implemented." context type_str
   | Message m -> sprintf "[%s] %s" type_str m
 
 let generate (config:compile_conf) (p: meta program) (get_lines: int -> int -> string list) out =

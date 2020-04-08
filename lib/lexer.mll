@@ -41,6 +41,7 @@ rule token = parse
   | ":"         { SELECT }
   | "="         { ASSIGN }
   | "?="        { PROB_ASSIGN }
+  | "print"     { PRINT }
   | "if"        { IF }
   | "else"      { ELSE }
   | "while"     { WHILE }

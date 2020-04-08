@@ -295,6 +295,17 @@ module Walker_LlvmPass = Common.Walker.Make(struct
           end >>= fun break_block ->
           ignore @@ Llvm.build_br break_block bdr;
           success s
+        | Print (Typed (typ, _, _), _) as s ->
+          pop_val >>= fun vl ->
+          let mdl = match !mdl_ref with | Some mdl -> mdl | None -> assert false in
+          let printf_func = match Llvm.lookup_function "printf" mdl with | Some mdl -> mdl | None -> assert false in
+          let format = Llvm.build_global_stringptr begin match typ with
+              | Array _ -> "%.0snot implemented"
+              | Int _ | Char _ | Bool _ -> "%d"
+              | Float _ -> "%f"
+            end "" bdr in
+          ignore @@ Llvm.build_call printf_func [| format; vl |] "" bdr;
+          success s
         | Choose (stmts, probs, _) ->
           seqList @@ List.map (fun _ ->
               pop_blk >>= fun prob_end ->
@@ -332,6 +343,8 @@ module Walker_LlvmPass = Common.Walker.Make(struct
           Llvm.position_at_end post_block bdr;
           success s
         | BlockStmt (block, _) as s -> success s
+        | _ as s ->
+          error @@ CodegenError (UnimplementedStatement s)
       end >>= fun s ->
       success parent >>= function
       | `Stmt If _ ->

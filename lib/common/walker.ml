@@ -124,6 +124,9 @@ module Make(V : Visitor) = struct
         walk_stmt (`Stmt pre_result) stmt >>= fun walk_stmt_stmt ->
         success (Do (walk_expr_expr, walk_stmt_stmt, m))
       | Break _ as s -> success s
+      | Print (expr, m) ->
+        walk_expr (`Stmt pre_result) expr >>= fun walk_expr_expr ->
+        success (Print (walk_expr_expr, m))
       | Choose (stmts, probs, m) ->
         seqList (List.map (walk_stmt (`Stmt pre_result)) stmts) >>= fun walk_stmt_stmts ->
         success (Choose (walk_stmt_stmts, probs, m))

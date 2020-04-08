@@ -93,6 +93,7 @@ module Walker_TypeCheckPass = Common.Walker.Make(struct
           | _ -> error @@ TypeError (DoRequiresBoolean s)
         end
       | Break _ as s -> success s
+      | Print _ as s -> success s
       | Choose _ as s -> success s
       | BlockStmt _ as s -> success s
       | _ as s -> error @@ TypeError (UntypedStatementFragment s)

@@ -17,6 +17,7 @@
 (* Misc *)
 %token ASSIGN
 %token PROB_ASSIGN
+%token PRINT
 %token <string> IDENT
 (* Control Flow *)
 %token IF
@@ -103,6 +104,7 @@ stmt:
   | WHILE GROUP_OPEN e = bool GROUP_CLSE body = stmt                  { While (e, body, Position $loc) }
   | DO body = stmt WHILE GROUP_OPEN e = bool GROUP_CLSE STAT_SEPA     { Do (e, body, Position $loc) }
   | BREAK STAT_SEPA                                                   { Break (Position $loc) }
+  | PRINT e = bool STAT_SEPA                                          { Print (e, Position $loc) }
   | CHOOSE c = choose STAT_SEPA                                       {
       let (stmts, probs) = c |> List.rev |> List.split in
       Choose (stmts, probs, Position $loc)
