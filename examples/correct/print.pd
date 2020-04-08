@@ -1,6 +1,11 @@
 {
-  int i;
-  i = 1;
-  print i;
-  print i;
+  int[10] a; int b; bool d; float e;
+  a[0] = 100;
+  print a;
+  b = 100;
+  print b;
+  d = true;
+  print d;
+  e = 100.0;
+  print e;
 }

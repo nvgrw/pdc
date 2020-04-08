@@ -300,9 +300,9 @@ module Walker_LlvmPass = Common.Walker.Make(struct
           let mdl = match !mdl_ref with | Some mdl -> mdl | None -> assert false in
           let printf_func = match Llvm.lookup_function "printf" mdl with | Some mdl -> mdl | None -> assert false in
           let format = Llvm.build_global_stringptr begin match typ with
-              | Array _ -> "%.0snot implemented"
-              | Int _ | Char _ | Bool _ -> "%d"
-              | Float _ -> "%f"
+              | Array _ -> "%.0snot implemented\n"
+              | Int _ | Char _ | Bool _ -> "%d\n"
+              | Float _ -> "%f\n"
             end "" bdr in
           ignore @@ Llvm.build_call printf_func [| format; vl |] "" bdr;
           success s
