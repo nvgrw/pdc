@@ -1,0 +1,12 @@
+{
+  # This choose test file is used to test
+  # the generated code by running it
+  # successive runs should hopefully give different numbers
+  int[20] numbers; int i; i = 0;
+  while (i < 20) {
+    numbers[i] ?= { 1, 2, 3 };
+    i = i + 1;
+  }
+
+  print numbers;
+}
