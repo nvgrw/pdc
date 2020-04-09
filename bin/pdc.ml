@@ -8,20 +8,19 @@ let () =
   (* State *)
   let in_file = ref None in
   let out_file = ref "a.out" in
-  let optimize = ref default_conf.optimize in
-  let gen = ref default_conf.gen in
-  let dump_lex_ast = ref default_conf.dump_lex_ast in
-  let dump_semant_ast = ref default_conf.dump_semant_ast in
-  let dump_ir = ref default_conf.dump_ir in
+  let config = default_conf in
 
   (* Argument Parsing *)
   let options: (doc * spec * doc) list = [
     ("-o", Set_string out_file, "output file name");
-    ("--no-opt", Clear optimize, "disable optimizations");
-    ("--no-gen", Clear gen, "disable code generation and output");
-    ("--dump-lex-ast", Set dump_lex_ast, "dump the lex ast to standard output");
-    ("--dump-semant-ast", Set dump_semant_ast, "dump the semant ast to standard output");
-    ("--dump-ir", Set dump_ir, "dump the ir to standard output");
+
+    ("--no-opt", Unit (fun () -> config.optimize <- false), "disable optimizations");
+    ("--no-gen", Unit (fun () -> config.gen <- false), "disable code generation and output");
+
+
+    ("--dump-lex-ast", Unit (fun () -> config.dump_lex_ast <- true), "dump the lex ast to standard output");
+    ("--dump-semant-ast", Unit (fun () -> config.dump_semant_ast <- true), "dump the semant ast to standard output");
+    ("--dump-ir", Unit (fun () -> config.dump_ir <- true), "dump the ir to standard output");
   ] in
   let anon_handle x = in_file := Some x in
   let exec_name = Sys.argv.(0) in
@@ -34,9 +33,6 @@ let () =
   in
 
   (* Setup *)
-  let config = { optimize = !optimize; dump_ir = !dump_ir; dump_semant_ast = !dump_semant_ast; dump_lex_ast = !dump_lex_ast; gen = !gen } in
   let input = InFile in_file  in
   let output = OutFile !out_file in
   Compile.compile config input output
-
-(* x = true; *)

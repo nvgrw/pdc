@@ -10,14 +10,14 @@ type compile_out =
 (* Maybe here we can have different types of configuration, options, etc *)
 type compile_conf =
   {
-    optimize: bool;
-    dump_ir: bool;
-    dump_semant_ast: bool;
-    dump_lex_ast: bool;
-    gen: bool
+    mutable optimize: bool;
+    mutable dump_ir: bool;
+    mutable dump_semant_ast: bool;
+    mutable dump_lex_ast: bool;
+    mutable gen: bool
   }
 
-let default_conf = { optimize = true; dump_ir = false; dump_semant_ast = false; dump_lex_ast = false; gen = true }
+let default_conf = { optimize = true; gen = true; dump_lex_ast = false; dump_semant_ast = false; dump_ir = false }
 
 let make_buf = function
   | InFile path ->
