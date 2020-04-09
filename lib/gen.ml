@@ -1,16 +1,12 @@
 open Common.Context
+open Interop
 
 let generate mdl p =
   let con = Llvm.global_context () in
-  (* Extern stdlib *)
-  let noalias = Llvm.create_enum_attr con "noalias" 0L in
-  let nocapture = Llvm.create_enum_attr con "nocapture" 0L in
-
-  (* ** printf *)
-  let printf_type = Llvm.var_arg_function_type (Llvm.i32_type con) [| Llvm.pointer_type (Llvm.i8_type con) |] in
-  let printf = Llvm.declare_function "printf" printf_type mdl in
-  Llvm.add_function_attr printf noalias (Llvm.AttrIndex.Param 0);
-  Llvm.add_function_attr printf nocapture (Llvm.AttrIndex.Param 0);
+  let stdlib_mdl = Stdlib.parse_stdlib_mdl () in
+  Llvm.set_data_layout (Llvm.data_layout stdlib_mdl) mdl;
+  Llvm_linker.link_modules' mdl stdlib_mdl;
+  Stdlib.remove_exercise mdl;
 
   (* ** random *)
   let random_type = Llvm.function_type (Llvm.double_type con) [||] in
