@@ -35,4 +35,4 @@ let () =
   (* Setup *)
   let input = InFile in_file  in
   let output = OutFile !out_file in
-  Compile.compile config input output
+  ignore @@ Compile.compile config input output

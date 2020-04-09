@@ -14,10 +14,20 @@ type compile_conf =
     mutable dump_ir: bool;
     mutable dump_semant_ast: bool;
     mutable dump_lex_ast: bool;
-    mutable gen: bool
+    mutable gen: bool;
+    mutable dispose_mdl: bool;
+    mutable printer: string -> unit
   }
 
-let default_conf = { optimize = true; gen = true; dump_lex_ast = false; dump_semant_ast = false; dump_ir = false }
+let default_conf = { 
+  optimize = true; 
+  gen = true;
+  dump_lex_ast = false;
+  dump_semant_ast = false;
+  dump_ir = false;
+  dispose_mdl = true;
+  printer = prerr_endline;
+}
 
 let make_buf = function
   | InFile path ->

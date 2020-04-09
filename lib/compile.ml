@@ -101,18 +101,20 @@ let error_string err get_lines =
   | Message m -> sprintf "[%s] %s" type_str m
 
 let generate (config:compile_conf) (p: meta program) (get_lines: int -> int -> string list) out =
-  if config.dump_lex_ast then print_endline @@ show_program pp_meta p;
+  if config.dump_lex_ast then config.printer @@ show_program pp_meta p;
   let post_semant = Semant.check p
   in begin match post_semant with
-    | Error err -> print_endline @@ error_string err get_lines
+    | Error err ->
+      config.printer @@ error_string err get_lines;
+      None
     | Success (_, semant_ast) ->
-      if config.dump_semant_ast then print_endline @@ show_program pp_meta semant_ast;
+      if config.dump_semant_ast then config.printer @@ show_program pp_meta semant_ast;
       let con = Llvm.global_context () in
       let mdl = Llvm.create_module con "llpdc" in (* TODO: name after input file name *)
       if config.gen then begin
         let post_gen = Gen.generate mdl semant_ast
         in begin match post_gen with
-          | Error err -> print_endline @@ error_string err get_lines
+          | Error err -> config.printer @@ error_string err get_lines
           | Success (_, _gen_ast) ->
             if config.optimize then begin
               let passManager = Llvm.PassManager.create () in
@@ -138,12 +140,16 @@ let generate (config:compile_conf) (p: meta program) (get_lines: int -> int -> s
               | OutChannel ch ->
                 Llvm_bitwriter.output_bitcode ch mdl
             in if not successful_output then
-              prerr_endline "export failed";
+              config.printer "export failed";
         end
       end;
       if config.dump_ir then Llvm.dump_module mdl;
-      Llvm.dispose_module mdl;
-      Llvm.dispose_context con
+      if config.dispose_mdl then (
+        Llvm.dispose_module mdl;
+        Llvm.dispose_context con;
+        None
+      ) else
+        Some mdl
   end
 
 let compile config input output =
@@ -151,13 +157,13 @@ let compile config input output =
     let (buf, get_lines) = Setup.make_buf input in
     try generate config (Parser.program Lexer.token buf) get_lines output with
     | Lexer.SyntaxError msg ->
-      eprintf "lexer error: %s\n" msg;
+      config.printer @@ sprintf "lexer error: %s\n" msg;
       exit 1
     | Parser.Error ->
       let context = generate_context get_lines buf.lex_start_p buf.lex_curr_p in
-      eprintf "%s: parser error\n" context;
+      config.printer @@ sprintf "%s: parser error\n" context;
       exit 1;
   with
   | Sys_error msg ->
-    prerr_endline msg;
+    config.printer msg;
     exit 1
