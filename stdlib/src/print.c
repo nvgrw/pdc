@@ -60,7 +60,7 @@ static inline void _print_array_##NAME(TYPE* array, int64_t n_dim, int64_t* dim,
   printf("%*s]", level, "");                                                          \
 }                                                                                     \
                                                                                       \
-void print_array_##NAME(TYPE* array, int n_dim, int* dim) {                           \
+void print_array_##NAME(TYPE* array, int64_t n_dim, int64_t* dim) {                   \
   _print_array_##NAME(array, n_dim, dim, 0);                                          \
 }
 
