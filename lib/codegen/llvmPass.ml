@@ -114,6 +114,21 @@ module Walker_LlvmPass = Common.Walker.Make(struct
       | Char _ -> Llvm.i8_type con
       | Bool _ -> Llvm.i1_type con
 
+    let flatten_array_typ t =
+      let rec flatten_array_typ' n_dim dim = begin function
+        | Array (typ, size, _) ->
+          flatten_array_typ' (n_dim + 1) (size :: dim) typ
+        | _ as t-> (t, n_dim, dim)
+      end in
+      flatten_array_typ' 0 [] t
+
+    let flat_typ_str = function
+      | Array _ -> assert false
+      | Int _ -> "int"
+      | Float _ -> "float"
+      | Char _ -> "char"
+      | Bool _ -> "bool"
+
     let build_br_if_not_terminated bb bdr =
       match bdr |> Llvm.insertion_block |> Llvm.block_terminator with
       | None ->
@@ -124,6 +139,11 @@ module Walker_LlvmPass = Common.Walker.Make(struct
       | None ->
         Some (Llvm.build_cond_br cond cond_true cond_false bdr)
       | Some _ -> None
+
+    let lookup_function name mdl =
+      match Llvm.lookup_function name mdl with
+      | Some mdl -> mdl
+      | None -> assert false
 
     let visit_program_pre _ p =
       let mdl = match !mdl_ref with | Some mdl -> mdl | None -> assert false in
@@ -298,13 +318,29 @@ module Walker_LlvmPass = Common.Walker.Make(struct
         | Print (Typed (typ, _, _), _) as s ->
           pop_val >>= fun vl ->
           let mdl = match !mdl_ref with | Some mdl -> mdl | None -> assert false in
-          let printf_func = match Llvm.lookup_function "printf" mdl with | Some mdl -> mdl | None -> assert false in
-          let format = Llvm.build_global_stringptr begin match typ with
-              | Array _ -> "%.0snot implemented\n"
-              | Int _ | Char _ | Bool _ -> "%d\n"
-              | Float _ -> "%f\n"
-            end "" bdr in
-          ignore @@ Llvm.build_call printf_func [| format; vl |] "" bdr;
+
+          begin match typ with
+            | Array _ ->
+              let (typ, n_dim, dim) = flatten_array_typ typ in
+              let lln_dim = Llvm.const_int (Llvm.i64_type con) n_dim in
+              let llelement_typ = Llvm.i64_type con in
+              let lldim_elements = Array.of_list @@ List.map (fun d -> Llvm.const_int llelement_typ d) dim in
+              let lldim_const = Llvm.const_array llelement_typ lldim_elements in
+              let lldim_global = Llvm.define_global "pdim" lldim_const mdl in
+              Llvm.set_linkage Llvm.Linkage.Private lldim_global;
+              let lldim_arr = Llvm.const_gep lldim_global [| Llvm.const_int (Llvm.i64_type con) 0 |] in
+              let lldim = Llvm.const_bitcast lldim_arr (Llvm.pointer_type @@ Llvm.i64_type con) in
+              let std_print_array = lookup_function (Printf.sprintf "print_array_%s" (flat_typ_str typ)) mdl in
+              let lltyp = typ_to_llvm typ in
+              let cast_vl = Llvm.build_bitcast vl (Llvm.pointer_type lltyp) "" bdr in
+              ignore @@ Llvm.build_call std_print_array [| cast_vl; lln_dim; lldim |] "" bdr;
+            | _ ->
+              let std_print = lookup_function (Printf.sprintf "print_%s" (flat_typ_str typ)) mdl in
+              ignore @@ Llvm.build_call std_print [| vl |] "" bdr;
+          end;
+
+          let std_print_newline = lookup_function "print_newline" mdl in
+          ignore @@ Llvm.build_call std_print_newline [||] "" bdr;
           success s
         | Choose (stmts, probs, _) ->
           seqList @@ List.map (fun _ ->
