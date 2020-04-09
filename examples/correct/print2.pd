@@ -1,0 +1,36 @@
+{
+  {
+    int[2][3][2] md;
+    {
+      int i; i = 0;
+      while (i < 2) {
+        int j; j = 0;
+        while (j < 3) {
+          int k; k = 0;
+          while (k < 2) {
+            md[i][j][k] = (i + 1) * (j + 1) * (k + 1);
+            k = k + 1;
+          }
+          j = j + 1;
+        }
+        i = i + 1;
+      }
+    }
+    print md;
+  }
+
+  {
+    float[3] mf;
+    mf[0] = 3.14;
+    mf[1] = 1.59;
+    mf[2] = 69.420;
+    print mf;
+  }
+
+  {
+    bool[2][2] mb;
+    mb[0][0] = true;
+    mb[1][1] = true;
+    print mb;
+  }
+}
