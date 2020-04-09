@@ -23,6 +23,8 @@ module Walker_LoweringPass = Common.Walker.Make(struct
         let assignments = List.map (fun e -> Assign (loc, e, m)) exprs in
         let weights = List.init (List.length assignments) (Core.const 1) in
         success @@ Choose (assignments, weights, m)
+      | Print (Typed (Array _ as arr, Var (loc, m'), m''), m''') ->
+        success @@ Print (Typed (arr, PtrVar (loc, m'), m''), m''')
       | _ as s -> success s
     let visit_stmt_pos _ s = success s
 

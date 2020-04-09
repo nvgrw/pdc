@@ -67,6 +67,7 @@ type 'm expr =
   | UnOp of 'm unop * 'm expr * 'm
   | Const of 'm value * 'm
   | Var of 'm loc * 'm
+  | PtrVar of 'm loc * 'm
   | Typed of 'm typ * 'm expr * 'm
 and 'm loc =
   | Id of string * 'm
@@ -79,6 +80,7 @@ let get_meta_expr = function
   | UnOp (_, _, m) -> m
   | Const (_, m) -> m
   | Var (_, m) -> m
+  | PtrVar (_, m) -> m
   | Typed (_, _, m) -> m
 
 let get_meta_loc = function

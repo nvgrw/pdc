@@ -453,6 +453,7 @@ module Walker_LlvmPass = Common.Walker.Make(struct
         pop_val >>= fun llval_ptr ->
         push_val @@ Llvm.build_load llval_ptr "tmpload" bdr >>= fun _ ->
         success e
+      | PtrVar _ as e -> success e
       | Typed (typ, expr, _) as e -> success e
       | _ as e -> error @@ CodegenError (CannotGenerateExpression e)
 

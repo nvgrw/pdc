@@ -65,6 +65,9 @@ module Make(V : Visitor) = struct
       | Var (loc, m) ->
         walk_loc (`Expr pre_result) loc >>= fun walk_loc_loc ->
         success (Var (walk_loc_loc, m))
+      | PtrVar (loc, m) ->
+        walk_loc (`Expr pre_result) loc >>= fun walk_loc_loc ->
+        success (PtrVar (walk_loc_loc, m))
       | Typed (typ, expr, m) ->
         walk_typ (`Expr pre_result) typ >>= fun walk_typ_typ ->
         walk_expr (`Expr pre_result) expr >>= fun walk_expr_expr ->
