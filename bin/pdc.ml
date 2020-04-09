@@ -36,8 +36,8 @@ let () =
   let input = InFile in_file in
   config.dispose_mdl <- false;
   match Compile.compile config input with
-  | None ->
-    prerr_endline "[front end] no module"
+  | None -> ()
   | Some mdl ->
     if not (Llvm_bitwriter.write_bitcode_file mdl !out_file)
-    then prerr_endline "[front end] export failed"
+    then prerr_endline "[front end] export failed" else ();
+    Llvm.dispose_module mdl

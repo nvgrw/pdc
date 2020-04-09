@@ -1,7 +1,7 @@
 (executable
  (public_name pdc)
  (name pdc)
- (libraries compile core llvm.bitwriter))
+ (libraries compile core llvm llvm.bitwriter))
 
 (env
  (dev
