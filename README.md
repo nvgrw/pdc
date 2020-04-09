@@ -4,25 +4,20 @@ This README is a work in progress.
 
 # Compilation
 
-## More pipes
+## One liner
+
+1. `pdc -o /dev/stdout prog.pd | clang -x ir - -Lstdlib/build -lpdstd -o prog`
+
+## Some separate files
+
 1. `pdc -o /dev/stdout prog.pd | llc -filetype=obj -o prog.o`
-2. `clang prog.o -o prog`
-
-## No intermediate files
-1. `pdc -o /dev/stdout prog.pd | clang -x ir - -o prog`
-
-Appears to emit a warning:
-
-```
-warning: overriding the module target triple with x86_64-apple-macosx10.15.0 [-Woverride-module]
-1 warning generated.
-```
+2. `clang prog.o -Lstdlib/build -lpdstd -o prog`
 
 ## Separate files
 
 1. `pdc -o prog.bc prog.pd`
 2. `llc -filetype=obj prog.bc -o prog.o`
-3. `clang prog.o -o prog`
+3. `clang prog.o -Lstdlib/build -lpdstd -o prog`
 
 ## _pdc_ only
 

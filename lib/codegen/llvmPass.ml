@@ -218,6 +218,7 @@ module Walker_LlvmPass = Common.Walker.Make(struct
       | While _ ->
         let block = Llvm.append_block con "whead" func in
         ignore @@ Llvm.build_br block bdr;
+        Llvm.position_at_end block bdr;
         push_blk block >>= fun () ->
         (* add break block *)
         push_break_block func >>= fun () ->
