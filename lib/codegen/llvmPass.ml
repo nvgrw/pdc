@@ -333,6 +333,14 @@ module Walker_LlvmPass = Common.Walker.Make(struct
               let lldim = Llvm.const_bitcast lldim_arr (Llvm.pointer_type @@ Llvm.i64_type con) in
               let std_print_array = lookup_function (Printf.sprintf "print_array_%s" (flat_typ_str typ)) mdl in
               let lltyp = typ_to_llvm typ in
+              (* v probably find a better solution *)
+              let lltyp =
+                if (Llvm.classify_type lltyp == Llvm.TypeKind.Integer && Llvm.integer_bitwidth lltyp < 8) then
+                  Llvm.i8_type con
+                else
+                  lltyp
+              in
+              (* ^ probably find a better solution *)
               let cast_vl = Llvm.build_bitcast vl (Llvm.pointer_type lltyp) "" bdr in
               ignore @@ Llvm.build_call std_print_array [| cast_vl; lln_dim; lldim |] "" bdr;
             | _ ->
