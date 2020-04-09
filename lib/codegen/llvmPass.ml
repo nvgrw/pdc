@@ -329,7 +329,7 @@ module Walker_LlvmPass = Common.Walker.Make(struct
               let lldim_const = Llvm.const_array llelement_typ lldim_elements in
               let lldim_global = Llvm.define_global "pdim" lldim_const mdl in
               Llvm.set_linkage Llvm.Linkage.Private lldim_global;
-              let lldim_arr = Llvm.const_gep lldim_global [| Llvm.const_int (Llvm.i64_type con) 0 |] in
+              let lldim_arr = Llvm.const_gep lldim_global [||] in
               let lldim = Llvm.const_bitcast lldim_arr (Llvm.pointer_type @@ Llvm.i64_type con) in
               let std_print_array = lookup_function (Printf.sprintf "print_array_%s" (flat_typ_str typ)) mdl in
               let lltyp = typ_to_llvm typ in
