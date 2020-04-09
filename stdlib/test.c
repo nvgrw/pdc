@@ -8,7 +8,7 @@ int main(int argc, const char **argv) {
       {{1, 9}, {2, 9}, {3, 9}},
       {{4, 9}, {5, 9}, {6, 9}}
     };
-    int dim[] = { 2, 3, 2 };
+    int64_t dim[] = { 2, 3, 2 };
     print_array_int((int64_t*) &a, 3, dim);
   }
 
@@ -19,7 +19,7 @@ int main(int argc, const char **argv) {
       {false, true, false, false},
       {true, false, false, false}
     } };
-    int dim[] = { 1, 4, 4 };
+    int64_t dim[] = { 1, 4, 4 };
     print_array_bool((bool*) &a, 3, dim);
   }
   return 0;

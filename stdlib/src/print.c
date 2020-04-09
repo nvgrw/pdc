@@ -28,7 +28,7 @@ void print_float(double value) {
 }
 
 #define DEFINE_PRINT_ARRAY(NAME, TYPE)                                                \
-static inline void _print_array_##NAME(TYPE* array, int n_dim, int* dim, int level) { \
+static inline void _print_array_##NAME(TYPE* array, int64_t n_dim, int64_t* dim, int level) { \
   if (n_dim == 1) {                                                                   \
     int array_size = *dim;                                                            \
     printf("%*s[", level, "");                                                        \
