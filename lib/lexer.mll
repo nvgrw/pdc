@@ -72,4 +72,5 @@ rule token = parse
     { raise (SyntaxError (Printf.sprintf "Unexpected character `%s'" @@ lexeme lexbuf)) }
 and comment = parse
   | newline     { next_line lexbuf; token lexbuf }
+  | eof         { EOF }
   | _           { comment lexbuf }

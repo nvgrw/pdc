@@ -4,3 +4,4 @@
   if (true) # Comment in statement
   {}
 }
+# Comment at end of file
