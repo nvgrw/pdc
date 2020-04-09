@@ -1,0 +1,15 @@
+{
+  int d; int g; int o;
+  d ?= { 0, 1, 2 }; # Pick winning door
+  g ?= { 0, 1, 2 }; # Pick guessed door
+  o ?= { 0, 1, 2 }; # Pick empty door
+
+  while ((o == g) || (o == d)) {
+    o = o + 1;
+    if (o >= 3) {
+      o = 0;
+    }
+  }
+
+  print g == d;
+}
