@@ -3,19 +3,21 @@
 #include <inttypes.h>
 #include <stdbool.h>
 
-void print_newline(void) {
+#include "common.h"
+
+void STD(print_newline)(void) {
   printf("\n");
 }
 
-void print_int(int64_t value) {
+void STD(print_int)(int64_t value) {
   printf("%lld", value);
 }
 
-void print_char(int8_t value) {
+void STD(print_char)(int8_t value) {
   printf("%d", value);
 }
 
-void print_bool(bool value) {
+void STD(print_bool)(bool value) {
   if (value) {
     printf("true");
   } else {
@@ -23,7 +25,7 @@ void print_bool(bool value) {
   }
 }
 
-void print_float(double value) {
+void STD(print_float)(double value) {
   printf("%f", value);
 }
 
@@ -33,7 +35,7 @@ static inline void _print_array_##NAME(TYPE* array, int64_t n_dim, int64_t* dim,
     int array_size = *dim;                                                            \
     printf("%*s[", level, "");                                                        \
     for (int i = 0; i < array_size; i++) {                                            \
-      print_##NAME(array[i]);                                                         \
+      STD(print_##NAME)(array[i]);                                                    \
       if (i != array_size - 1) {                                                      \
         printf(", ");                                                                 \
       }                                                                               \
@@ -60,7 +62,7 @@ static inline void _print_array_##NAME(TYPE* array, int64_t n_dim, int64_t* dim,
   printf("%*s]", level, "");                                                          \
 }                                                                                     \
                                                                                       \
-void print_array_##NAME(TYPE* array, int64_t n_dim, int64_t* dim) {                   \
+void STD(print_array_##NAME)(TYPE* array, int64_t n_dim, int64_t* dim) {              \
   _print_array_##NAME(array, n_dim, dim, 0);                                          \
 }
 

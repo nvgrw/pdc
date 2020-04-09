@@ -331,7 +331,7 @@ module Walker_LlvmPass = Common.Walker.Make(struct
               Llvm.set_linkage Llvm.Linkage.Private lldim_global;
               let lldim_arr = Llvm.const_gep lldim_global [||] in
               let lldim = Llvm.const_bitcast lldim_arr (Llvm.pointer_type @@ Llvm.i64_type con) in
-              let std_print_array = lookup_function (Printf.sprintf "print_array_%s" (flat_typ_str typ)) mdl in
+              let std_print_array = lookup_function (Printf.sprintf "_pdcstd_print_array_%s" (flat_typ_str typ)) mdl in
               let lltyp = typ_to_llvm typ in
               (* v probably find a better solution *)
               let lltyp =
@@ -344,11 +344,11 @@ module Walker_LlvmPass = Common.Walker.Make(struct
               let cast_vl = Llvm.build_bitcast vl (Llvm.pointer_type lltyp) "" bdr in
               ignore @@ Llvm.build_call std_print_array [| cast_vl; lln_dim; lldim |] "" bdr;
             | _ ->
-              let std_print = lookup_function (Printf.sprintf "print_%s" (flat_typ_str typ)) mdl in
+              let std_print = lookup_function (Printf.sprintf "_pdcstd_print_%s" (flat_typ_str typ)) mdl in
               ignore @@ Llvm.build_call std_print [| vl |] "" bdr;
           end;
 
-          let std_print_newline = lookup_function "print_newline" mdl in
+          let std_print_newline = lookup_function "_pdcstd_print_newline" mdl in
           ignore @@ Llvm.build_call std_print_newline [||] "" bdr;
           success s
         | Choose (stmts, probs, _) ->
@@ -362,7 +362,7 @@ module Walker_LlvmPass = Common.Walker.Make(struct
 
           (* jump to previous block and create jump table *)
           Llvm.position_at_end previous bdr;
-          let random_func = match Llvm.lookup_function "random" mdl with | Some mdl -> mdl | None -> assert false in
+          let random_func = match Llvm.lookup_function "_pdcstd_random" mdl with | Some mdl -> mdl | None -> assert false in
           let random = Llvm.build_call random_func [||] "rnd" bdr in
           let prob_sum = List.fold_left (+) 0 probs in
           let prob_sum_const = Llvm.const_float (Llvm.double_type con) (float_of_int prob_sum) in

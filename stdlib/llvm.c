@@ -1,4 +1,5 @@
 #include "print.h"
+#include "random.h"
 
 /**
  * The purpose of this object is to 'exercise' the stdlib so that clang does not
@@ -8,16 +9,18 @@
 #define NULL ((void*)0)
 
 void _exercise(void) {
-  print_newline();
+  STD(print_newline)();
 
-  print_int(0);
-  print_char(0);
-  print_bool(0);
-  print_float(0);
+  STD(print_int)(0);
+  STD(print_char)(0);
+  STD(print_bool)(0);
+  STD(print_float)(0);
 
-  print_array_int(NULL, 0, NULL);
-  print_array_char(NULL, 0, NULL);
-  print_array_bool(NULL, 0, NULL);
-  print_array_float(NULL, 0, NULL);
+  STD(print_array_int)(NULL, 0, NULL);
+  STD(print_array_char)(NULL, 0, NULL);
+  STD(print_array_bool)(NULL, 0, NULL);
+  STD(print_array_float)(NULL, 0, NULL);
+
+  STD(random)();
 }
 
