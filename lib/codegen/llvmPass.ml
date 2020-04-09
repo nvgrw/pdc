@@ -112,7 +112,7 @@ module Walker_LlvmPass = Common.Walker.Make(struct
       | Int _ -> Llvm.i64_type con
       | Float _ -> Llvm.double_type con
       | Char _ -> Llvm.i8_type con
-      | Bool _ -> Llvm.i1_type con
+      | Bool _ -> Llvm.i8_type con
 
     let flatten_array_typ t =
       let rec flatten_array_typ' n_dim dim = begin function
@@ -483,7 +483,7 @@ module Walker_LlvmPass = Common.Walker.Make(struct
         push_val @@ Llvm.const_float (Llvm.double_type con) r >>= fun () ->
         success e
       | Const (Bool (b, _), _) as e ->
-        push_val @@ Llvm.const_int (Llvm.i1_type con) (if b then 1 else 0) >>= fun () ->
+        push_val @@ Llvm.const_int (Llvm.i8_type con) (if b then 1 else 0) >>= fun () ->
         success e
       (* Variables *)
       | Var (loc, _) as e ->
