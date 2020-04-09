@@ -26,6 +26,7 @@ let real = digit+ | (digit* frac)
 rule token = parse
   | white       { token lexbuf }
   | newline     { next_line lexbuf; token lexbuf }
+  | "#"         { comment lexbuf }
   | "int"       { INT }
   | "float"     { FLOAT }
   | "char"      { CHAR }
@@ -69,3 +70,6 @@ rule token = parse
   | eof         { EOF }
   | _
     { raise (SyntaxError (Printf.sprintf "Unexpected character `%s'" @@ lexeme lexbuf)) }
+and comment = parse
+  | newline     { next_line lexbuf; token lexbuf }
+  | _           { comment lexbuf }

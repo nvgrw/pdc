@@ -1,0 +1,6 @@
+# All input should be dropped following a # symbol
+{
+  # Comment in a block
+  if (true) # Comment in statement
+  {}
+}
