@@ -3,9 +3,7 @@ type compile_in =
   | InChannel of in_channel
   | InString of string
 
-type compile_out =
-  | OutFile of string
-  | OutChannel of out_channel
+type compile_out = Llvm.llmodule option
 
 (* Maybe here we can have different types of configuration, options, etc *)
 type compile_conf =
@@ -19,8 +17,8 @@ type compile_conf =
     mutable printer: string -> unit
   }
 
-let default_conf = { 
-  optimize = true; 
+let default_conf = {
+  optimize = true;
   gen = true;
   dump_lex_ast = false;
   dump_semant_ast = false;

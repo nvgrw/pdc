@@ -100,7 +100,7 @@ let error_string err get_lines =
     sprintf "%s: [%s] statement not implemented." context type_str
   | Message m -> sprintf "[%s] %s" type_str m
 
-let generate (config:compile_conf) (p: meta program) (get_lines: int -> int -> string list) out =
+let generate (config:compile_conf) (p: meta program) (get_lines: int -> int -> string list) =
   if config.dump_lex_ast then config.printer @@ show_program pp_meta p;
   let post_semant = Semant.check p
   in begin match post_semant with
@@ -115,32 +115,23 @@ let generate (config:compile_conf) (p: meta program) (get_lines: int -> int -> s
         let post_gen = Gen.generate mdl semant_ast
         in begin match post_gen with
           | Error err -> config.printer @@ error_string err get_lines
-          | Success (_, _gen_ast) ->
-            if config.optimize then begin
-              let passManager = Llvm.PassManager.create () in
-              (* SET UP OPTIMIZATION PASSES *)
-              (*  allocas to registers *)
-              Llvm_scalar_opts.add_memory_to_register_promotion passManager;
-              (*  simplify adjacent instructions *)
-              Llvm_scalar_opts.add_instruction_combination passManager;
-              (*  reassociate for better constant propagation *)
-              Llvm_scalar_opts.add_reassociation passManager;
-              (*  global value numbering / common subex elimination *)
-              Llvm_scalar_opts.add_gvn passManager;
-              (*  simplification of the cfg. DCE + block merging *)
-              Llvm_scalar_opts.add_cfg_simplification passManager;
-              (* COMPLETED OPTIMIZATION PASS SETUP *)
-              ignore @@ Llvm.PassManager.run_module mdl passManager;
-              Llvm.PassManager.dispose passManager
-            end;
-
-            let successful_output = match out with
-              | OutFile f ->
-                Llvm_bitwriter.write_bitcode_file mdl f
-              | OutChannel ch ->
-                Llvm_bitwriter.output_bitcode ch mdl
-            in if not successful_output then
-              config.printer "export failed";
+          | Success (_, _gen_ast) when config.optimize ->
+            let passManager = Llvm.PassManager.create () in
+            (* SET UP OPTIMIZATION PASSES *)
+            (*  allocas to registers *)
+            Llvm_scalar_opts.add_memory_to_register_promotion passManager;
+            (*  simplify adjacent instructions *)
+            Llvm_scalar_opts.add_instruction_combination passManager;
+            (*  reassociate for better constant propagation *)
+            Llvm_scalar_opts.add_reassociation passManager;
+            (*  global value numbering / common subex elimination *)
+            Llvm_scalar_opts.add_gvn passManager;
+            (*  simplification of the cfg. DCE + block merging *)
+            Llvm_scalar_opts.add_cfg_simplification passManager;
+            (* COMPLETED OPTIMIZATION PASS SETUP *)
+            ignore @@ Llvm.PassManager.run_module mdl passManager;
+            Llvm.PassManager.dispose passManager
+          | _ -> ()
         end
       end;
       if config.dump_ir then Llvm.dump_module mdl;
@@ -152,10 +143,10 @@ let generate (config:compile_conf) (p: meta program) (get_lines: int -> int -> s
         Some mdl
   end
 
-let compile config input output =
+let compile config input =
   try
     let (buf, get_lines) = Setup.make_buf input in
-    try generate config (Parser.program Lexer.token buf) get_lines output with
+    try generate config (Parser.program Lexer.token buf) get_lines with
     | Lexer.SyntaxError msg ->
       config.printer @@ sprintf "lexer error: %s\n" msg;
       exit 1

@@ -1,4 +1,4 @@
 (library
  (name setup)
  (modules setup)
- (libraries core))
+ (libraries core llvm))

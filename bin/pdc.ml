@@ -33,6 +33,11 @@ let () =
   in
 
   (* Setup *)
-  let input = InFile in_file  in
-  let output = OutFile !out_file in
-  ignore @@ Compile.compile config input output
+  let input = InFile in_file in
+  config.dispose_mdl <- false;
+  match Compile.compile config input with
+  | None ->
+    prerr_endline "[front end] no module"
+  | Some mdl ->
+    if not (Llvm_bitwriter.write_bitcode_file mdl !out_file)
+    then prerr_endline "[front end] export failed"
