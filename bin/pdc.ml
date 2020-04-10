@@ -8,7 +8,8 @@ type output_type =
   | Object
   | Bitcode
 
-let clang_stdlib_args = "-Lstdlib/build -lpdstd"
+let prefix = [%blob "../.prefix"]
+let clang_stdlib_args = Printf.sprintf "-L%s/lib -lpdstd" prefix
 
 (* Main *)
 let () =

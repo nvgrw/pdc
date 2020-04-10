@@ -10,6 +10,7 @@ clean:
 	dune clean
 	rm -rf stdlib/build
 	rm -f .deps-installed
+	rm -f .prefix
 
 clean-all: clean
 	rm -f $(PREFIX)/bin/pdc
@@ -26,6 +27,7 @@ install: _build/install/default/bin/pdc stdlib/build/libpdstd.a
 	touch .deps-installed
 
 _build/install/default/bin/pdc: .deps-installed stdlib/build/llvm.bc stdlib/build/libpdstd.a $(PDC_FILES)
+	rm -f .prefix && printf "$(PREFIX)" > .prefix
 	dune build
 
 stdlib/build/llvm.bc: stdlib/build/CMakeFiles/llvm.dir/llvm.c.o

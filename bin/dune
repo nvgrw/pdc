@@ -1,7 +1,9 @@
 (executable
  (public_name pdc)
  (name pdc)
- (libraries compile core llvm llvm.bitwriter))
+ (libraries compile core llvm llvm.bitwriter)
+ (preprocess (pps ppx_blob))
+ (preprocessor_deps (file ../.prefix)))
 
 (env
  (dev
