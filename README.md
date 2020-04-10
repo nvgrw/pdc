@@ -2,23 +2,41 @@
 
 This README is a work in progress.
 
-# Compilation
+# Installation
 
-## One liner
+## Prerequisites
 
-1. `pdc -o /dev/stdout prog.pd | clang -x ir - -Lstdlib/build -lpdstd -o prog`
+- GNU Make 3.81 (or newer)
+- LLVM 9.0.0 with `clang` on path
+- dune 1.11
+- opam
+- OCaml 4.07.1
 
-## Some separate files
+## Building
 
-1. `pdc -o /dev/stdout prog.pd | llc -filetype=obj -o prog.o`
-2. `clang prog.o -Lstdlib/build -lpdstd -o prog`
+The root of the repository contains a `Makefile` with the following non-file targets:
 
-## Separate files
+- **all**: compile pdc;
+- **clean**: remove build-related files from repositor;
+- **clean-all**: like clean but also removes installation;
+- **install**: move pdc and libpdstd.a to /usr/local or `PREFIX` from environment.
 
-1. `pdc -o prog.bc prog.pd`
-2. `llc -filetype=obj prog.bc -o prog.o`
-3. `clang prog.o -Lstdlib/build -lpdstd -o prog`
+# Usage
 
-## _pdc_ only
+## Compile .pd to executable
 
-_pdc_ could invoke the LLVM static compiler and clang itself. Currently it can't do this.
+```
+pdc program.pd -o program
+```
+
+## Compile .pd to LLVM bitcode
+
+```
+pdc program.pd -o program.bc
+```
+
+## Compile .pd to target object
+
+```
+pdc -c program.pd -o program
+```
