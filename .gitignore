@@ -32,3 +32,5 @@ _opam/
 
 pd.opam
 a.out
+.deps-installed
+*.swp
