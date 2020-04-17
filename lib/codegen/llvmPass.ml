@@ -358,26 +358,12 @@ module Walker_LlvmPass = Common.Walker.Make(struct
               success (prob_begin, prob_end)) probs >>= fun prob_blocks ->
           pop_blk >>= fun previous ->
           let (prob_begins, prob_ends) = List.rev prob_blocks |> List.split in
-          let mdl = match !mdl_ref with | Some mdl -> mdl | None -> assert false in
 
-          (* jump to previous block and create jump table *)
+          (* jump to previous block and create choose *)
           Llvm.position_at_end previous bdr;
-          let random_func = match Llvm.lookup_function "_pdcstd_random" mdl with | Some mdl -> mdl | None -> assert false in
-          let random = Llvm.build_call random_func [||] "rnd" bdr in
-          let prob_sum = List.fold_left (+) 0 probs in
-          let prob_sum_const = Llvm.const_float (Llvm.double_type con) (float_of_int prob_sum) in
-          let choice_float = Llvm.build_fmul random prob_sum_const "choicef" bdr in
-          let choice = Llvm.build_fptoui choice_float (Llvm.i64_type con) "choice" bdr in
-
-          let switch = Llvm.build_switch choice (List.hd prob_begins) prob_sum bdr in
-          (* add cases only for the other probs *)
-          let foreach_prob total (p, blk) = begin
-            for i = total to total + p - 1 do
-              Llvm.add_case switch (Llvm.const_int (Llvm.i64_type con) i) blk
-            done;
-            total + p
-          end in
-          let _ = List.fold_left foreach_prob (List.hd probs) (List.tl (List.combine probs prob_begins)) in
+          let num_choices = List.length probs in
+          let choose = Llvm.build_choose (Llvm.const_int (Llvm.i64_type con) (List.hd probs)) (List.hd prob_begins) (num_choices - 1) bdr in
+          List.iter (fun (wt, bb) -> Llvm.add_choice choose (Llvm.const_int (Llvm.i64_type con) wt) bb) (List.tl (List.combine probs prob_begins));
 
           (* insert unconditional branch to post_block *)
           let post_block = Llvm.append_block con "chooseend" func in
