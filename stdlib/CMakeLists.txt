@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 2.6)
+cmake_minimum_required (VERSION 3.4.3)
 project (pdc_standard_library)
 
 file (GLOB STD_SOURCES "src/*.c" "include/*.h")
