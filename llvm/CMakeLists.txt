@@ -12,7 +12,7 @@ message (STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 add_definitions (${LLVM_DEFINITIONS})
 include_directories (${LLVM_INCLUDE_DIRS})
 
-llvm_map_components_to_libnames (LLVM_LIBS support core ipo codegen)
+llvm_map_components_to_libnames (LLVM_LIBS support core ipo scalarOpts)
 
 if (NOT LLVM_ENABLE_RTTI)
   set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti")
