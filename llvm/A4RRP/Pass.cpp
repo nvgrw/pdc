@@ -3,7 +3,6 @@
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/LegacyPassManager.h"
 
-//#include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
 
 using namespace llvm;
@@ -46,11 +45,15 @@ bool RandomProvider::runOnFunction(Function &F) {
         continue;
 
       IRBuilder<> Builder(CI);
+      auto *UpperBound = cast<ConstantInt>(CI->getArgOperand(0));
+      assert(UpperBound->getBitWidth() -
+                     UpperBound->getValue().countLeadingZeros() <=
+                 32 &&
+             "arc4random Random Provider only supports 32-bit values!");
       Value *RandomValue = Builder.CreateIntCast(
           Builder.CreateCall(
               Function_arc4random_uniform,
-              {Builder.CreateIntCast(CI->getArgOperand(0), Builder.getInt32Ty(),
-                                     false)}),
+              {Builder.CreateIntCast(UpperBound, Builder.getInt32Ty(), false)}),
           Builder.getInt64Ty(), false);
 
       CI->replaceAllUsesWith(RandomValue);
