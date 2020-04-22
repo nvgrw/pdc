@@ -22,4 +22,4 @@ if (NOT LLVM_ENABLE_EH)
   set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions")
 endif()
 
-add_subdirectory (A4RRandomProvider)
+add_subdirectory (A4RRP)
