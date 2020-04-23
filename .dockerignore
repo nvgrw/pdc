@@ -1,0 +1,14 @@
+llvm/build
+stdlib/build
+_build
+Dockerfile
+.dockerignore
+.git
+.gitignore
+examples
+README.md
+**/.DS_Store
+**/*.swp
+.deps-installed
+pd.opam
+.prefix
