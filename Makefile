@@ -34,7 +34,7 @@ install: _build/install/default/bin/pdc stdlib/build/libpdstd.a llvm/build/libA4
 	cp llvm/build/libA4RRP.so $(PREFIX)/lib/libA4RRP.so
 
 .deps-installed:
-	opam install . --deps-only && \
+	opam install . -y --deps-only && \
 	touch .deps-installed
 
 _build/install/default/bin/pdc: .deps-installed stdlib/build/llvm.bc stdlib/build/libpdstd.a llvm/build/libA4RRP.so $(PDC_FILES)

@@ -10,7 +10,7 @@ void STD(print_newline)(void) {
 }
 
 void STD(print_int)(int64_t value) {
-  printf("%lld", value);
+  printf("%" PRId64, value);
 }
 
 void STD(print_char)(int8_t value) {
