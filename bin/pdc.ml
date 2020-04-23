@@ -9,7 +9,7 @@ type output_type =
   | Bitcode
 
 let prefix = [%blob "../.prefix"]
-let clang_stdlib_args = Printf.sprintf "-L%s/lib -lpdstd" prefix
+let clang_stdlib_args = Printf.sprintf "-L%s/lib -lpdstd -Xclang -load -Xclang %s/lib/libA4RRP.so" prefix prefix
 
 (* Main *)
 let () =
