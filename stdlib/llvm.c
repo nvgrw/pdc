@@ -1,5 +1,4 @@
 #include "print.h"
-#include "random.h"
 
 /**
  * The purpose of this object is to 'exercise' the stdlib so that clang does not
@@ -20,7 +19,5 @@ void _exercise(void) {
   STD(print_array_char)(NULL, 0, NULL);
   STD(print_array_bool)(NULL, 0, NULL);
   STD(print_array_float)(NULL, 0, NULL);
-
-  STD(random)();
 }
 
