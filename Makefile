@@ -54,7 +54,7 @@ stdlib/build/Makefile: stdlib/CMakeLists.txt
 llvm/build/libA4RRP.so: llvm/build/A4RRP/libA4RRP.so
 	cp llvm/build/A4RRP/libA4RRP.so llvm/build/libA4RRP.so
 
-llvm/build/A4RRP/libA4RRP.so: llvm/build/Makefile
+llvm/build/A4RRP/libA4RRP.so: llvm/build/Makefile $(LLX_FILES)
 	cd llvm/build && $(MAKE)
 
 llvm/build/Makefile llvm/build/A4RRP/Makefile: llvm/CMakeLists.txt llvm/A4RRP/CMakeLists.txt
