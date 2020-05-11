@@ -1,0 +1,5 @@
+(library
+ (name native)
+ (modules extra)
+ (libraries llvm)
+ (c_library_flags (-L../../llvm/build/Extra -lExtra)))

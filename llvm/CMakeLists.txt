@@ -3,6 +3,7 @@ project (pdc_llvm_support)
 set (CMAKE_CXX_STANDARD 14)
 set (CMAKE_CXX_STANDARD_REQUIRED ON)
 set (CMAKE_CXX_EXTENSIONS OFF)
+set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules")
 
 find_package (LLVM REQUIRED CONFIG)
 
@@ -23,3 +24,4 @@ if (NOT LLVM_ENABLE_EH)
 endif()
 
 add_subdirectory (A4RRP)
+add_subdirectory (Extra)
