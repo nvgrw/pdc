@@ -1,6 +1,6 @@
 (library
  (name interop)
  (modules stdlib)
- (libraries llvm llvm.bitreader)
+ (libraries core llvm llvm.bitreader)
  (preprocess (pps ppx_blob))
  (preprocessor_deps (file ../../stdlib/build/llvm.bc)))

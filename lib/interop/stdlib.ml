@@ -5,8 +5,4 @@ let parse_stdlib_mdl () =
   Llvm_bitreader.parse_bitcode con buf
 
 let remove_exercise mdl =
-  begin match Llvm.lookup_function "_exercise" mdl with
-    | None -> assert false
-    | Some func ->
-      Llvm.delete_function func
-  end
+  Llvm.delete_function (Core.Option.value_exn (Llvm.lookup_function "_exercise" mdl))

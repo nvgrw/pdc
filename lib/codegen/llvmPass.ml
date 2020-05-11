@@ -141,12 +141,10 @@ module Walker_LlvmPass = Common.Walker.Make(struct
       | Some _ -> None
 
     let lookup_function name mdl =
-      match Llvm.lookup_function name mdl with
-      | Some mdl -> mdl
-      | None -> assert false
+      Option.value_exn (Llvm.lookup_function name mdl)
 
     let visit_program_pre _ p =
-      let mdl = match !mdl_ref with | Some mdl -> mdl | None -> assert false in
+      let mdl = Option.value_exn !mdl_ref in
       let main_type = Llvm.function_type (Llvm.i64_type con) [||] in
       let main = Llvm.declare_function "main" main_type mdl in
       let main_bb = Llvm.append_block con "entry" main in
@@ -155,7 +153,7 @@ module Walker_LlvmPass = Common.Walker.Make(struct
     let visit_program_pos _ p =
       ignore @@ Llvm.build_ret (Llvm.const_int (Llvm.i64_type con) 0) bdr;
 
-      let mdl = match !mdl_ref with | Some mdl -> mdl | None -> assert false in
+      let mdl = Option.value_exn !mdl_ref in
       mdl_ref := None;
 
       (* Verify *)
@@ -318,7 +316,7 @@ module Walker_LlvmPass = Common.Walker.Make(struct
           success s
         | Print (Typed (typ, _, _), _) as s ->
           pop_val >>= fun vl ->
-          let mdl = match !mdl_ref with | Some mdl -> mdl | None -> assert false in
+          let mdl = Option.value_exn !mdl_ref in
 
           begin match typ with
             | Array _ ->
