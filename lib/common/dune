@@ -1,6 +1,6 @@
-(library 
+(library
     (name common)
-    (libraries core llvm)
+    (libraries core llvm native)
     (modules aST visitorMonad walker data meta context scope)
     (preprocess (pps ppx_import ppx_deriving.show)))
 

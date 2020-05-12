@@ -13,18 +13,20 @@
 #include "llvm/IR/DIBuilder.h"
 #include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/Metadata.h"
 #include "llvm/IR/Module.h"
 
 //#define Builder_val(v) (*(LLVMBuilderRef *)(Data_custom_val(v)))
-#define Value_val(v) (*(LLVMValueRef *)(Data_custom_val(v)))
-#define VAL2META(V) (((MetadataAsValue *)V)->getMetadata())
+#define Value_val(v) ((LLVMValueRef)Op_val(v))
+#define Metadata_val(v) ((LLVMMetadataRef)Op_val(v))
+//#define VAL2META(V) (((MetadataAsValue *)V)->getMetadata())
 
 using namespace llvm;
 
 extern "C" {
 
-/* llmodule -> difile_args -> llvalue */
-CAMLprim LLVMValueRef extra_difile(LLVMModuleRef M, value Arguments) {
+/* llmodule -> difile_args -> llmetadata */
+CAMLprim LLVMMetadataRef extra_difile(LLVMModuleRef M, value Arguments) {
   Module &Module = *unwrap(M);
   DIBuilder DIB(Module);
 
@@ -32,60 +34,56 @@ CAMLprim LLVMValueRef extra_difile(LLVMModuleRef M, value Arguments) {
   const char *Basename = String_val(Field(Arguments, 0));
   const char *Directory = String_val(Field(Arguments, 1));
 
-  return wrap(MetadataAsValue::get(Module.getContext(),
-                                   DIB.createFile(Basename, Directory)));
+  return wrap(DIB.createFile(Basename, Directory));
 }
 
-/* llmodule -> disubprogram_args -> llvalue */
-CAMLprim LLVMValueRef extra_disubprogram(LLVMModuleRef M, value Arguments) {
+/* llmodule -> disubprogram_args -> llmetadata */
+CAMLprim LLVMMetadataRef extra_disubprogram(LLVMModuleRef M, value Arguments) {
   Module &Module = *unwrap(M);
   DIBuilder DIB(Module);
 
   // Extract Arguments
-  auto *Scope = cast<DIScope>(VAL2META(unwrap(Value_val(Field(Arguments, 0)))));
+  auto *Scope = cast<DIScope>(unwrap(Metadata_val(Field(Arguments, 0))));
   const char *Name = String_val(Field(Arguments, 1));
   const char *LinkageName = String_val(Field(Arguments, 2));
-  auto *File = cast<DIFile>(VAL2META(unwrap(Value_val(Field(Arguments, 3)))));
+  auto *File = cast<DIFile>(unwrap(Metadata_val(Field(Arguments, 3))));
   unsigned int LineNo = Unsigned_int_val(Field(Arguments, 4));
-  auto *Ty =
-      cast<DISubroutineType>(VAL2META(unwrap(Value_val(Field(Arguments, 5)))));
+  auto *Ty = cast<DISubroutineType>(unwrap(Metadata_val(Field(Arguments, 5))));
   unsigned int ScopeLine = Unsigned_int_val(Field(Arguments, 6));
 
-  return wrap(MetadataAsValue::get(
-      Module.getContext(), DIB.createFunction(Scope, Name, LinkageName, File,
-                                              LineNo, Ty, ScopeLine)));
+  return wrap(DIB.createFunction(Scope, Name, LinkageName, File, LineNo, Ty,
+                                 ScopeLine));
 }
 
-/* llmodule -> dilexicalblock_args -> llvalue */
-CAMLprim LLVMValueRef extra_dilexicalblock(LLVMModuleRef M, value Arguments) {
+/* llmodule -> dilexicalblock_args -> llmetadata */
+CAMLprim LLVMMetadataRef extra_dilexicalblock(LLVMModuleRef M,
+                                              value Arguments) {
   Module &Module = *unwrap(M);
   DIBuilder DIB(Module);
 
   // Extract Args
-  auto *Scope = cast<DIScope>(VAL2META(unwrap(Value_val(Field(Arguments, 0)))));
-  auto *File = cast<DIFile>(VAL2META(unwrap(Value_val(Field(Arguments, 1)))));
+  auto *Scope = cast<DIScope>(unwrap(Metadata_val(Field(Arguments, 0))));
+  auto *File = cast<DIFile>(unwrap(Metadata_val(Field(Arguments, 1))));
   unsigned int Line = Unsigned_int_val(Field(Arguments, 2));
   unsigned int Col = Unsigned_int_val(Field(Arguments, 3));
 
-  return wrap(MetadataAsValue::get(
-      Module.getContext(), DIB.createLexicalBlock(Scope, File, Line, Col)));
+  return wrap(DIB.createLexicalBlock(Scope, File, Line, Col));
 }
 
-/* llmodule -> dilocalvariable_args -> llvalue */
-CAMLprim LLVMValueRef extra_dilocalvariable(LLVMModuleRef M, value Arguments) {
+/* llmodule -> dilocalvariable_args -> llmetadata */
+CAMLprim LLVMMetadataRef extra_dilocalvariable(LLVMModuleRef M,
+                                               value Arguments) {
   Module &Module = *unwrap(M);
   DIBuilder DIB(Module);
 
   // Extract Args
-  auto *Scope = cast<DIScope>(VAL2META(unwrap(Value_val(Field(Arguments, 0)))));
+  auto *Scope = cast<DIScope>(unwrap(Metadata_val(Field(Arguments, 0))));
   const char *Name = String_val(Field(Arguments, 1));
-  auto *File = cast<DIFile>(VAL2META(unwrap(Value_val(Field(Arguments, 2)))));
+  auto *File = cast<DIFile>(unwrap(Metadata_val(Field(Arguments, 2))));
   unsigned int LineNo = Unsigned_int_val(Field(Arguments, 3));
-  auto *Ty = cast<DIType>(VAL2META(unwrap(Value_val(Field(Arguments, 4)))));
+  auto *Ty = cast<DIType>(unwrap(Metadata_val(Field(Arguments, 4))));
 
-  return wrap(MetadataAsValue::get(
-      Module.getContext(),
-      DIB.createAutoVariable(Scope, Name, File, LineNo, Ty)));
+  return wrap(DIB.createAutoVariable(Scope, Name, File, LineNo, Ty));
 }
 
 /* llmodule -> llvalue */
@@ -93,11 +91,38 @@ CAMLprim LLVMValueRef extra_get_dbg_declare(LLVMModuleRef M) {
   return wrap(Intrinsic::getDeclaration(unwrap(M), Intrinsic::dbg_declare));
 }
 
-/* llmodule -> llvalue */
-CAMLprim LLVMValueRef extra_empty_diexpression(LLVMModuleRef M) {
+/* llmodule -> llmetadata */
+CAMLprim LLVMMetadataRef extra_empty_diexpression(LLVMModuleRef M) {
   Module &Module = *unwrap(M);
   DIBuilder DIB(Module);
-  return wrap(
-      MetadataAsValue::get(Module.getContext(), DIB.createExpression()));
+  return wrap(DIB.createExpression());
+}
+
+/* llmodule -> string -> llmetadata */
+CAMLprim LLVMMetadataRef extra_unspecified_ditype(LLVMModuleRef M, value Name) {
+  Module &Module = *unwrap(M);
+  DIBuilder DIB(Module);
+  return wrap(DIB.createUnspecifiedType(String_val(Name)));
+}
+
+/* llcontext -> llmetadata -> llvalue */
+CAMLprim LLVMValueRef extra_metadata_to_value(LLVMContextRef C,
+                                              LLVMMetadataRef M) {
+  return wrap(MetadataAsValue::get(*unwrap(C), unwrap(M)));
+}
+
+/* unit -> llmetadata */
+CAMLprim LLVMMetadataRef extra_mdnull(value Unit) { return nullptr; }
+
+/* llmodule -> llmetadata array -> llmetadata */
+CAMLprim LLVMMetadataRef extra_disubroutine_type(LLVMModuleRef M,
+                                                 value TypeVals) {
+  Module &Module = *unwrap(M);
+  DIBuilder DIB(Module);
+
+  unsigned Length = Wosize_val(TypeVals);
+  DITypeRefArray ParameterTypes = DIB.getOrCreateTypeArray(ArrayRef<Metadata *>(
+      unwrap((LLVMMetadataRef *)Op_val(TypeVals)), Length));
+  return wrap(DIB.createSubroutineType(ParameterTypes));
 }
 }

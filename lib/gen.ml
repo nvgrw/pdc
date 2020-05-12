@@ -8,9 +8,8 @@ let generate filename_opt mdl p =
   Stdlib.remove_exercise mdl;
   (* ------------- *)
 
-  let con = Llvm.module_context mdl in
   let difile = match filename_opt with
-    | None -> Llvm.mdnull con
+    | None -> Native.Extra.mdnull ()
     | Some fn ->
       let (dir, base) = Core.Filename.split fn in
       Native.Extra.difile mdl { basename = base; directory = dir } in
