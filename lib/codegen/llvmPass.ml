@@ -7,6 +7,7 @@ open Common.Data
 
 module Scope = Common.Scope
 module Option = Base.Option
+module NE = Native.Extra
 
 let mdl_ref = ref None
 let difile_ref = ref None
@@ -156,6 +157,21 @@ module Walker_LlvmPass = Common.Walker.Make(struct
       let main = Llvm.declare_function "main" main_type mdl in
       let main_bb = Llvm.append_block con "entry" main in
       let () = Llvm.position_at_end main_bb bdr in
+
+      get >>= begin function
+        | `Codegen ({ C.debugScopes = debugScopes; _ } as state) ->
+          let debugScope = NE.disubprogram mdl {
+              NE.DISubprogram.scope = Option.value_exn !difile_ref;
+              name = "main";
+              linkage_name = "main";
+              file = Option.value_exn !difile_ref;
+              line_no = 1;
+              ty = NE.disubroutine_type mdl [||];
+              scope_line = 1;
+            } in
+          put @@ `Codegen { state with C.debugScopes = debugScope :: debugScopes }
+        | _ -> assert false
+      end >>= fun _ ->
       success p
     let visit_program_pos _ p =
       ignore @@ Llvm.build_ret (Llvm.const_int (Llvm.i64_type con) 0) bdr;
@@ -187,8 +203,34 @@ module Walker_LlvmPass = Common.Walker.Make(struct
         put @@ `Codegen new_state >>= fun _ ->
         success b
       | _ -> assert false
-    let visit_block_pre _ b = success b
-    let visit_block_pos _ b = success b
+    let visit_block_pre = function
+      | `Program _ -> begin function
+          | Block (_, _, _, Position _) as b ->
+            (* don't generate lexical block for program scope *)
+            success b
+        end
+      | _ -> begin function
+          | Block (_, _, _, Position (pos_from, _pos_to)) as b ->
+            let mdl = Option.value_exn !mdl_ref in
+            get >>= begin function
+              | `Codegen ({ C.debugScopes = debugScopes; _} as state) ->
+                let debugScope = NE.dilexicalblock mdl {
+                    NE.DILexicalBlock.scope = List.hd debugScopes;
+                    file = Option.value_exn !difile_ref;
+                    line = pos_from.pos_lnum;
+                    col = 0;
+                  } in
+                put @@ `Codegen { state with C.debugScopes = debugScope :: debugScopes }
+              | _ -> assert false end >>= fun _ ->
+            success b
+        end
+    let visit_block_pos _ = function
+      | Block (_, _, _, Position _) as b ->
+        get >>= begin function
+          | `Codegen ({C.debugScopes = _::debugScopes; _} as state) ->
+            put @@ `Codegen { state with C.debugScopes = debugScopes }
+          | _ -> assert false end >>= fun _ ->
+        success b
 
     let visit_stmt_pre parent s =
       let func = bdr |> Llvm.insertion_block |> Llvm.block_parent in

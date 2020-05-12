@@ -3,33 +3,39 @@ open Llvm
 
 type llmetadata
 
-type difile_args = {
-  basename: string;
-  directory: string
-}
+module DIFile = struct
+  type args = {
+    basename: string;
+    directory: string
+  }
+end
 
-external difile: llmodule -> difile_args -> llmetadata = "extra_difile"
+external difile: llmodule -> DIFile.args -> llmetadata = "extra_difile"
 
-type disubprogram_args = {
-  scope: llmetadata;
-  name: string;
-  linkage_name: string;
-  file: llmetadata;
-  line_no: int;
-  ty: llmetadata;
-  scope_line: int
-}
+module DISubprogram = struct
+  type args = {
+    scope: llmetadata;
+    name: string;
+    linkage_name: string;
+    file: llmetadata;
+    line_no: int;
+    ty: llmetadata;
+    scope_line: int
+  }
+end
 
-external disubprogram: llmodule -> disubprogram_args -> llmetadata = "extra_disubprogram"
+external disubprogram: llmodule -> DISubprogram.args -> llmetadata = "extra_disubprogram"
 
-type dilexicalblock_args = {
-  scope: llmetadata;
-  file: llmetadata;
-  line: int;
-  col: int
-}
+module DILexicalBlock = struct
+  type args = {
+    scope: llmetadata;
+    file: llmetadata;
+    line: int;
+    col: int
+  }
+end
 
-external dilexicalblock: llmodule -> dilexicalblock_args -> llmetadata = "extra_dilexicalblock"
+external dilexicalblock: llmodule -> DILexicalBlock.args -> llmetadata = "extra_dilexicalblock"
 
 type dilocalvariable_args = {
   scope: llmetadata;
