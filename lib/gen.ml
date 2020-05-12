@@ -11,7 +11,9 @@ let generate filename_opt mdl p =
   let con = Llvm.module_context mdl in
   let difile = match filename_opt with
     | None -> Llvm.mdnull con
-    | Some fn -> let (dir, base) = Core.Filename.split fn in Native.Extra.extra_difile con base dir in
+    | Some fn ->
+      let (dir, base) = Core.Filename.split fn in
+      Native.Extra.difile mdl { basename = base; directory = dir } in
 
   Codegen.LlvmPass.initialize mdl difile;
   Codegen.LlvmPass.process p C.empty

@@ -1,8 +1,44 @@
 
 open Llvm
 
-external extra_difile : llcontext -> string -> string -> llvalue = "extra_difile"
+type difile_args = {
+  basename: string;
+  directory: string
+}
 
-external extra_dilocalvariable: llmodule -> string -> llvalue -> int -> llvalue = "extra_dilocalvariable"
+external difile: llmodule -> difile_args -> llvalue = "extra_difile"
 
-external extra_build_declare: llvalue -> llvalue -> llbuilder -> llmodule -> llvalue = "extra_build_declare"
+type disubprogram_args = {
+  scope: llvalue;
+  name: string;
+  linkage_name: string;
+  file: llvalue;
+  line_no: int;
+  ty: llvalue;
+  scope_line: int
+}
+
+external disubprogram: llmodule -> disubprogram_args -> llvalue = "extra_disubprogram"
+
+type dilexicalblock_args = {
+  scope: llvalue;
+  file: llvalue;
+  line: int;
+  col: int
+}
+
+external dilexicalblock: llmodule -> dilexicalblock_args -> llvalue = "extra_dilexicalblock"
+
+type dilocalvariable_args = {
+  scope: llvalue;
+  name: string;
+  file: llvalue;
+  line_no: int;
+  ty: llvalue
+}
+
+external dilocalvariable: llmodule -> dilocalvariable_args -> llvalue = "extra_dilocalvariable"
+
+external get_dbg_declare: llmodule -> llvalue = "extra_get_dbg_declare"
+
+external empty_diexpression: llmodule -> llvalue = "extra_empty_diexpression"
