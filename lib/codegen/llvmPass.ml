@@ -19,6 +19,7 @@ module Walker_LlvmPass = Common.Walker.Make(struct
     type err = pass_error
     type mta = meta
 
+    (* State modification *)
     let pop_val =
       get >>= function
       | `Codegen state -> begin
@@ -71,9 +72,11 @@ module Walker_LlvmPass = Common.Walker.Make(struct
         success ()
       | _ -> assert false
 
+    (* Useful globals *)
     let con = Llvm.global_context ()
     let bdr = Llvm.builder con
 
+    (* Misc utilities *)
     let push_break_block func =
       get >>= function
       | `Codegen ({ C.breakBlocks = breakBlocks; _ } as state) ->
@@ -146,6 +149,7 @@ module Walker_LlvmPass = Common.Walker.Make(struct
     let lookup_function name mdl =
       Option.value_exn (Llvm.lookup_function name mdl)
 
+    (* Start *)
     let visit_program_pre _ p =
       let mdl = Option.value_exn !mdl_ref in
       let main_type = Llvm.function_type (Llvm.i64_type con) [||] in
