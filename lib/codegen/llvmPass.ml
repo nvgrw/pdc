@@ -9,7 +9,10 @@ module Scope = Common.Scope
 module Option = Base.Option
 
 let mdl_ref = ref None
-let initialize mdl = mdl_ref := Some mdl
+let difile_ref = ref None
+let initialize mdl difile =
+  mdl_ref := Some mdl;
+  difile_ref := Some difile
 
 module Walker_LlvmPass = Common.Walker.Make(struct
     type ctx = context
@@ -386,7 +389,9 @@ module Walker_LlvmPass = Common.Walker.Make(struct
 
     let visit_decl_pre _ d = success d
     let visit_decl_pos _ = function
-      | Decl (typ, ident, _) as d ->
+      | Decl (typ, ident, Position (pos_from, _pos_to)) as d ->
+        let difile = Option.value_exn !difile_ref in
+        let mdl = Option.value_exn !mdl_ref in
         let lltyp = typ_to_llvm typ in
         get >>= begin function
           | `Codegen state ->
@@ -396,6 +401,8 @@ module Walker_LlvmPass = Common.Walker.Make(struct
                 let new_scope = StringMap.add ident llval curr in
                 let new_state = { state with C.scopes = new_scope :: others } in
                 put @@ `Codegen new_state >>= fun _ ->
+                let dilocalvariable = Native.Extra.extra_dilocalvariable mdl ident difile pos_from.pos_lnum in
+                ignore @@ Native.Extra.extra_build_declare llval dilocalvariable bdr mdl;
                 success d
               | _ -> assert false
             end

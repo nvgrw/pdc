@@ -14,7 +14,8 @@ type compile_conf =
     mutable dump_lex_ast: bool;
     mutable gen: bool;
     mutable dispose_mdl: bool;
-    mutable printer: string -> unit
+    mutable printer: string -> unit;
+    mutable filename: string option
   }
 
 let default_conf = {
@@ -25,6 +26,7 @@ let default_conf = {
   dump_ir = false;
   dispose_mdl = true;
   printer = prerr_endline;
+  filename = None
 }
 
 let make_buf = function

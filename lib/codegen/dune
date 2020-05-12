@@ -1,6 +1,6 @@
 (library
  (name codegen)
- (libraries common llvm llvm.analysis llvm.scalar_opts)
+ (libraries common llvm llvm.analysis llvm.scalar_opts native)
  (modules llvmPass))
 
 (env

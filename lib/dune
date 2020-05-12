@@ -1,6 +1,6 @@
 (library
  (name compile)
- (libraries semantic codegen setup interop llvm llvm.linker native))
+ (libraries core semantic codegen setup interop llvm llvm.linker native))
 
 (ocamllex lexer)
 

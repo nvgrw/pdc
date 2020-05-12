@@ -48,6 +48,7 @@ let () =
   (* Setup *)
   let input = InFile in_file in
   config.dispose_mdl <- false;
+  config.filename <- Some in_file;
   match Compile.compile config input with
   | None -> ()
   | Some mdl ->

@@ -10,6 +10,7 @@
 
 #include "llvm-c/Types.h"
 
+#include "llvm/IR/DIBuilder.h"
 #include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Module.h"
@@ -21,34 +22,38 @@ using namespace llvm;
 extern "C" {
 
 /* llcontext -> string -> string -> llvalue */
-CAMLprim LLVMValueRef extra_difile(LLVMContextRef C, value Filename,
+CAMLprim LLVMValueRef extra_difile(LLVMContextRef C, value Basename,
                                    value Directory) {
   LLVMContext &Context = *unwrap(C);
   DIFile *DIF =
-      DIFile::get(Context, String_val(Filename), String_val(Directory));
+      DIFile::get(Context, String_val(Basename), String_val(Directory));
   return wrap(MetadataAsValue::get(Context, DIF));
 }
 
-/* llcontext -> string -> llvalue -> int -> llvalue */
-CAMLprim LLVMValueRef extra_dilocalvariable(LLVMContextRef C, value Name,
+/* llmodule -> string -> llvalue -> int -> llvalue */
+CAMLprim LLVMValueRef extra_dilocalvariable(LLVMModuleRef M, value Name,
                                             LLVMValueRef File, value Line) {
-  LLVMContext &Context = *unwrap(C);
-  DILocalVariable *DIL = DILocalVariable::get(
-      Context, nullptr, String_val(Name),
-      (DIFile *)ValueAsMetadata::get(unwrap(File)), Unsigned_int_val(Line),
-      nullptr, 0, DINode::FlagZero, 0);
+  Module &Module = *unwrap(M);
+  LLVMContext &Context = Module.getContext();
+
+  DIBuilder DIB(Module);
+  DILocalVariable *DIL = DIB.createAutoVariable(
+      DIB.createUnspecifiedParameter(), String_val(Name),
+      (DIFile *)((MetadataAsValue *)unwrap(File))->getMetadata(),
+      Unsigned_int_val(Line), nullptr);
+
   return wrap(MetadataAsValue::get(Context, DIL));
 }
 
-/* llvalue -> llvalue -> string -> llbuilder -> llvalue */
+/* llvalue -> llvalue -> llbuilder -> llmodule -> llvalue */
 CAMLprim LLVMValueRef extra_build_declare(LLVMValueRef Value,
-                                          LLVMValueRef Location, value Name,
-                                          value B, LLVMModuleRef M) {
+                                          LLVMValueRef Location, value B,
+                                          LLVMModuleRef M) {
   IRBuilder<> *Builder = unwrap(Builder_val(B));
   Module *Module = unwrap(M);
   LLVMContext &Context = Builder->getContext();
 
-  Function *F = Intrinsic::getDeclaration(unwrap(M), Intrinsic::dbg_declare);
+  Function *F = Intrinsic::getDeclaration(Module, Intrinsic::dbg_declare);
 
   llvm::Value *V =
       MetadataAsValue::get(Context, LocalAsMetadata::get(unwrap(Value)));

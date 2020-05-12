@@ -100,7 +100,7 @@ let error_string err get_lines =
     sprintf "%s: [%s] statement not implemented." context type_str
   | Message m -> sprintf "[%s] %s" type_str m
 
-let generate (config:compile_conf) (p: meta program) (get_lines: int -> int -> string list) =
+let generate (config: compile_conf) (p: meta program) (get_lines: int -> int -> string list) =
   if config.dump_lex_ast then config.printer @@ show_program pp_meta p;
   let post_semant = Semant.check p
   in begin match post_semant with
@@ -112,7 +112,7 @@ let generate (config:compile_conf) (p: meta program) (get_lines: int -> int -> s
       let con = Llvm.global_context () in
       let mdl = Llvm.create_module con "llpdc" in (* TODO: name after input file name *)
       if config.gen then begin
-        let post_gen = Gen.generate mdl semant_ast
+        let post_gen = Gen.generate config.filename mdl semant_ast
         in begin match post_gen with
           | Error err -> config.printer @@ error_string err get_lines
           | Success (_, _gen_ast) when config.optimize ->
