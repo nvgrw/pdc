@@ -103,6 +103,11 @@ CAMLprim LLVMValueRef extra_get_dbg_declare(LLVMModuleRef M) {
   return wrap(Intrinsic::getDeclaration(unwrap(M), Intrinsic::dbg_declare));
 }
 
+/* llmodule -> llvalue */
+CAMLprim LLVMValueRef extra_get_dbg_value(LLVMModuleRef M) {
+  return wrap(Intrinsic::getDeclaration(unwrap(M), Intrinsic::dbg_value));
+}
+
 /* llmodule -> llmetadata */
 CAMLprim LLVMMetadataRef extra_empty_diexpression(LLVMModuleRef M) {
   Module &Module = *unwrap(M);

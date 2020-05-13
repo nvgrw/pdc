@@ -62,6 +62,8 @@ external dicompileunit: llmodule -> DICompileUnit.args -> llmetadata = "extra_di
 
 external get_dbg_declare: llmodule -> llvalue = "extra_get_dbg_declare"
 
+external get_dbg_value: llmodule -> llvalue = "extra_get_dbg_value"
+
 external empty_diexpression: llmodule -> llmetadata = "extra_empty_diexpression"
 
 external unspecified_ditype: llmodule -> string -> llmetadata = "extra_unspecified_ditype"
