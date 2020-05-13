@@ -1,11 +1,7 @@
 open Common.Context
 open Interop
 
-let generate filename_opt mdl p =
-  (* Add these here to prevent post-linking duplication *)
-  Native.Extra.extra_add_int_module_flag mdl "Debug Info Version" 3;
-  Native.Extra.extra_add_int_module_flag mdl "Dwarf Version" 4;
-
+let generate filename_opt is_optimized mdl p =
   (* Add Stdlib *)
   let stdlib_mdl = Stdlib.parse_stdlib_mdl () in
   Llvm.set_data_layout (Llvm.data_layout stdlib_mdl) mdl;
@@ -22,8 +18,10 @@ let generate filename_opt mdl p =
   let dicompileunit = Native.Extra.dicompileunit mdl {
       Native.Extra.DICompileUnit.file = difile;
       producer =  "pdc";
-      isOptimized = true; (* todo: figure out what to do with this *)
+      isOptimized = is_optimized;
     } in
+  Native.Extra.extra_add_int_module_flag mdl "Debug Info Version" 3;
+  Native.Extra.extra_add_int_module_flag mdl "Dwarf Version" 4;
   (* ----------- *)
 
   Codegen.LlvmPass.initialize mdl difile dicompileunit;

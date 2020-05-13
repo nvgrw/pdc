@@ -49,7 +49,7 @@ stdlib/build/libpdstd.a stdlib/build/CMakeFiles/llvm.dir/llvm.c.o: stdlib/build/
 
 stdlib/build/Makefile: stdlib/CMakeLists.txt
 	mkdir -p stdlib/build
-	cd stdlib/build && cmake $(CMAKE_OPTS) ..
+	cd stdlib/build && cmake -DCMAKE_BUILD_TYPE=Release ..
 
 llvm/build/libA4RRP.so: llvm/build/A4RRP/libA4RRP.so
 	cp llvm/build/A4RRP/libA4RRP.so llvm/build/libA4RRP.so
