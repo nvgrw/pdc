@@ -72,3 +72,13 @@ external mdnull: unit -> llmetadata = "extra_mdnull"
 external disubroutine_type: llmodule -> llmetadata array -> llmetadata = "extra_disubroutine_type"
 
 external value_to_metadata: llvalue -> llmetadata = "extra_value_to_metadata"
+
+module AttachInstLocation = struct
+  type args = {
+    line: int;
+    col: int;
+    scope: llmetadata;
+  }
+end
+
+external attach_inst_location: llmodule -> llvalue -> AttachInstLocation.args -> unit = "extra_attach_inst_location"

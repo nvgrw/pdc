@@ -148,4 +148,22 @@ CAMLprim LLVMMetadataRef extra_disubroutine_type(LLVMModuleRef M,
       unwrap((LLVMMetadataRef *)Op_val(TypeVals)), Length));
   return wrap(DIB.createSubroutineType(ParameterTypes));
 }
+
+/* llmodule -> llvalue -> AttachInstLocation.args -> unit */
+CAMLprim value extra_attach_inst_location(LLVMModuleRef M, LLVMValueRef Invoke,
+                                          value Arguments) {
+  Module &Module = *unwrap(M);
+  DIBuilder DIB(Module);
+
+  assert(isa<Instruction>(unwrap(Invoke)) && "Value needs to be instruction");
+
+  // Extract Args
+  auto Line = Unsigned_int_val(Field(Arguments, 0));
+  auto Col = Unsigned_int_val(Field(Arguments, 1));
+  auto *Scope = cast<DIScope>(unwrap(Metadata_val(Field(Arguments, 2))));
+
+  auto *I = cast<Instruction>(unwrap(Invoke));
+  I->setDebugLoc(DebugLoc::get(Line, Col, Scope));
+  return Val_unit;
+}
 }

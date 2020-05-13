@@ -454,11 +454,16 @@ module Walker_LlvmPass = Common.Walker.Make(struct
                 line_no = pos_from.pos_lnum;
                 ty = NE.unspecified_ditype mdl (Printf.sprintf "%s_ty" ident);
               } in
-            ignore @@ Llvm.build_call (NE.get_dbg_declare mdl) [|
-              NE.metadata_to_value con @@ NE.value_to_metadata llval;
-              NE.metadata_to_value con dilvar;
-              NE.metadata_to_value con (NE.empty_diexpression mdl);
-            |] "" bdr;
+            let decl_dbg_call = Llvm.build_call (NE.get_dbg_declare mdl) [|
+                NE.metadata_to_value con @@ NE.value_to_metadata llval;
+                NE.metadata_to_value con dilvar;
+                NE.metadata_to_value con (NE.empty_diexpression mdl);
+              |] "" bdr in
+            NE.attach_inst_location mdl decl_dbg_call {
+              NE.AttachInstLocation.line = pos_from.pos_lnum;
+              col = pos_from.pos_cnum - pos_from.pos_bol + 1;
+              scope = List.hd state.debugScopes;
+            };
             (* - Add debug info - *)
 
             success d
