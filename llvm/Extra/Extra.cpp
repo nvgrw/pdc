@@ -1,10 +1,6 @@
 
 #include <vector>
 
-//#include "caml/callback.h"
-//#include "caml/custom.h"
-//#include "caml/fail.h"
-//#include "caml/memory.h"
 #include "caml/alloc.h"
 #include "caml/misc.h"
 
@@ -16,10 +12,7 @@
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/Module.h"
 
-//#define Builder_val(v) (*(LLVMBuilderRef *)(Data_custom_val(v)))
-#define Value_val(v) ((LLVMValueRef)Op_val(v))
 #define Metadata_val(v) ((LLVMMetadataRef)Op_val(v))
-//#define VAL2META(V) (((MetadataAsValue *)V)->getMetadata())
 
 using namespace llvm;
 
