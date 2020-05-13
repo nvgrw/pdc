@@ -41,7 +41,7 @@ bool RandomProvider::runOnFunction(Function &F) {
   for (BasicBlock &BB : F)
     for (BasicBlock::iterator II = BB.begin(), E = BB.end(); II != E;) {
       IntrinsicInst *CI = dyn_cast<IntrinsicInst>(II++);
-      if (!CI)
+      if (!CI || CI->getIntrinsicID() != Intrinsic::rand_uniform)
         continue;
 
       IRBuilder<> Builder(CI);
