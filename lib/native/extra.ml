@@ -49,6 +49,16 @@ end
 
 external dilocalvariable: llmodule -> DILocalVariable.args -> llmetadata = "extra_dilocalvariable"
 
+module DICompileUnit = struct
+  type args = {
+    file: llmetadata;
+    producer: string;
+    isOptimized: bool;
+  }
+end
+
+external dicompileunit: llmodule -> DICompileUnit.args -> llmetadata = "extra_dicompileunit"
+
 external get_dbg_declare: llmodule -> llvalue = "extra_get_dbg_declare"
 
 external empty_diexpression: llmodule -> llmetadata = "extra_empty_diexpression"

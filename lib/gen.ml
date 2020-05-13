@@ -13,6 +13,11 @@ let generate filename_opt mdl p =
     | Some fn ->
       let (dir, base) = Core.Filename.split fn in
       Native.Extra.difile mdl { basename = base; directory = dir } in
+  let dicompileunit = Native.Extra.dicompileunit mdl {
+      Native.Extra.DICompileUnit.file = difile;
+      producer =  "pdc";
+      isOptimized = true; (* todo: figure out what to do with this *)
+    } in
 
-  Codegen.LlvmPass.initialize mdl difile;
+  Codegen.LlvmPass.initialize mdl difile dicompileunit;
   Codegen.LlvmPass.process p C.empty

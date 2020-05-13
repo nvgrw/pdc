@@ -25,7 +25,7 @@ using namespace llvm;
 
 extern "C" {
 
-/* llmodule -> difile_args -> llmetadata */
+/* llmodule -> DIFile.args -> llmetadata */
 CAMLprim LLVMMetadataRef extra_difile(LLVMModuleRef M, value Arguments) {
   Module &Module = *unwrap(M);
   DIBuilder DIB(Module);
@@ -37,7 +37,7 @@ CAMLprim LLVMMetadataRef extra_difile(LLVMModuleRef M, value Arguments) {
   return wrap(DIB.createFile(Basename, Directory));
 }
 
-/* llmodule -> disubprogram_args -> llmetadata */
+/* llmodule -> DISubprogram.args -> llmetadata */
 CAMLprim LLVMMetadataRef extra_disubprogram(LLVMModuleRef M, value Arguments) {
   Module &Module = *unwrap(M);
   DIBuilder DIB(Module);
@@ -58,7 +58,7 @@ CAMLprim LLVMMetadataRef extra_disubprogram(LLVMModuleRef M, value Arguments) {
   return wrap(SP);
 }
 
-/* llmodule -> dilexicalblock_args -> llmetadata */
+/* llmodule -> DILexicalBlock.args -> llmetadata */
 CAMLprim LLVMMetadataRef extra_dilexicalblock(LLVMModuleRef M,
                                               value Arguments) {
   Module &Module = *unwrap(M);
@@ -73,7 +73,7 @@ CAMLprim LLVMMetadataRef extra_dilexicalblock(LLVMModuleRef M,
   return wrap(DIB.createLexicalBlock(Scope, File, Line, Col));
 }
 
-/* llmodule -> dilocalvariable_args -> llmetadata */
+/* llmodule -> DILocalVariable.args -> llmetadata */
 CAMLprim LLVMMetadataRef extra_dilocalvariable(LLVMModuleRef M,
                                                value Arguments) {
   Module &Module = *unwrap(M);
@@ -87,6 +87,21 @@ CAMLprim LLVMMetadataRef extra_dilocalvariable(LLVMModuleRef M,
   auto *Ty = cast<DIType>(unwrap(Metadata_val(Field(Arguments, 4))));
 
   return wrap(DIB.createAutoVariable(Scope, Name, File, LineNo, Ty));
+}
+
+/* llmodule -> DICompileUnit.args -> llmetadata */
+CAMLprim LLVMMetadataRef extra_dicompileunit(LLVMModuleRef M, value Arguments) {
+  Module &Module = *unwrap(M);
+  DIBuilder DIB(Module);
+
+  // Extract Args
+  auto *File = cast<DIFile>(unwrap(Metadata_val(Field(Arguments, 0))));
+  const char *Producer = String_val(Field(Arguments, 1));
+  bool isOptimized = Bool_val(Field(Arguments, 2));
+
+  return wrap(DIB.createCompileUnit(
+      dwarf::DW_LANG_C /* we're mostly piggybacking off of C's conventions */,
+      File, Producer, isOptimized, "", 0));
 }
 
 /* llmodule -> llvalue */

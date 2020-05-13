@@ -11,9 +11,11 @@ module NE = Native.Extra
 
 let mdl_ref = ref None
 let difile_ref = ref None
-let initialize mdl difile =
+let dicompileunit_ref = ref None
+let initialize mdl difile dicompileunit =
   mdl_ref := Some mdl;
-  difile_ref := Some difile
+  difile_ref := Some difile;
+  dicompileunit_ref := Some dicompileunit
 
 module Walker_LlvmPass = Common.Walker.Make(struct
     type ctx = context
@@ -161,7 +163,7 @@ module Walker_LlvmPass = Common.Walker.Make(struct
       get >>= begin function
         | `Codegen ({ C.debugScopes = debugScopes; _ } as state) ->
           let debugScope = NE.disubprogram mdl {
-              NE.DISubprogram.scope = Option.value_exn !difile_ref;
+              NE.DISubprogram.scope = Option.value_exn !dicompileunit_ref;
               name = "main";
               linkage_name = "main";
               file = Option.value_exn !difile_ref;
