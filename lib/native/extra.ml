@@ -66,6 +66,8 @@ external get_dbg_value: llmodule -> llvalue = "extra_get_dbg_value"
 
 external empty_diexpression: llmodule -> llmetadata = "extra_empty_diexpression"
 
+external diexpression: llmodule -> int array -> llmetadata = "extra_diexpression"
+
 external unspecified_ditype: llmodule -> string -> llmetadata = "extra_unspecified_ditype"
 
 external metadata_to_value: llcontext -> llmetadata -> llvalue = "extra_metadata_to_value"

@@ -2,6 +2,7 @@
 #include <vector>
 
 #include "caml/alloc.h"
+#include "caml/memory.h"
 #include "caml/misc.h"
 
 #include "llvm-c/Types.h"
@@ -113,6 +114,25 @@ CAMLprim LLVMMetadataRef extra_empty_diexpression(LLVMModuleRef M) {
   Module &Module = *unwrap(M);
   DIBuilder DIB(Module);
   return wrap(DIB.createExpression());
+}
+
+/* llmodule -> int array -> llmetadata */
+CAMLprim LLVMMetadataRef extra_diexpression(LLVMModuleRef M, value Opcodes) {
+  CAMLparam1(Opcodes);
+  unsigned Size = Wosize_val(Opcodes);
+
+  uint64_t *Ops = new uint64_t[Size];
+  for (unsigned I = 0; I < Size; I++) {
+    Ops[I] = (int64_t)Unsigned_int_val(Field(Opcodes, I));
+  }
+
+  Module &Module = *unwrap(M);
+  DIBuilder DIB(Module);
+  auto *Expression = DIB.createExpression(ArrayRef<uint64_t>(Ops, Size));
+  // DIExpression copies Ops
+  delete[] Ops;
+
+  return wrap(Expression);
 }
 
 /* llmodule -> string -> llmetadata */

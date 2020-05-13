@@ -11,10 +11,11 @@ module C = struct
   type context = {
     values: Llvm.llvalue list;
     blocks: Llvm.llbasicblock list;
-    scopes: Llvm.llvalue StringMap.t list;
+    scopes: (Llvm.llvalue * Native.Extra.llmetadata) StringMap.t list;
     breakBlocks: Llvm.llbasicblock list;
     debugScopes: Native.Extra.llmetadata list;
-    debugSubprogram: Native.Extra.llmetadata
+    debugSubprogram: Native.Extra.llmetadata;
+    debugLocalVariable: Native.Extra.llmetadata;
   }
   let empty = `Codegen {
       values = [];
@@ -22,7 +23,8 @@ module C = struct
       scopes = [];
       debugScopes = [];
       breakBlocks = [];
-      debugSubprogram = Native.Extra.mdnull ()
+      debugSubprogram = Native.Extra.mdnull ();
+      debugLocalVariable = Native.Extra.mdnull ();
     }
 end
 

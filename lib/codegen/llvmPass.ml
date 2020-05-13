@@ -108,6 +108,16 @@ module Walker_LlvmPass = Common.Walker.Make(struct
       end;
       success ()
 
+    let set_debug_local_variable di = get >>= function
+      | `Codegen state ->
+        put @@ `Codegen {state with C.debugLocalVariable = di }
+      | _ -> assert false
+
+    let get_debug_local_variable = get >>= function
+      | `Codegen { C.debugLocalVariable = di; _ } ->
+        success di
+      | _ -> assert false
+
     let rec typ_to_llvm = function
       | Array (_typ, _size, _) as t ->
         let rec resolve_array typ accum = begin match typ with
@@ -287,10 +297,28 @@ module Walker_LlvmPass = Common.Walker.Make(struct
     let visit_stmt_pos parent s =
       let func = bdr |> Llvm.insertion_block |> Llvm.block_parent in
       begin match s with
-        | Assign (loc, expr, _) as s ->
+        | Assign (loc, expr, Position (pos_from, _pos_to)) as s ->
           pop_val >>= fun expr_llval ->
           pop_val >>= fun loc_llval ->
           let _ = Llvm.build_store expr_llval loc_llval bdr in
+
+          (* + Add debug info + *)
+          get >>= (function
+              | `Codegen state -> success state
+              | _ -> assert false) >>= fun state ->
+          get_debug_local_variable >>= fun dilvar ->
+          let mdl = Option.value_exn !mdl_ref in
+          let decl_dbg_call = Llvm.build_call (NE.get_dbg_value mdl) [|
+              NE.metadata_to_value con @@ NE.value_to_metadata loc_llval;
+              NE.metadata_to_value con dilvar;
+              NE.metadata_to_value con (NE.diexpression mdl [| 0x06 |]);
+            |] "" bdr in
+          NE.attach_inst_location mdl decl_dbg_call {
+            NE.AttachInstLocation.line = pos_from.pos_lnum;
+            col = pos_from.pos_cnum - pos_from.pos_bol + 1;
+            scope = List.hd state.C.debugScopes;
+          };
+          (* - Add debug info - *)
           success s
         | ProbAssign _ as s ->
           error @@ CodegenError (ProbAssignNotLowered s)
@@ -443,10 +471,6 @@ module Walker_LlvmPass = Common.Walker.Make(struct
         let lltyp = typ_to_llvm typ in
         get >>= begin function
           | `Codegen ({ C.scopes = curr :: others; _ } as state) ->
-            let llval = Llvm.build_alloca lltyp "tmpalloca" bdr in
-            let new_scope = StringMap.add ident llval curr in
-            put @@ `Codegen { state with C.scopes = new_scope :: others } >>= fun _ ->
-
             (* + Add debug info + *)
             let mdl = Option.value_exn !mdl_ref in
             let dilvar = NE.dilocalvariable mdl {
@@ -456,17 +480,22 @@ module Walker_LlvmPass = Common.Walker.Make(struct
                 line_no = pos_from.pos_lnum;
                 ty = NE.unspecified_ditype mdl (Printf.sprintf "%s_ty" ident);
               } in
-            let decl_dbg_call = Llvm.build_call (NE.get_dbg_declare mdl) [|
+            (* - Add debug info - *)
+
+            (* let decl_dbg_call = Llvm.build_call (NE.get_dbg_declare mdl) [|
                 NE.metadata_to_value con @@ NE.value_to_metadata llval;
                 NE.metadata_to_value con dilvar;
                 NE.metadata_to_value con (NE.empty_diexpression mdl);
-              |] "" bdr in
-            NE.attach_inst_location mdl decl_dbg_call {
-              NE.AttachInstLocation.line = pos_from.pos_lnum;
-              col = pos_from.pos_cnum - pos_from.pos_bol + 1;
-              scope = List.hd state.debugScopes;
-            };
-            (* - Add debug info - *)
+               |] "" bdr in
+               NE.attach_inst_location mdl decl_dbg_call {
+               NE.AttachInstLocation.line = pos_from.pos_lnum;
+               col = pos_from.pos_cnum - pos_from.pos_bol + 1;
+               scope = List.hd state.debugScopes;
+               }; *)
+
+            let llval = Llvm.build_alloca lltyp "tmpalloca" bdr in
+            let new_scope = StringMap.add ident (llval, dilvar) curr in
+            put @@ `Codegen { state with C.scopes = new_scope :: others } >>= fun _ ->
 
             success d
           | _ -> assert false
@@ -560,10 +589,11 @@ module Walker_LlvmPass = Common.Walker.Make(struct
     let visit_loc_pos _ = function
       (* Identifiers *)
       | Id (ident, m) as l ->
-        Scope.get_llvalue m ident >>= fun llval ->
+        Scope.get_llvalue m ident >>= fun (llval, di) ->
         push_val llval >>= fun _ ->
+        set_debug_local_variable di >>= fun () ->
         success l
-      (* Array Dereferences (enforced through tcp) *)
+      (* Array Dereferences (enforced through type check pass) *)
       | Deref (loc, expr, _) as l ->
         pop_val >>= fun expr_llval ->
         pop_val >>= fun loc_llval ->
