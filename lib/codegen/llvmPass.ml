@@ -218,7 +218,7 @@ module Walker_LlvmPass = Common.Walker.Make(struct
                     NE.DILexicalBlock.scope = List.hd debugScopes;
                     file = Option.value_exn !difile_ref;
                     line = pos_from.pos_lnum;
-                    col = 0;
+                    col = pos_from.pos_cnum - pos_from.pos_bol + 1;
                   } in
                 put @@ `Codegen { state with C.debugScopes = debugScope :: debugScopes }
               | _ -> assert false end >>= fun _ ->
@@ -227,7 +227,7 @@ module Walker_LlvmPass = Common.Walker.Make(struct
     let visit_block_pos _ = function
       | Block (_, _, _, Position _) as b ->
         get >>= begin function
-          | `Codegen ({C.debugScopes = _::debugScopes; _} as state) ->
+          | `Codegen ({ C.debugScopes = oldScope :: debugScopes; _} as state) ->
             put @@ `Codegen { state with C.debugScopes = debugScopes }
           | _ -> assert false end >>= fun _ ->
         success b
@@ -438,16 +438,28 @@ module Walker_LlvmPass = Common.Walker.Make(struct
       | Decl (typ, ident, Position (pos_from, _pos_to)) as d ->
         let lltyp = typ_to_llvm typ in
         get >>= begin function
-          | `Codegen state ->
-            begin match state.C.scopes with
-              | curr :: others ->
-                let llval = Llvm.build_alloca lltyp "tmpalloca" bdr in
-                let new_scope = StringMap.add ident llval curr in
-                let new_state = { state with C.scopes = new_scope :: others } in
-                put @@ `Codegen new_state >>= fun _ ->
-                success d
-              | _ -> assert false
-            end
+          | `Codegen ({ C.scopes = curr :: others; _ } as state) ->
+            let llval = Llvm.build_alloca lltyp "tmpalloca" bdr in
+            let new_scope = StringMap.add ident llval curr in
+            put @@ `Codegen { state with C.scopes = new_scope :: others } >>= fun _ ->
+
+            (* + Add debug info + *)
+            let mdl = Option.value_exn !mdl_ref in
+            let dilvar = NE.dilocalvariable mdl {
+                NE.DILocalVariable.scope = List.hd state.debugScopes;
+                name = ident;
+                file = Option.value_exn !difile_ref;
+                line_no = pos_from.pos_lnum;
+                ty = NE.unspecified_ditype mdl (Printf.sprintf "%s_ty" ident);
+              } in
+            ignore @@ Llvm.build_call (NE.get_dbg_declare mdl) [|
+              NE.metadata_to_value con @@ NE.value_to_metadata llval;
+              NE.metadata_to_value con dilvar;
+              NE.metadata_to_value con (NE.empty_diexpression mdl);
+            |] "" bdr;
+            (* - Add debug info - *)
+
+            success d
           | _ -> assert false
         end
 

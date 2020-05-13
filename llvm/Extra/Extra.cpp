@@ -51,8 +51,11 @@ CAMLprim LLVMMetadataRef extra_disubprogram(LLVMModuleRef M, value Arguments) {
   auto *Ty = cast<DISubroutineType>(unwrap(Metadata_val(Field(Arguments, 5))));
   unsigned int ScopeLine = Unsigned_int_val(Field(Arguments, 6));
 
-  return wrap(DIB.createFunction(Scope, Name, LinkageName, File, LineNo, Ty,
-                                 ScopeLine));
+  DISubprogram *SP = DISubprogram::getDistinct(
+      Module.getContext(), Scope, Name, LinkageName, File, LineNo, Ty,
+      ScopeLine, nullptr, 0, 0, DINode::DIFlags::FlagZero,
+      DISubprogram::DISPFlags::SPFlagDefinition, nullptr);
+  return wrap(SP);
 }
 
 /* llmodule -> dilexicalblock_args -> llmetadata */
@@ -109,6 +112,11 @@ CAMLprim LLVMMetadataRef extra_unspecified_ditype(LLVMModuleRef M, value Name) {
 CAMLprim LLVMValueRef extra_metadata_to_value(LLVMContextRef C,
                                               LLVMMetadataRef M) {
   return wrap(MetadataAsValue::get(*unwrap(C), unwrap(M)));
+}
+
+/* llvalue -> llmetadata */
+CAMLprim LLVMMetadataRef extra_value_to_metadata(LLVMValueRef V) {
+  return wrap(ValueAsMetadata::get(unwrap(V)));
 }
 
 /* unit -> llmetadata */

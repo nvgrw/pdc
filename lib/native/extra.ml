@@ -37,15 +37,17 @@ end
 
 external dilexicalblock: llmodule -> DILexicalBlock.args -> llmetadata = "extra_dilexicalblock"
 
-type dilocalvariable_args = {
-  scope: llmetadata;
-  name: string;
-  file: llmetadata;
-  line_no: int;
-  ty: llmetadata
-}
+module DILocalVariable = struct
+  type args = {
+    scope: llmetadata;
+    name: string;
+    file: llmetadata;
+    line_no: int;
+    ty: llmetadata
+  }
+end
 
-external dilocalvariable: llmodule -> dilocalvariable_args -> llmetadata = "extra_dilocalvariable"
+external dilocalvariable: llmodule -> DILocalVariable.args -> llmetadata = "extra_dilocalvariable"
 
 external get_dbg_declare: llmodule -> llvalue = "extra_get_dbg_declare"
 
@@ -58,3 +60,5 @@ external metadata_to_value: llcontext -> llmetadata -> llvalue = "extra_metadata
 external mdnull: unit -> llmetadata = "extra_mdnull"
 
 external disubroutine_type: llmodule -> llmetadata array -> llmetadata = "extra_disubroutine_type"
+
+external value_to_metadata: llvalue -> llmetadata = "extra_value_to_metadata"
