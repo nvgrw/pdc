@@ -20,7 +20,8 @@ module DISubprogram = struct
     file: llmetadata;
     line_no: int;
     ty: llmetadata;
-    scope_line: int
+    scope_line: int;
+    unit: llmetadata;
   }
 end
 

@@ -50,11 +50,12 @@ CAMLprim LLVMMetadataRef extra_disubprogram(LLVMModuleRef M, value Arguments) {
   unsigned int LineNo = Unsigned_int_val(Field(Arguments, 4));
   auto *Ty = cast<DISubroutineType>(unwrap(Metadata_val(Field(Arguments, 5))));
   unsigned int ScopeLine = Unsigned_int_val(Field(Arguments, 6));
+  auto *Unit = cast<DICompileUnit>(unwrap(Metadata_val(Field(Arguments, 7))));
 
   DISubprogram *SP = DISubprogram::getDistinct(
       Module.getContext(), Scope, Name, LinkageName, File, LineNo, Ty,
       ScopeLine, nullptr, 0, 0, DINode::DIFlags::FlagZero,
-      DISubprogram::DISPFlags::SPFlagDefinition, nullptr);
+      DISubprogram::DISPFlags::SPFlagDefinition, Unit);
   return wrap(SP);
 }
 

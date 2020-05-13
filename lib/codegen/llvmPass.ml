@@ -162,14 +162,16 @@ module Walker_LlvmPass = Common.Walker.Make(struct
 
       get >>= begin function
         | `Codegen ({ C.debugScopes = debugScopes; _ } as state) ->
+          let compile_unit = Option.value_exn !dicompileunit_ref in
           let debugScope = NE.disubprogram mdl {
-              NE.DISubprogram.scope = Option.value_exn !dicompileunit_ref;
+              NE.DISubprogram.scope = compile_unit;
               name = "main";
               linkage_name = "main";
               file = Option.value_exn !difile_ref;
               line_no = 1;
               ty = NE.disubroutine_type mdl [||];
               scope_line = 1;
+              unit = compile_unit;
             } in
           put @@ `Codegen { state with C.debugScopes = debugScope :: debugScopes }
         | _ -> assert false
