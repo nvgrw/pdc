@@ -2,12 +2,18 @@ open Common.Context
 open Interop
 
 let generate filename_opt mdl p =
+  (* Add these here to prevent post-linking duplication *)
+  Native.Extra.extra_add_int_module_flag mdl "Debug Info Version" 3;
+  Native.Extra.extra_add_int_module_flag mdl "Dwarf Version" 4;
+
+  (* Add Stdlib *)
   let stdlib_mdl = Stdlib.parse_stdlib_mdl () in
   Llvm.set_data_layout (Llvm.data_layout stdlib_mdl) mdl;
   Llvm_linker.link_modules' mdl stdlib_mdl;
   Stdlib.remove_exercise mdl;
-  (* ------------- *)
+  (* ---------- *)
 
+  (* Debug Setup *)
   let difile = match filename_opt with
     | None -> Native.Extra.mdnull ()
     | Some fn ->
@@ -18,6 +24,7 @@ let generate filename_opt mdl p =
       producer =  "pdc";
       isOptimized = true; (* todo: figure out what to do with this *)
     } in
+  (* ----------- *)
 
   Codegen.LlvmPass.initialize mdl difile dicompileunit;
   Codegen.LlvmPass.process p C.empty

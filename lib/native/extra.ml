@@ -83,3 +83,5 @@ module AttachInstLocation = struct
 end
 
 external attach_inst_location: llmodule -> llvalue -> AttachInstLocation.args -> unit = "extra_attach_inst_location"
+
+external extra_add_int_module_flag: llmodule -> string -> int -> unit = "extra_add_int_module_flag"

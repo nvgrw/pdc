@@ -160,4 +160,13 @@ CAMLprim value extra_attach_inst_location(LLVMModuleRef M, LLVMValueRef Invoke,
   I->setDebugLoc(DebugLoc::get(Line, Col, Scope));
   return Val_unit;
 }
+
+/* llmodule -> string -> int -> unit */
+CAMLprim value extra_add_int_module_flag(LLVMModuleRef M, value Key,
+                                         value Val) {
+  llvm::Module *Module = unwrap(M);
+  Module->addModuleFlag(Module::Warning, String_val(Key),
+                        Unsigned_int_val(Val));
+  return Val_unit;
+}
 }
