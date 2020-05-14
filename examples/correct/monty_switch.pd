@@ -5,17 +5,11 @@
   o ?= { 0, 1, 2 }; # Pick empty door
 
   while ((o == g) || (o == d)) {
-    o = o + 1;
-    if (o >= 3) {
-      o = 0;
-    }
+    o = (o + 1) % 3;
   }
 
   do {
-    g = g + 1; # Switch guess
-    if (g >= 3) {
-      g = 0;
-    }
+    g = (g + 1) % 3; # Switch guess
   } while (g == o);
 
   print g == d;
