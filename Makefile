@@ -10,8 +10,10 @@ all: _build/install/default/bin/pdc
 
 ifeq ($(DEBUG),1)
    CMAKE_OPTS = -DCMAKE_BUILD_TYPE=Debug
+	 DUNE_OPTS = --profile=dev
  else
    CMAKE_OPTS = -DCMAKE_BUILD_TYPE=Release
+	 DUNE_OPTS = --profile=release
 endif
 
 clean:
@@ -39,7 +41,7 @@ install: _build/install/default/bin/pdc stdlib/build/libpdstd.a llvm/build/libA4
 
 _build/install/default/bin/pdc: .deps-installed stdlib/build/llvm.bc stdlib/build/libpdstd.a llvm/build/libA4RRP.so $(PDC_FILES)
 	rm -f .prefix && printf "$(PREFIX)" > .prefix
-	dune build
+	dune build $(DUNE_OPTS)
 
 stdlib/build/llvm.bc: stdlib/build/CMakeFiles/llvm.dir/llvm.c.o
 	cp stdlib/build/CMakeFiles/llvm.dir/llvm.c.o stdlib/build/llvm.bc
