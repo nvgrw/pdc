@@ -7,7 +7,7 @@ open Common.Data
 
 module Scope = Common.Scope
 module Option = Base.Option
-module NE = Native.Extra
+module NE = Extra
 
 let mdl_ref = ref None
 let difile_ref = ref None
