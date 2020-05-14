@@ -522,6 +522,8 @@ module Walker_LlvmPass = Common.Walker.Make(struct
             build Llvm.build_mul Llvm.build_fmul "multmp"
           | Divide _ ->
             build Llvm.build_sdiv Llvm.build_fdiv "divtmp"
+          | Remainder _ ->
+            build Llvm.build_srem Llvm.build_frem "remtmp"
           (* Boolean *)
           | Or _ ->
             Llvm.build_or lhs_llval rhs_llval "ortmp" bdr

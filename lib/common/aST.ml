@@ -11,6 +11,7 @@ type 'm binop =
   | Subtract of 'm
   | Multiply of 'm
   | Divide of 'm
+  | Remainder of 'm
 [@@deriving show]
 
 let get_meta_binop = function
@@ -26,6 +27,7 @@ let get_meta_binop = function
   | Subtract m -> m
   | Multiply m -> m
   | Divide m -> m
+  | Remainder m -> m
 
 type 'm unop =
   | Negate of 'm

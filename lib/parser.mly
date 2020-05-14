@@ -40,6 +40,7 @@
 %token MINUS
 %token MULTIPLY
 %token DIVIDE
+%token REMAINDER
 (* Unary *)
 %token NOT (* | NEGATE -- negate is ambiguous, will handle this in parsing *)
 %token <int> NUM
@@ -156,9 +157,10 @@ expr:
   ;
 
 term:
-  | l = term MULTIPLY r = unary { BinOp (l, Multiply (Position $loc($2)), r, Position $loc) }
-  | l = term DIVIDE r = unary   { BinOp (l, Divide (Position $loc($2)), r, Position $loc) }
-  | unary                       { $1 }
+  | l = term MULTIPLY r = unary  { BinOp (l, Multiply (Position $loc($2)), r, Position $loc) }
+  | l = term DIVIDE r = unary    { BinOp (l, Divide (Position $loc($2)), r, Position $loc) }
+  | l = term REMAINDER r = unary { BinOp (l, Remainder (Position $loc($2)), r, Position $loc) }
+  | unary                        { $1 }
   ;
 
 unary:

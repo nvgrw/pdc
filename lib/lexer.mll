@@ -61,6 +61,7 @@ rule token = parse
   | "-"         { MINUS }
   | "*"         { MULTIPLY }
   | "/"         { DIVIDE }
+  | "%"         { REMAINDER }
   | "!"         { NOT }
   | num as n    { (NUM (int_of_string n)) }
   | real as r   { (REAL (float_of_string r)) }

@@ -42,11 +42,13 @@ let binop_result = function
   | (Int _, Subtract _, Int _, m)
   | (Int _, Multiply _, Int _, m)
   | (Int _, Divide _, Int _, m) -> Some (Int m)
+  | (Int _, Remainder _, Int _, m) -> Some (Int m)
   (* (Float) Arithmetic *)
   | (Float _, Add _, Float _, m)
   | (Float _, Subtract _, Float _, m)
   | (Float _, Multiply _, Float _, m)
   | (Float _, Divide _, Float _, m) -> Some (Float m)
+  | (Float _, Remainder _, Float _, m) -> Some (Float m)
   | _ -> None
 
 module Walker_TypeCheckPass = Common.Walker.Make(struct
