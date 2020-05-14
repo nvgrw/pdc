@@ -482,20 +482,20 @@ module Walker_LlvmPass = Common.Walker.Make(struct
               } in
             (* - Add debug info - *)
 
-            (* let decl_dbg_call = Llvm.build_call (NE.get_dbg_declare mdl) [|
-                NE.metadata_to_value con @@ NE.value_to_metadata llval;
-                NE.metadata_to_value con dilvar;
-                NE.metadata_to_value con (NE.empty_diexpression mdl);
-               |] "" bdr in
-               NE.attach_inst_location mdl decl_dbg_call {
-               NE.AttachInstLocation.line = pos_from.pos_lnum;
-               col = pos_from.pos_cnum - pos_from.pos_bol + 1;
-               scope = List.hd state.debugScopes;
-               }; *)
-
             let llval = Llvm.build_alloca lltyp "tmpalloca" bdr in
             let new_scope = StringMap.add ident (llval, dilvar) curr in
             put @@ `Codegen { state with C.scopes = new_scope :: others } >>= fun _ ->
+
+            let decl_dbg_call = Llvm.build_call (NE.get_dbg_declare mdl) [|
+                NE.metadata_to_value con @@ NE.value_to_metadata llval;
+                NE.metadata_to_value con dilvar;
+                NE.metadata_to_value con (NE.empty_diexpression mdl);
+              |] "" bdr in
+            NE.attach_inst_location mdl decl_dbg_call {
+              NE.AttachInstLocation.line = pos_from.pos_lnum;
+              col = pos_from.pos_cnum - pos_from.pos_bol + 1;
+              scope = List.hd state.debugScopes;
+            };
 
             success d
           | _ -> assert false
