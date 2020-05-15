@@ -123,8 +123,8 @@ module Make(V : Visitor) = struct
         walk_stmt (`Stmt pre_result) stmt >>= fun walk_stmt_stmt ->
         success (While (walk_expr_expr, walk_stmt_stmt, m))
       | Do (expr, stmt, m) ->
-        walk_expr (`Stmt pre_result) expr >>= fun walk_expr_expr ->
         walk_stmt (`Stmt pre_result) stmt >>= fun walk_stmt_stmt ->
+        walk_expr (`Stmt pre_result) expr >>= fun walk_expr_expr ->
         success (Do (walk_expr_expr, walk_stmt_stmt, m))
       | Break _ as s -> success s
       | Print (expr, m) ->
