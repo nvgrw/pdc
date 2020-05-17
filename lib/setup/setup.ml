@@ -9,6 +9,7 @@ type compile_out = Llvm.llmodule option
 type compile_conf =
   {
     mutable optimize: bool;
+    mutable debug_symbols: bool;
     mutable dump_ir: bool;
     mutable dump_semant_ast: bool;
     mutable dump_lex_ast: bool;
@@ -20,6 +21,7 @@ type compile_conf =
 
 let default_conf = {
   optimize = true;
+  debug_symbols = false;
   gen = true;
   dump_lex_ast = false;
   dump_semant_ast = false;

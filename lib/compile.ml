@@ -112,7 +112,7 @@ let generate (config: compile_conf) (p: meta program) (get_lines: int -> int -> 
       let con = Llvm.global_context () in
       let mdl = Llvm.create_module con "llpdc" in (* TODO: name after input file name *)
       if config.gen then begin
-        let post_gen = Gen.generate config.filename config.optimize mdl semant_ast
+        let post_gen = Gen.generate config.filename config.optimize config.debug_symbols mdl semant_ast
         in begin match post_gen with
           | Error err -> config.printer @@ error_string err get_lines
           | Success (_, _gen_ast) when config.optimize ->

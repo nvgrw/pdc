@@ -10,12 +10,8 @@ module Option = Base.Option
 module NE = Extra
 
 let mdl_ref = ref None
-let difile_ref = ref None
-let dicompileunit_ref = ref None
-let initialize mdl difile dicompileunit =
+let initialize mdl =
   mdl_ref := Some mdl;
-  difile_ref := Some difile;
-  dicompileunit_ref := Some dicompileunit
 
 module Walker_LlvmPass = Common.Walker.Make(struct
     type ctx = context
@@ -172,16 +168,15 @@ module Walker_LlvmPass = Common.Walker.Make(struct
 
       get >>= begin function
         | `Codegen ({ C.debugScopes = debugScopes; _ } as state) ->
-          let compile_unit = Option.value_exn !dicompileunit_ref in
           let debugScope = NE.disubprogram mdl {
-              NE.DISubprogram.scope = compile_unit;
+              NE.DISubprogram.scope = state.debugCompileUnit;
               name = "main";
               linkage_name = "main";
-              file = Option.value_exn !difile_ref;
+              file = state.debugFile;
               line_no = 1;
               ty = NE.disubroutine_type mdl [||];
               scope_line = 1;
-              unit = compile_unit;
+              unit = state.debugCompileUnit;
             } in
           put @@ `Codegen { state with C.debugScopes = debugScope :: debugScopes }
         | _ -> assert false
@@ -230,7 +225,7 @@ module Walker_LlvmPass = Common.Walker.Make(struct
               | `Codegen ({ C.debugScopes = debugScopes; _} as state) ->
                 let debugScope = NE.dilexicalblock mdl {
                     NE.DILexicalBlock.scope = List.hd debugScopes;
-                    file = Option.value_exn !difile_ref;
+                    file = state.debugFile;
                     line = pos_from.pos_lnum;
                     col = pos_from.pos_cnum - pos_from.pos_bol + 1;
                   } in
@@ -476,7 +471,7 @@ module Walker_LlvmPass = Common.Walker.Make(struct
             let dilvar = NE.dilocalvariable mdl {
                 NE.DILocalVariable.scope = List.hd state.debugScopes;
                 name = ident;
-                file = Option.value_exn !difile_ref;
+                file = state.debugFile;
                 line_no = pos_from.pos_lnum;
                 ty = NE.unspecified_ditype mdl (Printf.sprintf "%s_ty" ident);
               } in

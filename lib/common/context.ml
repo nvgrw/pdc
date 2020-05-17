@@ -13,19 +13,26 @@ module C = struct
     blocks: Llvm.llbasicblock list;
     scopes: (Llvm.llvalue * Extra.llmetadata) StringMap.t list;
     breakBlocks: Llvm.llbasicblock list;
+    debug: bool;
     debugScopes: Extra.llmetadata list;
     debugSubprogram: Extra.llmetadata;
     debugLocalVariable: Extra.llmetadata;
+    debugCompileUnit: Extra.llmetadata;
+    debugFile: Extra.llmetadata;
   }
-  let empty = `Codegen {
-      values = [];
-      blocks = [];
-      scopes = [];
-      debugScopes = [];
-      breakBlocks = [];
-      debugSubprogram = Extra.mdnull ();
-      debugLocalVariable = Extra.mdnull ();
-    }
+  let empty = {
+    values = [];
+    blocks = [];
+    scopes = [];
+    debug = false;
+    debugScopes = [];
+    breakBlocks = [];
+    debugSubprogram = Extra.mdnull ();
+    debugLocalVariable = Extra.mdnull ();
+    debugCompileUnit = Extra.mdnull ();
+    debugFile = Extra.mdnull ();
+  }
+  let empty_wrapped = `Codegen empty
 end
 
 type context = [

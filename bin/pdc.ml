@@ -24,7 +24,8 @@ let () =
     ("-c", Unit (fun () -> out_type := Object), "compile to target object file");
     ("-o", Set_string out_file, "output file name");
 
-    ("--no-opt", Unit (fun () -> config.optimize <- false), "disable optimizations");
+    ("-O0", Unit (fun () -> config.optimize <- false), "disable optimizations");
+    ("-g", Unit (fun () -> config.debug_symbols <- true), "enable debug symbols");
     ("--no-gen", Unit (fun () -> config.gen <- false), "disable code generation and output");
 
 
@@ -34,7 +35,7 @@ let () =
   ] in
   let anon_handle x = in_file := Some x in
   let exec_name = Sys.argv.(0) in
-  let () = parse options anon_handle (Printf.sprintf "%s [-c] [-o output_file] [--no-opt] [--no-gen] [--dump-lex-ast] [--dump-semant-ast] [--dump-ir] <file.pd>\n" exec_name) in
+  let () = parse options anon_handle (Printf.sprintf "%s [-c] [-o output_file] [--no-opt] [-O0] [-g] [--dump-lex-ast] [--dump-semant-ast] [--dump-ir] <file.pd>\n" exec_name) in
   let in_file = match !in_file with
     | None ->
       prerr_endline "no input file provided! aborting...";
