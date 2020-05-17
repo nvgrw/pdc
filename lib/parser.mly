@@ -49,7 +49,7 @@
 %token FALSE
 (* Types *)
 %token INT
-%token FLOAT
+/* %token FLOAT */
 %token CHAR
 %token BOOL
 
@@ -87,7 +87,7 @@ decl:
 typ:
   | t = typ DEREF_OPEN size = NUM DEREF_CLSE  { Array (t, size, Position $loc) }
   | INT                                       { Int (Position $loc) }
-  | FLOAT                                     { Float (Position $loc) }
+  /* | FLOAT                                     { Float (Position $loc) } */
   | CHAR                                      { Char (Position $loc) }
   | BOOL                                      { Bool (Position $loc) }
   ;

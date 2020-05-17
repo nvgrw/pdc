@@ -28,7 +28,7 @@ rule token = parse
   | newline     { next_line lexbuf; token lexbuf }
   | "#"         { comment lexbuf }
   | "int"       { INT }
-  | "float"     { FLOAT }
+  (* | "float"     { FLOAT } *)
   | "char"      { CHAR }
   | "bool"      { BOOL }
   | "{"         { SCOPE_OPEN }

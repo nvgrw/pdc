@@ -1,5 +1,5 @@
 {
-  int[10] a; int b; bool d; float e;
+  int[10] a; int b; bool d;# float e;
   {
     int i; i = 0;
     while (i < 10) {
@@ -13,6 +13,6 @@
   print b;
   d = true;
   print d;
-  e = 100.0;
-  print e;
+  #e = 100.0;
+  #print e;
 }

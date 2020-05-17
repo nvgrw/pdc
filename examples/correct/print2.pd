@@ -19,14 +19,14 @@
     print md;
   }
 
-  {
-    float[3] mf;
-    mf[0] = 3.14;
-    mf[1] = 1.59;
-    mf[2] = 69.420;
-    print mf;
-  }
-
+#  {
+#    float[3] mf;
+#    mf[0] = 3.14;
+#    mf[1] = 1.59;
+#    mf[2] = 69.420;
+#    print mf;
+#  }
+#
   {
     bool[2][2] mb;
     mb[0][1] = false;
