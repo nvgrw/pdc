@@ -21,6 +21,8 @@ extern "C" {
 
 /* llmodule -> DIFile.args -> llmetadata */
 CAMLprim LLVMMetadataRef extra_difile(LLVMModuleRef M, value Arguments) {
+  CAMLparam1(Arguments);
+
   Module &Module = *unwrap(M);
   DIBuilder DIB(Module);
 
@@ -28,11 +30,13 @@ CAMLprim LLVMMetadataRef extra_difile(LLVMModuleRef M, value Arguments) {
   const char *Basename = String_val(Field(Arguments, 0));
   const char *Directory = String_val(Field(Arguments, 1));
 
-  return wrap(DIB.createFile(Basename, Directory));
+  CAMLreturnT(LLVMMetadataRef, wrap(DIB.createFile(Basename, Directory)));
 }
 
 /* llmodule -> DISubprogram.args -> llmetadata */
 CAMLprim LLVMMetadataRef extra_disubprogram(LLVMModuleRef M, value Arguments) {
+  CAMLparam1(Arguments);
+
   Module &Module = *unwrap(M);
   DIBuilder DIB(Module);
 
@@ -50,12 +54,14 @@ CAMLprim LLVMMetadataRef extra_disubprogram(LLVMModuleRef M, value Arguments) {
       Module.getContext(), Scope, Name, LinkageName, File, LineNo, Ty,
       ScopeLine, nullptr, 0, 0, DINode::DIFlags::FlagZero,
       DISubprogram::DISPFlags::SPFlagDefinition, Unit);
-  return wrap(SP);
+  CAMLreturnT(LLVMMetadataRef, wrap(SP));
 }
 
 /* llmodule -> DILexicalBlock.args -> llmetadata */
 CAMLprim LLVMMetadataRef extra_dilexicalblock(LLVMModuleRef M,
                                               value Arguments) {
+  CAMLparam1(Arguments);
+
   Module &Module = *unwrap(M);
   DIBuilder DIB(Module);
 
@@ -65,12 +71,15 @@ CAMLprim LLVMMetadataRef extra_dilexicalblock(LLVMModuleRef M,
   unsigned int Line = Unsigned_int_val(Field(Arguments, 2));
   unsigned int Col = Unsigned_int_val(Field(Arguments, 3));
 
-  return wrap(DIB.createLexicalBlock(Scope, File, Line, Col));
+  CAMLreturnT(LLVMMetadataRef,
+              wrap(DIB.createLexicalBlock(Scope, File, Line, Col)));
 }
 
 /* llmodule -> DILocalVariable.args -> llmetadata */
 CAMLprim LLVMMetadataRef extra_dilocalvariable(LLVMModuleRef M,
                                                value Arguments) {
+  CAMLparam1(Arguments);
+
   Module &Module = *unwrap(M);
   DIBuilder DIB(Module);
 
@@ -81,11 +90,14 @@ CAMLprim LLVMMetadataRef extra_dilocalvariable(LLVMModuleRef M,
   unsigned int LineNo = Unsigned_int_val(Field(Arguments, 3));
   auto *Ty = cast<DIType>(unwrap(Metadata_val(Field(Arguments, 4))));
 
-  return wrap(DIB.createAutoVariable(Scope, Name, File, LineNo, Ty));
+  CAMLreturnT(LLVMMetadataRef,
+              wrap(DIB.createAutoVariable(Scope, Name, File, LineNo, Ty)));
 }
 
 /* llmodule -> DICompileUnit.args -> llmetadata */
 CAMLprim LLVMMetadataRef extra_dicompileunit(LLVMModuleRef M, value Arguments) {
+  CAMLparam1(Arguments);
+
   Module &Module = *unwrap(M);
   DIBuilder DIB(Module);
 
@@ -94,9 +106,12 @@ CAMLprim LLVMMetadataRef extra_dicompileunit(LLVMModuleRef M, value Arguments) {
   const char *Producer = String_val(Field(Arguments, 1));
   bool isOptimized = Bool_val(Field(Arguments, 2));
 
-  return wrap(DIB.createCompileUnit(
-      dwarf::DW_LANG_C /* we're mostly piggybacking off of C's conventions */,
-      File, Producer, isOptimized, "", 0));
+  CAMLreturnT(
+      LLVMMetadataRef,
+      wrap(DIB.createCompileUnit(
+          dwarf::
+              DW_LANG_C /* we're mostly piggybacking off of C's conventions */,
+          File, Producer, isOptimized, "", 0)));
 }
 
 /* llmodule -> llvalue */
@@ -132,7 +147,7 @@ CAMLprim LLVMMetadataRef extra_diexpression(LLVMModuleRef M, value Opcodes) {
   // DIExpression copies Ops
   delete[] Ops;
 
-  return wrap(Expression);
+  CAMLreturnT(LLVMMetadataRef, wrap(Expression));
 }
 
 /* llmodule -> string -> llmetadata */
@@ -154,15 +169,18 @@ CAMLprim LLVMMetadataRef extra_basic_ditype(LLVMModuleRef M, value Name,
 /* llmodule -> int -> llmetadata -> llmetadata array -> llmetadata */
 CAMLprim LLVMMetadataRef extra_array_ditype(LLVMModuleRef M, value Size,
                                             LLVMMetadataRef Ty, value S) {
+  CAMLparam1(S);
+
   Module &Module = *unwrap(M);
   DIBuilder DIB(Module);
 
   unsigned Length = Wosize_val(S);
   DINodeArray Subscripts = DIB.getOrCreateArray(
       ArrayRef<Metadata *>(unwrap((LLVMMetadataRef *)Op_val(S)), Length));
-  return wrap(DIB.createArrayType(Unsigned_int_val(Size), 0,
-                                  cast<DIType>(unwrap(Metadata_val(Ty))),
-                                  Subscripts));
+  CAMLreturnT(LLVMMetadataRef,
+              wrap(DIB.createArrayType(Unsigned_int_val(Size), 0,
+                                       cast<DIType>(unwrap(Metadata_val(Ty))),
+                                       Subscripts)));
 }
 
 /* llmodule -> int -> int -> llmetadata */
@@ -190,18 +208,22 @@ CAMLprim LLVMMetadataRef extra_mdnull(value Unit) { return nullptr; }
 /* llmodule -> llmetadata array -> llmetadata */
 CAMLprim LLVMMetadataRef extra_disubroutine_type(LLVMModuleRef M,
                                                  value TypeVals) {
+  CAMLparam1(TypeVals);
+
   Module &Module = *unwrap(M);
   DIBuilder DIB(Module);
 
   unsigned Length = Wosize_val(TypeVals);
   DITypeRefArray ParameterTypes = DIB.getOrCreateTypeArray(ArrayRef<Metadata *>(
       unwrap((LLVMMetadataRef *)Op_val(TypeVals)), Length));
-  return wrap(DIB.createSubroutineType(ParameterTypes));
+  CAMLreturnT(LLVMMetadataRef, wrap(DIB.createSubroutineType(ParameterTypes)));
 }
 
 /* llmodule -> llvalue -> AttachInstLocation.args -> unit */
 CAMLprim value extra_attach_inst_location(LLVMModuleRef M, LLVMValueRef Invoke,
                                           value Arguments) {
+  CAMLparam1(Arguments);
+
   Module &Module = *unwrap(M);
   DIBuilder DIB(Module);
 
@@ -214,7 +236,8 @@ CAMLprim value extra_attach_inst_location(LLVMModuleRef M, LLVMValueRef Invoke,
 
   auto *I = cast<Instruction>(unwrap(Invoke));
   I->setDebugLoc(DebugLoc::get(Line, Col, Scope));
-  return Val_unit;
+
+  CAMLreturn(Val_unit);
 }
 
 /* llmodule -> string -> int -> unit */
