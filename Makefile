@@ -6,7 +6,7 @@ LLX_FILES := $(shell find llvm -name "*.cpp" -or -name "*.h")
 
 .PHONY: all clean clean-all install
 
-all: _build/install/default/bin/pdc
+all: _build/default/bin/pdc.exe
 
 ifeq ($(DEBUG),1)
    CMAKE_OPTS = -DCMAKE_BUILD_TYPE=Debug
@@ -28,7 +28,7 @@ clean-all: clean
 	rm -f $(PREFIX)/lib/libpdstd.a
 	rm -f $(PREFIX)/lib/libA4RRP.so
 
-install: _build/install/default/bin/pdc stdlib/build/libpdstd.a llvm/build/libA4RRP.so
+install: _build/default/bin/pdc.exe stdlib/build/libpdstd.a llvm/build/libA4RRP.so
 	mkdir -p $(PREFIX)/bin
 	cp _build/default/bin/pdc.exe $(PREFIX)/bin/pdc
 	mkdir -p $(PREFIX)/lib
@@ -39,7 +39,7 @@ install: _build/install/default/bin/pdc stdlib/build/libpdstd.a llvm/build/libA4
 	opam install . -y --deps-only && \
 	touch .deps-installed
 
-_build/install/default/bin/pdc: .deps-installed stdlib/build/llvm.bc stdlib/build/libpdstd.a llvm/build/libA4RRP.so $(PDC_FILES)
+_build/default/bin/pdc.exe: .deps-installed stdlib/build/llvm.bc stdlib/build/libpdstd.a llvm/build/libA4RRP.so $(PDC_FILES)
 	rm -f .prefix && printf "$(PREFIX)" > .prefix
 	dune build $(DUNE_OPTS)
 
