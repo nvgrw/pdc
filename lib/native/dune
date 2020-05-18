@@ -3,4 +3,11 @@
  (name native)
  (modules extra)
  (libraries llvm)
- (c_library_flags (-L../../llvm/build/Extra -lExtra)))
+ (foreign_archives Extra))
+
+(rule
+ (deps (source_tree ../../llvm/build/Extra))
+ (targets libExtra.a dllExtra.so)
+ (action (progn
+          (copy ../../llvm/build/Extra/libExtra.a libExtra.a)
+          (copy ../../llvm/build/Extra/dllExtra.so dllExtra.so))))

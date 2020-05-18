@@ -1,6 +1,7 @@
 (executable
  (public_name pdc)
  (name pdc)
+ (modes byte native)
  (libraries compile core llvm llvm.bitwriter)
  (preprocess (pps ppx_blob))
  (preprocessor_deps (file ../.prefix)))
