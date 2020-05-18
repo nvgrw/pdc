@@ -30,7 +30,7 @@ clean-all: clean
 
 install: _build/install/default/bin/pdc stdlib/build/libpdstd.a llvm/build/libA4RRP.so
 	mkdir -p $(PREFIX)/bin
-	cp _build/install/default/bin/pdc $(PREFIX)/bin/pdc
+	cp _build/default/bin/pdc.exe $(PREFIX)/bin/pdc
 	mkdir -p $(PREFIX)/lib
 	cp stdlib/build/libpdstd.a $(PREFIX)/lib/libpdstd.a
 	cp llvm/build/libA4RRP.so $(PREFIX)/lib/libA4RRP.so
