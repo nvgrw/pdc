@@ -114,6 +114,14 @@ module Walker_LlvmPass = Common.Walker.Make(struct
         success di
       | _ -> assert false
 
+    let is_debug if_debug default = get >>= function
+      | (`Codegen state) as wrapped_state ->
+        if state.C.debug then
+          if_debug wrapped_state
+        else
+          success default
+      | _ -> assert false
+
     let rec typ_to_llvm = function
       | Array (_typ, _size, _) as t ->
         let rec resolve_array typ accum = begin match typ with
@@ -166,7 +174,7 @@ module Walker_LlvmPass = Common.Walker.Make(struct
       let main_bb = Llvm.append_block con "entry" main in
       let () = Llvm.position_at_end main_bb bdr in
 
-      get >>= begin function
+      is_debug begin function
         | `Codegen ({ C.debugScopes = debugScopes; _ } as state) ->
           let debugScope = NE.disubprogram mdl {
               NE.DISubprogram.scope = state.debugCompileUnit;
@@ -180,7 +188,7 @@ module Walker_LlvmPass = Common.Walker.Make(struct
             } in
           put @@ `Codegen { state with C.debugScopes = debugScope :: debugScopes }
         | _ -> assert false
-      end >>= fun _ ->
+      end () >>= fun _ ->
       success p
     let visit_program_pos _ p =
       ignore @@ Llvm.build_ret (Llvm.const_int (Llvm.i64_type con) 0) bdr;
@@ -221,7 +229,7 @@ module Walker_LlvmPass = Common.Walker.Make(struct
       | _ -> begin function
           | Block (_, _, _, Position (pos_from, _pos_to)) as b ->
             let mdl = Option.value_exn !mdl_ref in
-            get >>= begin function
+            is_debug begin function
               | `Codegen ({ C.debugScopes = debugScopes; _} as state) ->
                 let debugScope = NE.dilexicalblock mdl {
                     NE.DILexicalBlock.scope = List.hd debugScopes;
@@ -230,15 +238,17 @@ module Walker_LlvmPass = Common.Walker.Make(struct
                     col = pos_from.pos_cnum - pos_from.pos_bol + 1;
                   } in
                 put @@ `Codegen { state with C.debugScopes = debugScope :: debugScopes }
-              | _ -> assert false end >>= fun _ ->
+              | _ -> assert false
+            end () >>= fun () ->
             success b
         end
     let visit_block_pos _ = function
       | Block (_, _, _, Position _) as b ->
-        get >>= begin function
+        is_debug begin function
           | `Codegen ({ C.debugScopes = oldScope :: debugScopes; _} as state) ->
             put @@ `Codegen { state with C.debugScopes = debugScopes }
-          | _ -> assert false end >>= fun _ ->
+          | _ -> assert false
+        end () >>= fun () ->
         success b
 
     let visit_stmt_pre parent s =
@@ -297,23 +307,25 @@ module Walker_LlvmPass = Common.Walker.Make(struct
           pop_val >>= fun loc_llval ->
           let _ = Llvm.build_store expr_llval loc_llval bdr in
 
-          (* + Add debug info + *)
-          get >>= (function
-              | `Codegen state -> success state
-              | _ -> assert false) >>= fun state ->
-          get_debug_local_variable >>= fun dilvar ->
-          let mdl = Option.value_exn !mdl_ref in
-          let decl_dbg_call = Llvm.build_call (NE.get_dbg_value mdl) [|
-              NE.metadata_to_value con @@ NE.value_to_metadata loc_llval;
-              NE.metadata_to_value con dilvar;
-              NE.metadata_to_value con (NE.diexpression mdl [| 0x06 |]);
-            |] "" bdr in
-          NE.attach_inst_location mdl decl_dbg_call {
-            NE.AttachInstLocation.line = pos_from.pos_lnum;
-            col = pos_from.pos_cnum - pos_from.pos_bol + 1;
-            scope = List.hd state.C.debugScopes;
-          };
-          (* - Add debug info - *)
+          is_debug begin function
+            | `Codegen state ->
+              (* + Add debug info + *)
+              get_debug_local_variable >>= fun dilvar ->
+              let mdl = Option.value_exn !mdl_ref in
+              let decl_dbg_call = Llvm.build_call (NE.get_dbg_value mdl) [|
+                  NE.metadata_to_value con @@ NE.value_to_metadata loc_llval;
+                  NE.metadata_to_value con dilvar;
+                  NE.metadata_to_value con (NE.diexpression mdl [| 0x06 |]);
+                |] "" bdr in
+              NE.attach_inst_location mdl decl_dbg_call {
+                NE.AttachInstLocation.line = pos_from.pos_lnum;
+                col = pos_from.pos_cnum - pos_from.pos_bol + 1;
+                scope = List.hd state.C.debugScopes;
+              };
+              (* - Add debug info - *)
+              success ()
+            | _ -> assert false
+          end () >>= fun _ ->
           success s
         | ProbAssign _ as s ->
           error @@ CodegenError (ProbAssignNotLowered s)
@@ -466,32 +478,39 @@ module Walker_LlvmPass = Common.Walker.Make(struct
         let lltyp = typ_to_llvm typ in
         get >>= begin function
           | `Codegen ({ C.scopes = curr :: others; _ } as state) ->
-            (* + Add debug info + *)
             let mdl = Option.value_exn !mdl_ref in
-            let dilvar = NE.dilocalvariable mdl {
-                NE.DILocalVariable.scope = List.hd state.debugScopes;
-                name = ident;
-                file = state.debugFile;
-                line_no = pos_from.pos_lnum;
-                ty = NE.unspecified_ditype mdl (Printf.sprintf "%s_ty" ident);
-              } in
-            (* - Add debug info - *)
+            is_debug begin fun _ ->
+              (* + Add debug info + *)
+              let dilvar = NE.dilocalvariable mdl {
+                  NE.DILocalVariable.scope = List.hd state.debugScopes;
+                  name = ident;
+                  file = state.debugFile;
+                  line_no = pos_from.pos_lnum;
+                  ty = NE.unspecified_ditype mdl (Printf.sprintf "%s_ty" ident);
+                } in
+              success dilvar
+              (* - Add debug info - *)
+            end (NE.mdnull ()) >>= fun dilvar ->
 
             let llval = Llvm.build_alloca lltyp "tmpalloca" bdr in
             let new_scope = StringMap.add ident (llval, dilvar) curr in
             put @@ `Codegen { state with C.scopes = new_scope :: others } >>= fun _ ->
 
-            let decl_dbg_call = Llvm.build_call (NE.get_dbg_declare mdl) [|
-                NE.metadata_to_value con @@ NE.value_to_metadata llval;
-                NE.metadata_to_value con dilvar;
-                NE.metadata_to_value con (NE.empty_diexpression mdl);
-              |] "" bdr in
-            NE.attach_inst_location mdl decl_dbg_call {
-              NE.AttachInstLocation.line = pos_from.pos_lnum;
-              col = pos_from.pos_cnum - pos_from.pos_bol + 1;
-              scope = List.hd state.debugScopes;
-            };
-
+            is_debug begin function
+              | `Codegen state ->
+                let decl_dbg_call = Llvm.build_call (NE.get_dbg_declare mdl) [|
+                    NE.metadata_to_value con @@ NE.value_to_metadata llval;
+                    NE.metadata_to_value con dilvar;
+                    NE.metadata_to_value con (NE.empty_diexpression mdl);
+                  |] "" bdr in
+                NE.attach_inst_location mdl decl_dbg_call {
+                  NE.AttachInstLocation.line = pos_from.pos_lnum;
+                  col = pos_from.pos_cnum - pos_from.pos_bol + 1;
+                  scope = List.hd state.debugScopes;
+                };
+                success ()
+              | _ -> assert false
+            end () >>= fun () ->
             success d
           | _ -> assert false
         end
