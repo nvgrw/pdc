@@ -70,6 +70,12 @@ external diexpression: llmodule -> int array -> llmetadata = "extra_diexpression
 
 external unspecified_ditype: llmodule -> string -> llmetadata = "extra_unspecified_ditype"
 
+external basic_ditype: llmodule -> string -> int -> int -> llmetadata = "extra_basic_ditype"
+
+external array_ditype: llmodule -> int -> llmetadata -> llmetadata array -> llmetadata = "extra_array_ditype"
+
+external disubrange: llmodule -> int -> int -> llmetadata = "extra_disubrange"
+
 external metadata_to_value: llcontext -> llmetadata -> llvalue = "extra_metadata_to_value"
 
 external mdnull: unit -> llmetadata = "extra_mdnull"

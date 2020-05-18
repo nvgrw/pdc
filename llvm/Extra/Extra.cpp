@@ -142,6 +142,37 @@ CAMLprim LLVMMetadataRef extra_unspecified_ditype(LLVMModuleRef M, value Name) {
   return wrap(DIB.createUnspecifiedType(String_val(Name)));
 }
 
+/* llmodule -> string -> int -> int -> llmetadata */
+CAMLprim LLVMMetadataRef extra_basic_ditype(LLVMModuleRef M, value Name,
+                                            value SizeInBits, value Encoding) {
+  Module &Module = *unwrap(M);
+  DIBuilder DIB(Module);
+  return wrap(DIB.createBasicType(String_val(Name), Int_val(SizeInBits),
+                                  Unsigned_int_val(Encoding)));
+}
+
+/* llmodule -> int -> llmetadata -> llmetadata array -> llmetadata */
+CAMLprim LLVMMetadataRef extra_array_ditype(LLVMModuleRef M, value Size,
+                                            LLVMMetadataRef Ty, value S) {
+  Module &Module = *unwrap(M);
+  DIBuilder DIB(Module);
+
+  unsigned Length = Wosize_val(S);
+  DINodeArray Subscripts = DIB.getOrCreateArray(
+      ArrayRef<Metadata *>(unwrap((LLVMMetadataRef *)Op_val(S)), Length));
+  return wrap(DIB.createArrayType(Unsigned_int_val(Size), 0,
+                                  cast<DIType>(unwrap(Metadata_val(Ty))),
+                                  Subscripts));
+}
+
+/* llmodule -> int -> int -> llmetadata */
+CAMLprim LLVMMetadataRef extra_disubrange(LLVMModuleRef M, value Lo,
+                                          value Count) {
+  Module &Module = *unwrap(M);
+  DIBuilder DIB(Module);
+  return wrap(DIB.getOrCreateSubrange(Int_val(Lo), Int_val(Count)));
+}
+
 /* llcontext -> llmetadata -> llvalue */
 CAMLprim LLVMValueRef extra_metadata_to_value(LLVMContextRef C,
                                               LLVMMetadataRef M) {

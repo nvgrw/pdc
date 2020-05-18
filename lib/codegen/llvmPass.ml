@@ -137,6 +137,28 @@ module Walker_LlvmPass = Common.Walker.Make(struct
       | Char _ -> Llvm.i8_type con
       | Bool _ -> Llvm.i1_type con
 
+    let rec typ_to_ditype mdl = function
+      | Array (_typ, _size, _) as t ->
+        let rec resolve_array typ accum = begin match typ with
+          | Array (inner, size, _) ->
+            let (accum, bitsize, leaf) = resolve_array inner accum in
+            let subrange = NE.disubrange mdl 0 size in
+            (subrange :: accum, bitsize * size, leaf)
+          | _ as leaf ->
+            let (value, bitsize) = typ_to_ditype mdl leaf in
+            (accum, bitsize, value)
+        end in
+        let (accum, bitsize, leaf) = resolve_array t [] in
+        (NE.array_ditype mdl bitsize leaf (Array.of_list @@ List.rev accum), bitsize)
+      | Int _ ->
+        (NE.basic_ditype mdl "int" 64 0x05(*signed*), 64)
+      | Float _ ->
+        (NE.basic_ditype mdl "float" 64 0x05(*signed*), 64)
+      | Char _ ->
+        (NE.basic_ditype mdl "char" 8 0x05(*signed*), 8)
+      | Bool _ ->
+        (NE.basic_ditype mdl "bool" 1 0x05(*signed*), 1)
+
     let flatten_array_typ t =
       let rec flatten_array_typ' n_dim dim = begin function
         | Array (typ, size, _) ->
@@ -481,12 +503,13 @@ module Walker_LlvmPass = Common.Walker.Make(struct
             let mdl = Option.value_exn !mdl_ref in
             is_debug begin fun _ ->
               (* + Add debug info + *)
+              let (ty, _bitsize) = typ_to_ditype mdl typ in
               let dilvar = NE.dilocalvariable mdl {
                   NE.DILocalVariable.scope = List.hd state.debugScopes;
                   name = ident;
                   file = state.debugFile;
                   line_no = pos_from.pos_lnum;
-                  ty = NE.unspecified_ditype mdl (Printf.sprintf "%s_ty" ident);
+                  ty = ty;
                 } in
               success dilvar
               (* - Add debug info - *)
