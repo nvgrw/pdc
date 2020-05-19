@@ -39,19 +39,19 @@ let get_meta_unop = function
   | Not m -> m
 
 type 'm value =
-  | Num of int * 'm
+  | Num of int * int * 'm
   | Real of float * 'm
   | Bool of bool * 'm
 [@@deriving show]
 
 let get_meta_value = function
-  | Num (_, m) -> m
+  | Num (_, _, m) -> m
   | Real (_, m) -> m
   | Bool (_, m) -> m
 
 type 'm typ =
   | Array of 'm typ * int * 'm
-  | Int of 'm
+  | Int of int * 'm
   | Float of 'm
   | Char of 'm
   | Bool of 'm
@@ -59,7 +59,7 @@ type 'm typ =
 
 let get_meta_typ = function
   | Array (_, _, m) -> m
-  | Int m -> m
+  | Int (_, m) -> m
   | Float m -> m
   | Char m -> m
   | Bool m -> m

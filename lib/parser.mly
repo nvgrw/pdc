@@ -1,9 +1,4 @@
 
-/*
- * Significant inspiration taken from this tutorial:
- * https://medium.com/@aleksandrasays/tutorial-parsing-json-with-ocaml-579cc054924f
- */
-
 %token EOF
 %token SCOPE_OPEN
 %token SCOPE_CLSE
@@ -86,7 +81,8 @@ decl:
 
 typ:
   | t = typ DEREF_OPEN size = NUM DEREF_CLSE  { Array (t, size, Position $loc) }
-  | INT                                       { Int (Position $loc) }
+  | INT GROUP_OPEN prec = NUM GROUP_CLSE      { Int (prec, Position $loc) }
+  | INT                                       { Int (64, Position $loc) }
   /* | FLOAT                                     { Float (Position $loc) } */
   | CHAR                                      { Char (Position $loc) }
   | BOOL                                      { Bool (Position $loc) }
@@ -172,7 +168,7 @@ unary:
 factor:
   | GROUP_OPEN bool GROUP_CLSE  { $2 }
   | loc                         { Var ($1, Position $loc) }
-  | n = NUM                     { Const (Num (n, Position $loc), Position $loc) }
+  | n = NUM                     { Const (Num (n, -1, Position $loc), Position $loc) }
   | r = REAL                    { Const (Real (r, Position $loc), Position $loc) }
   | TRUE                        { Const (Bool (true, Position $loc), Position $loc) }
   | FALSE                       { Const (Bool (false, Position $loc), Position $loc) }

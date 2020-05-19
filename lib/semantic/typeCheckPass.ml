@@ -15,7 +15,8 @@ let wrap_type typ e m = success @@ Typed (typ, e, m)
 let rec same_typ = function
   | (Array (left_typ, left_size, _), Array (right_typ, right_size, _))
     -> same_typ (left_typ, right_typ) && left_size == right_size
-  | (Int _, Int _)
+  | (Int (left_prec, _), Int (right_prec, _))
+    -> left_prec = right_prec
   | (Float _, Float _)
   | (Char _, Char _)
   | (Bool _, Bool _) -> true
@@ -38,11 +39,11 @@ let binop_result = function
   | (Bool _, Or _, Bool _, m)
   | (Bool _, And _, Bool _, m) -> Some (Bool m)
   (* (Int) Arithmetic *)
-  | (Int _, Add _, Int _, m)
-  | (Int _, Subtract _, Int _, m)
-  | (Int _, Multiply _, Int _, m)
-  | (Int _, Divide _, Int _, m) -> Some (Int m)
-  | (Int _, Remainder _, Int _, m) -> Some (Int m)
+  | (Int (left_prec, _), Add _,       Int (right_prec, _), m)
+  | (Int (left_prec, _), Subtract _,  Int (right_prec, _), m)
+  | (Int (left_prec, _), Multiply _,  Int (right_prec, _), m)
+  | (Int (left_prec, _), Divide _,    Int (right_prec, _), m)
+  | (Int (left_prec, _), Remainder _, Int (right_prec, _), m) -> Some (Int (max left_prec right_prec, m))
   (* (Float) Arithmetic *)
   | (Float _, Add _, Float _, m)
   | (Float _, Subtract _, Float _, m)
@@ -66,6 +67,8 @@ module Walker_TypeCheckPass = Common.Walker.Make(struct
 
     let visit_stmt_pre _ s = success s
     let visit_stmt_pos _ = function
+      | Assign (LTyped(Int (ltyp_prec, _) as ltyp, lloc, lm), Typed(Int (typ_prec, _) as rtyp, rloc, rm), m) when ltyp_prec > typ_prec ->
+        success @@ Assign (LTyped(ltyp, lloc, lm), Typed(rtyp, rloc, rm), m)
       | Assign (LTyped(ltyp, _, _), Typed(typ, _, _), _) as s ->
         if (same_typ (ltyp, typ)) then success s
         else error @@ TypeError (IncompatibleAssignment (s, ltyp, typ))
@@ -113,7 +116,7 @@ module Walker_TypeCheckPass = Common.Walker.Make(struct
         if unop_compatible (op, typ)
         then wrap_type typ e m
         else error @@ TypeError (IncompatibleUnOp (e, op, typ))
-      | Const (Num (_, nm), m) as v -> success @@ Typed (Int nm, v, m)
+      | Const (Num (_, prec, nm), m) as v -> success @@ Typed (Int (prec, nm), v, m)
       | Const (Real (_, rm), m) as v -> success @@ Typed (Float rm, v, m)
       | Const (Bool (_, bm), m) as v -> success @@ Typed (Bool bm, v, m)
       | Var (LTyped (typ, loc, tm), vm) -> success @@ Typed (typ, (Var (loc, vm)), tm)

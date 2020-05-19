@@ -6,7 +6,8 @@ let passes = [
   Semantic.MiscCheckPass.process;
   (* Semantic.Print.process; *)
   Semantic.TypeCheckPass.process;
-  Semantic.LoweringPass.process
+  Semantic.LoweringPass.process;
+  Semantic.TypeInferPass.process;
 ]
 
 let check p =

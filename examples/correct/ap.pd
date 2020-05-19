@@ -1,0 +1,8 @@
+{
+  int(3) i; # 3-bit signed integer
+  int(4) j; # 4-bit signed integer
+  i = 98;
+  j = i + 1;
+  j = (3 + 14) + 0;
+  j = i; # ok, but i needs to be sign-extended
+}
