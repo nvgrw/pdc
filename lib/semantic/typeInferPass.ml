@@ -36,6 +36,7 @@ module Walker_TypeInferPass = Common.Walker.Make(struct
 
     let visit_expr_pre _ =
       function
+      (* Push parent Int precision into children *)
       | Typed (Int (prec, _) as pt, expr, m) ->
         success @@
         Typed (pt,
@@ -52,6 +53,18 @@ module Walker_TypeInferPass = Common.Walker.Make(struct
                    Const (Num (lv, prec, lm), em)
                  | _ as e -> e
                end, m)
+      (* Push sibling Int precision into children, or set default 64 *)
+      | Typed ((Bool _) as pt, expr, m) ->
+        success @@
+        Typed (pt, begin match expr with
+            | BinOp (Typed (Int (-1, ilm), lex, lm), op, Typed (Int (-1, irm), rex, rm), em) ->
+              BinOp (Typed (Int (64, ilm), lex, lm), op, Typed (Int (64, irm), rex, rm), em)
+            | BinOp (Typed (Int (lprec, ilm), lex, lm), op, Typed (Int (-1, irm), rex, rm), em) ->
+              BinOp (Typed (Int (lprec, ilm), lex, lm), op, Typed (Int (lprec, irm), rex, rm), em)
+            | BinOp (Typed (Int (-1, ilm), lex, lm), op, Typed (Int (rprec, irm), rex, rm), em) ->
+              BinOp (Typed (Int (rprec, ilm), lex, lm), op, Typed (Int (rprec, irm), rex, rm), em)
+            | _ as e -> e
+          end, m)
       | _ as e -> success e
     let visit_expr_pos _ e = success e
 

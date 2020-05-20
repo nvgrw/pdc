@@ -12,11 +12,11 @@ let unop_compatible = function
 
 let wrap_type typ e m = success @@ Typed (typ, e, m)
 
-let rec same_typ = function
+let rec compatible_typ = function
   | (Array (left_typ, left_size, _), Array (right_typ, right_size, _))
-    -> same_typ (left_typ, right_typ) && left_size == right_size
+    -> compatible_typ (left_typ, right_typ) && left_size == right_size
   | (Int (left_prec, _), Int (right_prec, _))
-    -> left_prec = right_prec
+    -> left_prec >= right_prec
   | (Float _, Float _)
   | (Char _, Char _)
   | (Bool _, Bool _) -> true
@@ -24,7 +24,7 @@ let rec same_typ = function
 
 let binop_result = function
   (* Equality *)
-  | (t, Eq _, t', m) | (t, Neq _, t', m) when (same_typ (t, t')) -> Some (Bool m)
+  | (t, Eq _, t', m) | (t, Neq _, t', m) when (compatible_typ (t, t')) -> Some (Bool m)
   (* (Int) Inequality *)
   | (Int _, Lt _, Int _, m)
   | (Int _, Leq _, Int _, m)
@@ -67,15 +67,13 @@ module Walker_TypeCheckPass = Common.Walker.Make(struct
 
     let visit_stmt_pre _ s = success s
     let visit_stmt_pos _ = function
-      | Assign (LTyped(Int (ltyp_prec, _) as ltyp, lloc, lm), Typed(Int (typ_prec, _) as rtyp, rloc, rm), m) when ltyp_prec > typ_prec ->
-        success @@ Assign (LTyped(ltyp, lloc, lm), Typed(rtyp, rloc, rm), m)
       | Assign (LTyped(ltyp, _, _), Typed(typ, _, _), _) as s ->
-        if (same_typ (ltyp, typ)) then success s
+        if (compatible_typ (ltyp, typ)) then success s
         else error @@ TypeError (IncompatibleAssignment (s, ltyp, typ))
       | ProbAssign (LTyped(ltyp, _, _), exprs, _) as s ->
         let rec types_match_ltyp = begin function
-          | Typed(typ, _, _) :: rest ->
-            if (same_typ (ltyp, typ)) then types_match_ltyp rest
+          | Typed (typ, _, _) :: rest ->
+            if (compatible_typ (ltyp, typ)) then types_match_ltyp rest
             else error @@ TypeError (IncompatibleAssignment (s, ltyp, typ))
           | [] -> success ()
           | _ -> error @@ TypeError (UntypedStatementFragment s)

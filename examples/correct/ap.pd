@@ -1,8 +1,14 @@
 {
   int(3) i; # 3-bit signed integer
   int(4) j; # 4-bit signed integer
-  i = 98;
+  int(1)[3] k; # 3-element 1-bit signed integer array
+  i = 3;
   j = i + 1;
   j = (3 + 14) + 0;
   j = i; # ok, but i needs to be sign-extended
+  print j;
+  k[0] = 0;
+  k[1] = -1;
+  k[2] = 0;
+  print k; # should not print garbage
 }

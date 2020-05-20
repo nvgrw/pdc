@@ -447,17 +447,16 @@ module Walker_LlvmPass = Common.Walker.Make(struct
               let lldim_arr = Llvm.const_gep lldim_global [||] in
               let lldim = Llvm.const_bitcast lldim_arr (Llvm.pointer_type @@ Llvm.i64_type con) in
               let std_print_array = lookup_function (Printf.sprintf "_pdcstd_print_array_%s" (flat_typ_str typ)) mdl in
-              let lltyp = typ_to_llvm typ in
-              (* v probably find a better solution *)
-              let lltyp =
-                if (Llvm.classify_type lltyp == Llvm.TypeKind.Integer && Llvm.integer_bitwidth lltyp < 8) then
-                  Llvm.i8_type con
-                else
-                  lltyp
-              in
-              (* ^ probably find a better solution *)
+              let lltyp = match typ with
+                | Int _ -> Llvm.i64_type con
+                | Bool _ | Char _ -> Llvm.i8_type con
+                | _ as t -> typ_to_llvm t in
               let cast_vl = Llvm.build_bitcast vl (Llvm.pointer_type lltyp) "" bdr in
               ignore @@ Llvm.build_call std_print_array [| cast_vl; lln_dim; lldim |] "" bdr;
+            | Int (prec, _) when prec < 64 ->
+              let std_print = lookup_function (Printf.sprintf "_pdcstd_print_int") mdl in
+              let cast = Llvm.build_sext_or_bitcast vl (Llvm.i64_type con) "" bdr in
+              ignore @@ Llvm.build_call std_print [| cast |] "" bdr;
             | _ ->
               let std_print = lookup_function (Printf.sprintf "_pdcstd_print_%s" (flat_typ_str typ)) mdl in
               ignore @@ Llvm.build_call std_print [| vl |] "" bdr;
