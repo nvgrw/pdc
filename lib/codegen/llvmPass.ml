@@ -323,13 +323,6 @@ module Walker_LlvmPass = Common.Walker.Make(struct
         success s
     let visit_stmt_pos parent s =
       let func = bdr |> Llvm.insertion_block |> Llvm.block_parent in
-      (* let pop_and_sext = function
-         | ((Int (lprec, lm) as lt), Int (rprec, rm)) when lprec > rprec ->
-          (* sext rhs *)
-          pop_val >>= fun llval ->
-          success @@ Llvm.build_sext llval (typ_to_llvm lt) "" bdr
-         | _ -> pop_val
-         in *)
       begin match s with
         | Assign (LTyped (ltyp, loc, _), Typed (rtyp, expr, _), Position (pos_from, _pos_to)) as s ->
           pop_val >>= fun expr_llval ->
@@ -546,17 +539,6 @@ module Walker_LlvmPass = Common.Walker.Make(struct
 
     let visit_expr_pre _ e = success e
     let visit_expr_pos _ =
-      (* let pop_and_sext = function
-         | (Int (lprec, lm), (Int (rprec, rm) as rt)) when lprec < rprec ->
-          (* sext lhs *)
-          pop_val >>= fun llval ->
-          success @@ Llvm.build_sext llval (typ_to_llvm rt) "" bdr
-         | ((Int (lprec, lm) as lt), Int (rprec, rm)) when lprec > rprec ->
-          (* sext rhs *)
-          pop_val >>= fun llval ->
-          success @@ Llvm.build_sext llval (typ_to_llvm lt) "" bdr
-         | _ -> pop_val
-         in *)
       function
       (* Operations *)
       | BinOp (Typed(ltyp, _lhs, _), op, Typed(rtyp, _rhs, _), _) as e ->
