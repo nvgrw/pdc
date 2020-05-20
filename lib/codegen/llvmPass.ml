@@ -132,7 +132,7 @@ module Walker_LlvmPass = Common.Walker.Make(struct
         end in
         let (accum, leaf) = resolve_array t [] in
         List.fold_left Llvm.array_type leaf accum
-      | Int (prec, _) -> Llvm.integer_type con prec
+      | Int _ -> Llvm.i64_type con
       | Float _ -> Llvm.double_type con
       | Char _ -> Llvm.i8_type con
       | Bool _ -> Llvm.i1_type con
@@ -150,8 +150,8 @@ module Walker_LlvmPass = Common.Walker.Make(struct
         end in
         let (accum, bitsize, leaf) = resolve_array t [] in
         (NE.array_ditype mdl bitsize leaf (Array.of_list @@ List.rev accum), bitsize)
-      | Int _ ->
-        (NE.basic_ditype mdl "int" 64 0x05(*signed*), 64)
+      | Int (prec, _) ->
+        (NE.basic_ditype mdl "int" prec 0x05(*signed*), prec)
       | Float _ ->
         (NE.basic_ditype mdl "float" 64 0x05(*signed*), 64)
       | Char _ ->
@@ -323,16 +323,16 @@ module Walker_LlvmPass = Common.Walker.Make(struct
         success s
     let visit_stmt_pos parent s =
       let func = bdr |> Llvm.insertion_block |> Llvm.block_parent in
-      let pop_and_sext = function
-        | ((Int (lprec, lm) as lt), Int (rprec, rm)) when lprec > rprec ->
+      (* let pop_and_sext = function
+         | ((Int (lprec, lm) as lt), Int (rprec, rm)) when lprec > rprec ->
           (* sext rhs *)
           pop_val >>= fun llval ->
           success @@ Llvm.build_sext llval (typ_to_llvm lt) "" bdr
-        | _ -> pop_val
-      in
+         | _ -> pop_val
+         in *)
       begin match s with
         | Assign (LTyped (ltyp, loc, _), Typed (rtyp, expr, _), Position (pos_from, _pos_to)) as s ->
-          pop_and_sext (ltyp, rtyp) >>= fun expr_llval ->
+          pop_val >>= fun expr_llval ->
           pop_val >>= fun loc_llval ->
           let _ = Llvm.build_store expr_llval loc_llval bdr in
 
@@ -546,22 +546,22 @@ module Walker_LlvmPass = Common.Walker.Make(struct
 
     let visit_expr_pre _ e = success e
     let visit_expr_pos _ =
-      let pop_and_sext = function
-        | (Int (lprec, lm), (Int (rprec, rm) as rt)) when lprec < rprec ->
+      (* let pop_and_sext = function
+         | (Int (lprec, lm), (Int (rprec, rm) as rt)) when lprec < rprec ->
           (* sext lhs *)
           pop_val >>= fun llval ->
           success @@ Llvm.build_sext llval (typ_to_llvm rt) "" bdr
-        | ((Int (lprec, lm) as lt), Int (rprec, rm)) when lprec > rprec ->
+         | ((Int (lprec, lm) as lt), Int (rprec, rm)) when lprec > rprec ->
           (* sext rhs *)
           pop_val >>= fun llval ->
           success @@ Llvm.build_sext llval (typ_to_llvm lt) "" bdr
-        | _ -> pop_val
-      in
+         | _ -> pop_val
+         in *)
       function
       (* Operations *)
       | BinOp (Typed(ltyp, _lhs, _), op, Typed(rtyp, _rhs, _), _) as e ->
-        pop_and_sext (ltyp, rtyp) >>= fun rhs_llval ->
-        pop_and_sext (ltyp, rtyp) >>= fun lhs_llval ->
+        pop_val >>= fun rhs_llval ->
+        pop_val >>= fun lhs_llval ->
         let build f ff ident =
           begin match ltyp with
             | Float _ -> ff
@@ -625,7 +625,7 @@ module Walker_LlvmPass = Common.Walker.Make(struct
         success e
       (* Constants *)
       | Const (Num (i, prec, _), _) as e ->
-        push_val @@ Llvm.const_int (Llvm.integer_type con prec) i >>= fun () ->
+        push_val @@ Llvm.const_int (Llvm.i64_type con) i >>= fun () ->
         success e
       | Const (Real (r, _), _) as e ->
         push_val @@ Llvm.const_float (Llvm.double_type con) r >>= fun () ->
