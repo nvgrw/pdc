@@ -1,5 +1,5 @@
 {
-  int d; int g; int o;
+  int(3) d; int(3) g; int(3) o;
   d ?= { 0, 1, 2 }; # Pick winning door
   g ?= { 0, 1, 2 }; # Pick guessed door
   o ?= { 0, 1, 2 }; # Pick empty door
