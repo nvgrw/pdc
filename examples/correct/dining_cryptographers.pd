@@ -1,0 +1,24 @@
+{
+  # language does not have xor operator right now
+  #
+  #    A
+  #
+  # B     C
+  bool abSecret; bool bcSecret; bool acSecret;
+  bool aAnnounce; bool bAnnounce; bool cAnnounce;
+  bool abAnnounce; bool abcAnnounce;
+
+  # Establish secrets
+  abSecret ?= { false, true };
+  bcSecret ?= { false, true };
+  acSecret ?= { false, true };
+
+  # NSA paid
+  aAnnounce = (!abSecret && acSecret) || (abSecret && !acSecret);
+  bAnnounce = (!abSecret && bcSecret) || (abSecret && !bcSecret);
+  cAnnounce = (!acSecret && bcSecret) || (acSecret && !bcSecret);
+
+  abAnnounce = (!aAnnounce && bAnnounce) || (aAnnounce && !bAnnounce);
+  abcAnnounce = (!abAnnounce && cAnnounce) || (abAnnounce && !cAnnounce);
+  print abcAnnounce;
+}
