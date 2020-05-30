@@ -334,12 +334,12 @@ module Walker_LlvmPass = Common.Walker.Make(struct
               (* + Add debug info + *)
               get_debug_local_variable >>= fun dilvar ->
               let mdl = Option.value_exn !mdl_ref in
-              let decl_dbg_call = Llvm.build_call (NE.get_dbg_value mdl) [|
+              let value_dbg_call = Llvm.build_call (NE.get_dbg_value mdl) [|
                   NE.metadata_to_value con @@ NE.value_to_metadata loc_llval;
                   NE.metadata_to_value con dilvar;
                   NE.metadata_to_value con (NE.diexpression mdl [| 0x06 |]);
                 |] "" bdr in
-              NE.attach_inst_location mdl decl_dbg_call {
+              NE.attach_inst_location mdl value_dbg_call {
                 NE.AttachInstLocation.line = pos_from.pos_lnum;
                 col = pos_from.pos_cnum - pos_from.pos_bol + 1;
                 scope = List.hd state.C.debugScopes;
