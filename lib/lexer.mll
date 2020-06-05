@@ -49,8 +49,11 @@ rule token = parse
   | "do"        { DO }
   | "break"     { BREAK }
   | "choose"    { CHOOSE }
-  | "||"        { OR }
+  | "&"         { BAND }
+  | "^"         { BXOR }
+  | "|"         { BOR }
   | "&&"        { AND }
+  | "||"        { OR }
   | "=="        { EQ }
   | "!="        { NEQ }
   | "<"         { LT }

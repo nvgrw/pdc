@@ -22,8 +22,11 @@
 %token BREAK
 %token CHOOSE
 (* Relational *)
-%token OR
+%token BAND
+%token BXOR
+%token BOR
 %token AND
+%token OR
 %token EQ
 %token NEQ
 %token LT
@@ -54,7 +57,7 @@
 %type  <Common.Meta.meta Common.AST.typ> typ
 %type  <Common.Meta.meta Common.AST.stmt> stmt
 %type  <Common.Meta.meta Common.AST.loc> loc
-%type  <Common.Meta.meta Common.AST.expr> bool join equality rel expr term unary factor
+%type  <Common.Meta.meta Common.AST.expr> bool join bwor bwxor bwand equality rel expr term unary factor
 
 /* Address Dangling Else */
 %nonassoc GROUP_CLSE
@@ -128,9 +131,28 @@ bool:
   ;
 
 join:
-  | l = join AND r = equality { BinOp (l, And (Position $loc($2)), r, Position $loc) }
-  | equality                  { $1 }
+  | l = join AND r = bwor { BinOp (l, And (Position $loc($2)), r, Position $loc) }
+  | bwor                  { $1 }
   ;
+
+/* Bitwise Operators
+   These bind tighter than AND and OR. x & y && z = (x & y) && z */
+bwor:
+  | l = bwor BOR r = bwxor { BinOp (l, BOr (Position $loc($2)), r, Position $loc) }
+  | bwxor                  { $1 }
+  ;
+
+bwxor:
+  | l = bwxor BXOR r = bwand { BinOp (l, BXor (Position $loc($2)), r, Position $loc) }
+  | bwand                    { $1 }
+  ;
+
+bwand:
+  | l = bwand BAND r = equality { BinOp (l, BAnd (Position $loc($2)), r, Position $loc) }
+  | equality                    { $1 }
+  ;
+
+/* ----------------- */
 
 equality:
   | l = equality EQ r = rel   { BinOp (l, Eq (Position $loc($2)), r, Position $loc) }

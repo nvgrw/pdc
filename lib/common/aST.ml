@@ -1,6 +1,9 @@
 type 'm binop =
   | Or of 'm
   | And of 'm
+  | BOr of 'm
+  | BXor of 'm
+  | BAnd of 'm
   | Eq of 'm
   | Neq of 'm
   | Lt of 'm
@@ -17,6 +20,9 @@ type 'm binop =
 let get_meta_binop = function
   | Or m -> m
   | And m -> m
+  | BOr m -> m
+  | BXor m -> m
+  | BAnd m -> m
   | Eq m -> m
   | Neq m -> m
   | Lt m -> m

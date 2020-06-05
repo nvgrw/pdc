@@ -561,11 +561,14 @@ module Walker_LlvmPass = Common.Walker.Make(struct
             build Llvm.build_sdiv Llvm.build_fdiv "divtmp"
           | Remainder _ ->
             build Llvm.build_srem Llvm.build_frem "remtmp"
-          (* Boolean *)
-          | Or _ ->
+          (* Boolean & Bitwise *)
+          | Or _ | BOr _ ->
             Llvm.build_or lhs_llval rhs_llval "ortmp" bdr
-          | And _ ->
+          | And _ | BAnd _ ->
             Llvm.build_and lhs_llval rhs_llval "andtmp" bdr
+          (* Bitwise *)
+          | BXor _ ->
+            Llvm.build_xor lhs_llval rhs_llval "xortmp" bdr
           (* Comparative *)
           | Eq _ ->
             let ieq = Llvm.build_icmp Llvm.Icmp.Eq in
