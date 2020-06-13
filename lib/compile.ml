@@ -68,6 +68,9 @@ let error_string err get_lines =
   | TypeError (UntypedStatementFragment stmt) ->
     let context = (match get_meta_stmt stmt with Position (s_pos, e_pos) -> generate_context get_lines s_pos e_pos) in
     sprintf "%s: [%s] untyped statement fragment %s." context type_str (show_stmt pp_meta stmt)
+  | TypeError (BadIntPrecision (t, precision)) ->
+    let context = (match get_meta_typ t with Position (s_pos, e_pos) -> generate_context get_lines s_pos e_pos) in
+    sprintf "%s: [%s] invalid int precision %d." context type_str precision
   | StructuralError (BadIdentifier (m, ident)) ->
     let context = (match m with Position (s_pos, e_pos) -> generate_context get_lines s_pos e_pos) in
     sprintf "%s: [%s] identifier `%s' not declared in scope." context type_str ident

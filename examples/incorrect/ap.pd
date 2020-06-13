@@ -1,4 +1,5 @@
 {
+  # int(0) z;
   int(3) i; # 3-bit signed integer
   int(4) j; # 4-bit signed integer
   i = j; # invalid, loss of precision

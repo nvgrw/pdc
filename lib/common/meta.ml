@@ -18,6 +18,7 @@ type type_error =
   | UntypedSubExpressions of meta expr
   | UntypedSubLocations of meta loc
   | UntypedStatementFragment of meta stmt
+  | BadIntPrecision of meta typ * int
 type structural_error =
   | BadIdentifier of meta * string
   | DuplicateIdentifier of meta decl * string

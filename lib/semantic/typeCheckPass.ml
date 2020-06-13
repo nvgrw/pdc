@@ -135,7 +135,10 @@ module Walker_TypeCheckPass = Common.Walker.Make(struct
       | LTyped _ as typed -> success typed
       | _ as l  -> error @@ TypeError (UntypedSubLocations l)
 
-    let visit_typ_pre _ t = success t
+    let visit_typ_pre _ =  function
+      | Int (prec, _) as t when (prec != -1 && prec < 1) || prec > 64 ->
+        error @@ TypeError (BadIntPrecision (t, prec))
+      | _ as t -> success t
     let visit_typ_pos _ t = success t
   end)
 
