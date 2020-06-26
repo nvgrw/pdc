@@ -35,7 +35,7 @@ let () =
   ] in
   let anon_handle x = in_file := Some x in
   let exec_name = Sys.argv.(0) in
-  let () = parse options anon_handle (Printf.sprintf "%s [-c] [-o output_file] [--no-opt] [-O0] [-g] [--dump-lex-ast] [--dump-semant-ast] [--dump-ir] <file.pd>\n" exec_name) in
+  let () = parse options anon_handle (Printf.sprintf "%s [-c] [-o output_file] [-O0] [-g] [--no-gen] [--dump-lex-ast] [--dump-semant-ast] [--dump-ir] <file.pd>\n" exec_name) in
   let in_file = match !in_file with
     | None ->
       prerr_endline "no input file provided! aborting...";
