@@ -3,10 +3,13 @@ FROM ubuntu:18.04
 WORKDIR /root
 
 RUN apt-get update
-RUN apt-get install -y software-properties-common
+RUN apt-get install -y software-properties-common curl
 RUN add-apt-repository ppa:avsm/ppa
+RUN curl https://apt.kitware.com/keys/kitware-archive-latest.asc | gpg --dearmor - > /etc/apt/trusted.gpg.d/kitware.gpg
+RUN apt-add-repository 'deb https://apt.kitware.com/ubuntu/ bionic main'
+
 RUN apt-get update
-RUN apt-get install -y opam m4 make cmake clang
+RUN apt-get install -y opam m4 make clang cmake pkg-config
 
 RUN opam init -a --disable-sandboxing
 RUN opam switch create 4.07.1
@@ -26,7 +29,6 @@ ENV OCAML_TOPLEVEL_PATH="/root/.opam/4.07.1/lib/toplevel"
 ENV MANPATH=":/root/.opam/4.07.1/man"
 ENV PATH="/root/.opam/4.07.1/bin:${PATH}"
 
-RUN apt-get install -y pkg-config
 WORKDIR /tmp/llvm/llvm/opam/llvm.10.0.0
 RUN opam install -y .
 
@@ -36,6 +38,8 @@ COPY . /tmp/pdc
 RUN dune build @install || true
 RUN opam install -y . --deps-only
 RUN rm -rf /root/.opam/download-cache && rm -rf /root/.opam/default/.opam-switch/backup
+
+RUN rm Makefile && mv Makefile.linux Makefile
 RUN make && make install
 
 # RUN rm -rf /var/lib/apt/lists/*
