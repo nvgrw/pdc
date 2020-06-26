@@ -88,7 +88,7 @@ typ:
   | INT                                       { Int (64, Position $loc) }
   | FLOAT                                     { Float (Position $loc) }
   | CHAR                                      { Char (Position $loc) }
-  | BOOL                                      { Bool (Position $loc) }
+  | BOOL                                      { Common.AST.Bool (Common.Meta.Position $loc) }
   ;
 
 stmts:
