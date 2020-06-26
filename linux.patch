@@ -1,0 +1,13 @@
+diff --git a/bin/pdc.ml b/bin/pdc.ml
+index d4348fa..6ad8bda 100644
+--- a/bin/pdc.ml
++++ b/bin/pdc.ml
+@@ -9,7 +9,7 @@ type output_type =
+   | Bitcode
+ 
+ let prefix = [%blob "../.prefix"]
+-let clang_stdlib_args = Printf.sprintf "-L%s/lib -lpdstd -Xclang -load -Xclang %s/lib/libA4RRP.so" prefix prefix
++let clang_stdlib_args = Printf.sprintf "-L%s/lib -lpdstd -Xclang -load -Xclang %s/lib/libSrandRP.so" prefix prefix
+ 
+ (* Main *)
+ let () =

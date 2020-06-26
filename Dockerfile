@@ -40,9 +40,12 @@ RUN opam install -y . --deps-only
 RUN rm -rf /root/.opam/download-cache && rm -rf /root/.opam/default/.opam-switch/backup
 
 RUN rm Makefile && mv Makefile.linux Makefile
+# quick and dirty hack to get this working in Linux -- better future solution needed
+RUN git apply linux.patch
 
 ENV CC="clang"
 ENV CXX="clang++"
 RUN make && make install
 
-# RUN rm -rf /var/lib/apt/lists/*
+WORKDIR /root
+RUN rm -rf /var/lib/apt/lists/*
